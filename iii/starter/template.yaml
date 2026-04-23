@@ -15,6 +15,5 @@ optional:
 files:
   - package.json
   - tsconfig.json
-  - iii.config.yaml
   - src/index.ts
   - src/example.py
