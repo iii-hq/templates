@@ -1,8 +1,10 @@
 # Root template manifest for iii - lists available templates by folder name
 templates:
+  - bare
+  - docker
   - quickstart
-  - multi-worker-orchestration
-  - quickstart-ai-agents
+  # - multi-worker-orchestration
+  # - quickstart-ai-agents
   - starter
 
 # Shared files from this directory included in every template
@@ -22,6 +24,8 @@ language_files:
   common:
     - '.env.*'
     - '.gitignore'
+    - '.gitkeep'
+    - '.dockerignore'
     - 'README.md'
     - 'README*'
     - 'LICENSE'
@@ -29,6 +33,9 @@ language_files:
     - '*-config.yaml'
     - 'config.yaml'
     - 'iii.worker.yaml'
+    - 'Dockerfile'
+    - 'docker-compose.yml'
+    - 'docker-compose.*.yml'
 
   # Files only included when Python is selected
   python:
