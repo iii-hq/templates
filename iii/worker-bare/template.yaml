@@ -1,14 +1,27 @@
 name: Worker Bare
-description: Minimal standalone iii worker scaffold.
+description: Minimal standalone iii worker scaffold (one language).
 version: "0.1.0"
 min_iii_version: "0.11.0"
 
-treat_required_as_included: true
+# User must pick exactly one language. None required up-front; the
+# scaffolder presents an "optional" picker. `treat_required_as_included`
+# is false so the picker actually shows.
+treat_required_as_included: false
 requires: []
-optional: []
+optional:
+  - typescript
+  - javascript
+  - python
+  - rust
+
+# Template-specific language file overrides live here. Root `language_files`
+# already maps extensions (.ts, .py, Cargo.toml, etc.) so this section
+# stays empty unless we need template-local exceptions.
+language_files: {}
 
 files: []
 
 next_steps:
+  - "Install deps (npm install / uv sync / cargo build)"
   - "Edit iii.worker.yaml to declare your entry point"
-  - "Add to a parent project with: iii worker add ./path/to/this-worker"
+  - "Add to a parent project: iii worker add ./path/to/this-worker"
