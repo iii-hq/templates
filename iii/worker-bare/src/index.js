@@ -1,21 +1,13 @@
 import { registerWorker } from "iii-sdk";
 
-async function main() {
-  const worker = await registerWorker({
-    name: "my-worker",
-  });
+const engineWsUrl = process.env.III_URL ?? "ws://localhost:49134";
 
-  await worker.registerFunction({
-    name: "hello",
-    handler: async ({ payload }) => {
-      return { greeting: `hello, ${payload?.name ?? "world"}` };
-    },
-  });
-
-  console.log("worker ready");
-}
-
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
+const iii = registerWorker(engineWsUrl, {
+  workerName: "my-worker",
 });
+
+iii.registerFunction("hello", async (data) => ({
+  greeting: `hello, ${data?.name ?? "world"}`,
+}));
+
+console.info("worker ready", { engineWsUrl });
