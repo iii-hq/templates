@@ -19,7 +19,15 @@ optional:
 # stays empty unless we need template-local exceptions.
 language_files: {}
 
-files: []
+files:
+  - package.json
+  - tsconfig.json
+  - src/index.ts
+  - src/index.js
+  - pyproject.toml
+  - main.py
+  - Cargo.toml
+  - src/main.rs
 
 next_steps:
   - "Install deps (npm install / uv sync / cargo build)"
