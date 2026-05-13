@@ -9,7 +9,7 @@
     "start:js": "node src/index.js"
   },
   "dependencies": {
-    "@iii-hq/iii": "^0.11.7"
+    "iii-sdk": "^0.11.6"
   },
   "devDependencies": {
     "typescript": "^5.4.0",

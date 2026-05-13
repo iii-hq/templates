@@ -1,4 +1,4 @@
-import { registerWorker } from "@iii-hq/iii";
+import { registerWorker } from "iii-sdk";
 
 async function main(): Promise<void> {
   const worker = await registerWorker({

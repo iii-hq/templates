@@ -1,4 +1,4 @@
-use iii::register_worker;
+use iii_sdk::register_worker;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
