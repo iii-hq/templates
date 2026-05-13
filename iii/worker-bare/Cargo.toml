@@ -6,4 +6,5 @@ edition = "2024"
 [dependencies]
 iii-sdk = "0.11.6"
 anyhow = "1"
-tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }

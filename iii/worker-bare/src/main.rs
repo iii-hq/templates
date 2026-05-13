@@ -1,20 +1,25 @@
-use iii_sdk::register_worker;
+use iii_sdk::{InitOptions, RegisterFunction, register_worker};
+use serde_json::{Value, json};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let worker = register_worker("my-worker").await?;
+    let url = std::env::var("III_URL").unwrap_or_else(|_| "ws://localhost:49134".to_string());
 
-    worker
-        .register_function("hello", |payload: serde_json::Value| async move {
-            let name = payload
+    let iii = register_worker(&url, InitOptions::default());
+
+    iii.register_function(RegisterFunction::new_async(
+        "hello",
+        |req: Value| async move {
+            let name = req
                 .get("name")
                 .and_then(|v| v.as_str())
                 .unwrap_or("world");
-            Ok(serde_json::json!({ "greeting": format!("hello, {name}") }))
-        })
-        .await?;
+            Ok::<_, String>(json!({ "greeting": format!("hello, {name}") }))
+        },
+    ));
 
-    println!("worker ready");
-    worker.run_forever().await?;
+    println!("worker ready (engine: {url})");
+    tokio::signal::ctrl_c().await?;
+    iii.shutdown();
     Ok(())
 }
