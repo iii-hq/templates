@@ -1,7 +1,7 @@
 import os
 from iii import register_worker, InitOptions, Logger
 
-iii = register_worker(
+worker = register_worker(
     os.environ.get("III_URL", "ws://localhost:49134"),
     InitOptions(worker_name="math-worker"),
 )
@@ -15,14 +15,14 @@ def add_handler(payload: dict) -> dict:
     result = {"c": a + b}
 
     # --- Uncomment after: iii worker add iii-state ---
-    # running_total = iii.trigger(
+    # running_total = worker.trigger(
     #     {
     #         "function_id": "state::get",
     #         "payload": {"scope": "math", "key": "running_total"},
     #     }
     # )
     # new_total = (running_total or 0) + result["c"]
-    # iii.trigger(
+    # worker.trigger(
     #     {
     #         "function_id": "state::set",
     #         "payload": {"scope": "math", "key": "running_total", "value": new_total},
@@ -33,6 +33,6 @@ def add_handler(payload: dict) -> dict:
     return result
 
 
-iii.register_function("math::add", add_handler)
+worker.register_function("math::add", add_handler)
 
 print("Math worker started - listening for calls")
