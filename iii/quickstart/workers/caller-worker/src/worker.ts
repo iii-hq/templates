@@ -1,14 +1,14 @@
 import { registerWorker, Logger } from 'iii-sdk';
 
-const iii = registerWorker(process.env.III_URL ?? 'ws://localhost:49134');
+const worker = registerWorker(process.env.III_URL ?? 'ws://localhost:49134');
 const logger = new Logger();
 
-iii.registerFunction(
+worker.registerFunction(
   'math::add_two_numbers',
   async (payload: { a: number; b: number }) => {
     logger.info('math::add_two_numbers called in TypeScript', payload);
 
-    const result = await iii.trigger({
+    const result = await worker.trigger({
       function_id: 'math::add',
       payload,
     });
@@ -22,10 +22,10 @@ iii.registerFunction(
 );
 
 // --- Uncomment after: iii worker add iii-http ---
-// iii.registerFunction(
+// worker.registerFunction(
 //   'http::add_two_numbers',
 //   async (payload: { body: { a: number; b: number } }) => {
-//     const result = await iii.trigger({
+//     const result = await worker.trigger({
 //       function_id: 'math::add_two_numbers',
 //       payload: payload.body,
 //     });
@@ -37,7 +37,7 @@ iii.registerFunction(
 //   },
 // );
 
-// iii.registerTrigger({
+// worker.registerTrigger({
 //   type: 'http',
 //   function_id: 'http::add_two_numbers',
 //   config: { api_path: '/math/add-two-numbers', http_method: 'POST' },
