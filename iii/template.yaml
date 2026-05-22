@@ -15,8 +15,6 @@ shared_files:
     dest: .gitignore
   - source: default-iii-config.yaml
     dest: config.yaml
-  - source: default-iii-worker.yaml
-    dest: iii.worker.yaml
 
 # Global language-specific file patterns
 # These determine which files are included based on selected languages

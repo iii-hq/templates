@@ -1,5 +1,0 @@
-# Default standalone-worker manifest. Edit name, language, and entry as needed.
-name: {{worker_name}}
-runtime:
-  language: {{worker_language}}
-  entry: {{worker_entry}}

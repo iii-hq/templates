@@ -20,6 +20,7 @@ optional:
 language_files: {}
 
 files:
+  - iii.worker.yaml
   - package.json
   - tsconfig.json
   - src/index.ts
