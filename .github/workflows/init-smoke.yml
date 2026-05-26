@@ -1,0 +1,68 @@
+name: Init Smoke
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  init-smoke:
+    name: Project and worker init
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      III_TEMPLATE_DIR: ${{ github.workspace }}/iii
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    steps:
+      - name: Checkout templates
+        uses: actions/checkout@v4
+
+      - name: Prepare artifacts
+        run: mkdir -p artifacts
+
+      - name: Install jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends jq
+
+      - name: Install iii
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          curl -fsSL https://install.iii.dev/iii/main/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run init smoke tests
+        run: scripts/smoke-init.sh 2>&1 | tee artifacts/init-smoke.log
+
+      - name: Record init smoke with VHS
+        if: always()
+        uses: charmbracelet/vhs-action@v1
+        with:
+          path: tapes/init-smoke.tape
+          install-fonts: true
+          token: ${{ github.token }}
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: init-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Notify Slack -- result
+        if: always()
+        run: scripts/notify-slack.sh finished "${{ job.status }}" artifacts

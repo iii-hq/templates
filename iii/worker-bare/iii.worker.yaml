@@ -1,0 +1,7 @@
+# Default standalone-worker manifest. Edit name, language, and entry as needed.
+name: {{worker_name}}
+runtime:
+  kind: {{worker_language}}
+  # Only TypeScript/JavaScript use package_manager. Python and Rust ignore it.
+  package_manager: npm
+  entry: {{worker_entry}}
