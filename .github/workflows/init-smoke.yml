@@ -51,7 +51,6 @@ jobs:
         uses: charmbracelet/vhs-action@v1
         with:
           path: tapes/init-smoke.tape
-          install-fonts: true
           token: ${{ github.token }}
 
       - name: Upload artifacts

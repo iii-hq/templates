@@ -5,7 +5,7 @@ Set Shell bash
 Set Width 1200
 Set Height 760
 Set FontSize 20
-Set FontFamily "JetBrains Mono"
+Set FontFamily "DejaVu Sans Mono"
 Set Theme "Catppuccin Mocha"
 Set Padding 18
 Set Framerate 30
