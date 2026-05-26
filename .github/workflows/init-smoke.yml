@@ -82,5 +82,5 @@ jobs:
           retention-days: 14
 
       - name: Notify Slack -- result
-        if: always()
+        if: always() && github.event_name == 'schedule'
         run: scripts/notify-slack.sh finished "${{ job.status }}" artifacts
