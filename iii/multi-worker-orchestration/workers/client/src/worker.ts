@@ -1,7 +1,8 @@
 // This is the client - it makes calls to data-worker and compute-worker.
 // It can be thought of as an orchestrator, but iii does not require one.
 
-import { registerWorker, Logger } from "iii-sdk";
+import { registerWorker } from "iii-sdk";
+import { Logger } from "@iii-dev/observability";
 const iii = registerWorker(process.env.III_URL ?? "ws://localhost:49134");
 const logger = new Logger();
 

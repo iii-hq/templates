@@ -1,7 +1,7 @@
 name: Quickstart (Cross-Language Math)
 description: Call a Python function from a Node worker using iii trigger
 version: '0.1.0'
-min_iii_version: '0.11.0'
+min_iii_version: '0.18.0'
 
 treat_required_as_included: true
 requires:

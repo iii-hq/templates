@@ -2,7 +2,8 @@
 // This worker manages account upgrades and publishes events to the iii event bus.
 // Follow the steps below to progressively build out the full system.
 
-import { registerWorker, Logger, TriggerAction } from "iii-sdk";
+import { registerWorker, TriggerAction } from "iii-sdk";
+import { Logger } from "@iii-dev/observability";
 
 const iii = registerWorker(
   process.env.III_BRIDGE_URL ?? "ws://localhost:49134",
