@@ -2,7 +2,8 @@
 # Demonstrates: register_function with Pydantic validation
 
 import os
-from iii import register_worker, InitOptions, Logger
+from iii import register_worker, InitOptions
+from iii_observability import Logger
 from pydantic import BaseModel, ValidationError
 
 class TransformInput(BaseModel):

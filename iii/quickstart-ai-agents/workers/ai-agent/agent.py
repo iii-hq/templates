@@ -6,7 +6,8 @@ import asyncio
 import json
 import os
 
-from iii import register_worker, InitOptions, Logger
+from iii import register_worker, InitOptions
+from iii_observability import Logger
 
 iii = register_worker(
     os.environ.get("III_BRIDGE_URL", "ws://localhost:49134"),

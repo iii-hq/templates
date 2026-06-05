@@ -1,4 +1,5 @@
-import { registerWorker, Logger } from 'iii-sdk';
+import { registerWorker } from 'iii-sdk';
+import { Logger } from '@iii-dev/observability';
 
 const worker = registerWorker(process.env.III_URL ?? 'ws://localhost:49134');
 const logger = new Logger();
