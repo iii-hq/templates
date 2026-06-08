@@ -1,0 +1,10 @@
+# Standalone Python worker manifest. `iii worker init` renames this to
+# iii.worker.yaml and fills in the worker name.
+name: {{worker_name}}
+runtime:
+  # Base OCI image used as the worker rootfs. Override to pin a version.
+  base_image: docker.io/iiidev/python:latest
+scripts:
+  install: pip install -e .
+  # watchfiles reloads the worker on edits (declared in pyproject.toml).
+  start: watchfiles 'python src/main.py'

@@ -1,7 +1,7 @@
 name: Worker Bare
 description: Minimal standalone iii worker scaffold (one language).
-version: "0.1.0"
-min_iii_version: "0.11.0"
+version: "0.19.0"
+min_iii_version: "0.19.0"
 
 # User must pick exactly one language. None required up-front; the
 # scaffolder presents an "optional" picker. `treat_required_as_included`
@@ -14,23 +14,35 @@ optional:
   - python
   - rust
 
-# Template-specific language file overrides live here. Root `language_files`
-# already maps extensions (.ts, .py, Cargo.toml, etc.) so this section
-# stays empty unless we need template-local exceptions.
-language_files: {}
+# Each language ships its own complete iii.worker.yaml (scripts + base_image).
+# Route the per-language manifest through the language picker so exactly one is
+# copied; `iii worker init` renames the survivor to iii.worker.yaml. Root
+# `language_files` already maps the source extensions (.ts, .py, Cargo.toml, …).
+language_files:
+  typescript:
+    - iii.worker.ts.yaml
+  javascript:
+    - iii.worker.js.yaml
+  python:
+    - iii.worker.py.yaml
+  rust:
+    - iii.worker.rust.yaml
 
 files:
-  - iii.worker.yaml
+  - iii.worker.ts.yaml
+  - iii.worker.js.yaml
+  - iii.worker.py.yaml
+  - iii.worker.rust.yaml
   - package.json
   - tsconfig.json
   - src/index.ts
   - src/index.js
   - pyproject.toml
-  - main.py
+  - src/main.py
   - Cargo.toml
   - src/main.rs
 
 next_steps:
-  - "Install deps (npm install / uv sync / cargo build)"
+  - "Install deps (npm install / pip install -e . / cargo build)"
   - "Edit iii.worker.yaml to declare your entry point"
   - "Add to a parent project: iii worker add ./path/to/this-worker"

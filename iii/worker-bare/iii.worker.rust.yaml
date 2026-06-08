@@ -1,0 +1,11 @@
+# Standalone Rust worker manifest. `iii worker init` renames this to
+# iii.worker.yaml and fills in the worker name.
+name: {{worker_name}}
+runtime:
+  # Base OCI image used as the worker rootfs. Override to pin a version.
+  base_image: docker.io/library/rust:slim-bookworm
+scripts:
+  # cargo-watch provides reload-on-edit; installed once into the rootfs.
+  setup: cargo install cargo-watch
+  install: cargo build
+  start: cargo watch -x run

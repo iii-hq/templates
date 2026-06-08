@@ -1,0 +1,58 @@
+name: Bump SDK Versions
+
+# Keeps the templates' iii-sdk / iii-observability pins and template.yaml
+# versions in lockstep with an iii engine release. Fired by the engine's
+# release workflow via repository_dispatch; can also be run by hand.
+on:
+  repository_dispatch:
+    types: [iii-release]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, e.g. 0.19.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    name: Bump and open PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve version input
+        id: ver
+        env:
+          # repository_dispatch carries the payload; workflow_dispatch the input.
+          DISPATCH_VERSION: ${{ github.event.client_payload.version }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          VERSION="${DISPATCH_VERSION:-$INPUT_VERSION}"
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::no version provided (client_payload.version or inputs.version)"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Bump manifests
+        run: python3 scripts/bump_versions.py --version "${{ steps.ver.outputs.version }}"
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/bump-sdk-${{ steps.ver.outputs.version }}
+          title: "chore: bump iii SDK pins to ${{ steps.ver.outputs.version }}"
+          commit-message: "chore: bump iii SDK pins to ${{ steps.ver.outputs.version }}"
+          body: |
+            Automated bump of `iii-sdk` / `iii-observability` pins and
+            `template.yaml` versions to **${{ steps.ver.outputs.version }}**.
+
+            Triggered by the iii engine release. Review and merge once the
+            published packages are available on the registries.
+          labels: dependencies, automated

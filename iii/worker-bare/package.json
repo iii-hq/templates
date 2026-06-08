@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "start:js": "node src/index.js"
+    "start": "tsx watch src/index.ts"
   },
   "dependencies": {
-    "iii-sdk": "^0.11.6"
+    "@iii-dev/observability": "0.19.0",
+    "iii-sdk": "0.19.0"
   },
   "devDependencies": {
-    "typescript": "^5.4.0",
-    "@types/node": "^20.11.0"
+    "@types/node": "^20.11.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0"
   }
 }

@@ -4,8 +4,8 @@
   "type": "module",
   "description": "Calls math::add in the Python worker and returns the result",
   "scripts": {
-    "dev": "tsx watch src/worker.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "start": "tsx watch src/worker.ts"
   },
   "dependencies": {
     "@iii-dev/observability": "0.19.0",
