@@ -23,8 +23,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # Use the org CI app so the bump commit/PR is authored by iii-ci[bot]
+      # and pushing the branch triggers the repo's CI on the PR.
+      - name: Generate token
+        id: token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.III_CI_APP_ID }}
+          private-key: ${{ secrets.III_CI_APP_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ steps.token.outputs.token }}
 
       - name: Resolve version input
         id: ver
@@ -44,15 +55,22 @@ jobs:
         run: python3 scripts/bump_versions.py --version "${{ steps.ver.outputs.version }}"
 
       - name: Open pull request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          branch: chore/bump-sdk-${{ steps.ver.outputs.version }}
-          title: "chore: bump iii SDK pins to ${{ steps.ver.outputs.version }}"
-          commit-message: "chore: bump iii SDK pins to ${{ steps.ver.outputs.version }}"
-          body: |
-            Automated bump of `iii-sdk` / `iii-observability` pins and
-            `template.yaml` versions to **${{ steps.ver.outputs.version }}**.
-
-            Triggered by the iii engine release. Review and merge once the
-            published packages are available on the registries.
-          labels: dependencies, automated
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          if git diff --quiet; then
+            echo "No manifest changes for $VERSION; nothing to open."
+            exit 0
+          fi
+          BRANCH="chore/bump-sdk-$VERSION"
+          git config user.name "iii-ci[bot]"
+          git config user.email "iii-ci[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git commit -am "chore: bump iii SDK pins to $VERSION"
+          git push -u origin "$BRANCH" --force-with-lease
+          gh pr create \
+            --title "chore: bump iii SDK pins to $VERSION" \
+            --body "Automated bump of \`iii-sdk\` / \`iii-observability\` pins and \`template.yaml\` versions to **$VERSION**. Triggered by the iii engine release. Review and merge once the published packages are available on the registries." \
+            --head "$BRANCH" \
+            || echo "PR may already exist for $BRANCH"
