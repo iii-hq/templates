@@ -14,15 +14,19 @@ optional:
   - python
   - rust
 
-# Each language ships its own complete iii.worker.yaml (scripts + base_image).
-# Route the per-language manifest through the language picker so exactly one is
-# copied; `iii worker init` renames the survivor to iii.worker.yaml. Root
+# Files that differ per language but share a destination name ship with a
+# language tag and are routed through the language picker so exactly one is
+# copied: the manifest (iii.worker.<lang>.yaml) and, for node, package.json
+# (package.<lang>.json — TS needs tsx/typescript, JS doesn't). `iii worker
+# init` renames the survivors to iii.worker.yaml / package.json. Root
 # `language_files` already maps the source extensions (.ts, .py, Cargo.toml, …).
 language_files:
   typescript:
     - iii.worker.ts.yaml
+    - package.ts.json
   javascript:
     - iii.worker.js.yaml
+    - package.js.json
   python:
     - iii.worker.py.yaml
   rust:
@@ -33,7 +37,8 @@ files:
   - iii.worker.js.yaml
   - iii.worker.py.yaml
   - iii.worker.rust.yaml
-  - package.json
+  - package.ts.json
+  - package.js.json
   - tsconfig.json
   - src/index.ts
   - src/index.js

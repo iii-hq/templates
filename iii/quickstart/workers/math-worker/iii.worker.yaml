@@ -4,4 +4,4 @@ runtime:
   base_image: docker.io/iiidev/python:latest
 scripts:
   install: "pip install -e ."
-  start: "watchfiles 'python math_worker.py'"
+  start: "watchfiles 'python src/math_worker.py'"

@@ -14,7 +14,7 @@ files:
   - README.md
   - workers/math-worker/iii.worker.yaml
   - workers/math-worker/pyproject.toml
-  - workers/math-worker/math_worker.py
+  - workers/math-worker/src/math_worker.py
   - workers/caller-worker/package.json
   - workers/caller-worker/tsconfig.json
   - workers/caller-worker/iii.worker.yaml

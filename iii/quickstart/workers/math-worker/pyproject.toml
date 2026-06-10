@@ -13,8 +13,8 @@ dependencies = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-# Single-module worker: the entry point is math_worker.py rather than a
+# Single-module worker: the entry point is src/math_worker.py rather than a
 # package. Tell hatchling to build exactly that module so `pip install -e .`
 # succeeds.
 [tool.hatch.build.targets.wheel]
-only-include = ["math_worker.py"]
+only-include = ["src/math_worker.py"]
