@@ -8,13 +8,13 @@ async fn main() -> anyhow::Result<()> {
     let iii = register_worker(&url, InitOptions::default());
 
     iii.register_function(RegisterFunction::new_async(
-        "hello",
+        "my_worker::hey",
         |req: Value| async move {
             let name = req
                 .get("name")
                 .and_then(|v| v.as_str())
                 .unwrap_or("world");
-            Ok::<_, String>(json!({ "greeting": format!("hello, {name}") }))
+            Ok::<_, String>(json!({ "greeting": format!("hey, {name}") }))
         },
     ));
 
