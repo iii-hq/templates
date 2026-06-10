@@ -1,7 +1,7 @@
 name: Docker
 description: Adds a Dockerfile and docker-compose.yml that run iii via the iiidev/iii base image.
 version: "0.19.0"
-min_iii_version: "0.19.0"
+min_iii_version: "0.19.3"
 
 # No language requirements: the Dockerfile delegates language-specific
 # concerns to the engine's worker stack. The engine post-processes the

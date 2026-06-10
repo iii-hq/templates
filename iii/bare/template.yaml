@@ -1,7 +1,7 @@
 name: Bare
 description: Minimal iii project scaffold — just config.yaml and .gitignore.
 version: "0.19.0"
-min_iii_version: "0.19.0"
+min_iii_version: "0.19.3"
 
 # No language requirements: this template is the bare scaffold used by
 # `iii project init`. Languages are added later via `iii worker add` or by
