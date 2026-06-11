@@ -1,10 +1,7 @@
-# Standalone JavaScript worker manifest. `iii worker init` renames this to
-# iii.worker.yaml and fills in the worker name.
 name: {{worker_name}}
 runtime:
-  # Base OCI image used as the worker rootfs. Override to pin a version.
+  # Base OCI image used as the worker rootfs.
   base_image: docker.io/iiidev/node:latest
 scripts:
   install: npm install
-  # `node --watch` reloads the worker on edits (native, no extra deps).
   start: node --watch src/index.js
