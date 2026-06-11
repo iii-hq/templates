@@ -17,7 +17,7 @@ def main() -> None:
     async def hello(data: dict) -> dict:
         return {"greeting": f"hello, {data.get('name', 'world')}"}
 
-    iii.register_function("hello", hello)
+    iii.register_function("my_worker::hello", hello)
 
     print(f"worker ready (engine: {engine_ws_url})")
     threading.Event().wait()

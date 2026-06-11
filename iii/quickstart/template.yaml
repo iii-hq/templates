@@ -1,7 +1,7 @@
 name: Quickstart (Cross-Language Math)
 description: Call a Python function from a Node worker using iii trigger
-version: '0.1.0'
-min_iii_version: '0.19.0'
+version: "0.19.0"
+min_iii_version: "0.19.3"
 
 treat_required_as_included: true
 requires:
@@ -13,8 +13,8 @@ optional: []
 files:
   - README.md
   - workers/math-worker/iii.worker.yaml
-  - workers/math-worker/requirements.txt
-  - workers/math-worker/math_worker.py
+  - workers/math-worker/pyproject.toml
+  - workers/math-worker/src/math_worker.py
   - workers/caller-worker/package.json
   - workers/caller-worker/tsconfig.json
   - workers/caller-worker/iii.worker.yaml
