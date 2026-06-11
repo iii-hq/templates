@@ -17,8 +17,7 @@ optional:
 # Files that differ per language but share a destination name ship with a
 # language tag and are routed through the language picker so exactly one is
 # copied: the manifest (iii.worker.<lang>.yaml) and, for node, package.json
-# (package.<lang>.json — TS needs tsx/typescript, JS doesn't). `iii worker
-# init` renames the survivors to iii.worker.yaml / package.json. Root
+# (package.<lang>.json — TS needs tsx/typescript, JS doesn't). Root
 # `language_files` already maps the source extensions (.ts, .py, Cargo.toml, …).
 language_files:
   typescript:
@@ -31,6 +30,24 @@ language_files:
     - iii.worker.py.yaml
   rust:
     - iii.worker.rust.yaml
+
+# Collapse the language-tagged survivor onto its canonical name at copy time.
+# Only the selected language's source is included (gated above), so these
+# share-a-destination entries never collide within one scaffold. The scaffolder
+# performs the rename; the CLI no longer hardcodes it.
+renames:
+  - source: iii.worker.ts.yaml
+    dest: iii.worker.yaml
+  - source: iii.worker.js.yaml
+    dest: iii.worker.yaml
+  - source: iii.worker.py.yaml
+    dest: iii.worker.yaml
+  - source: iii.worker.rust.yaml
+    dest: iii.worker.yaml
+  - source: package.ts.json
+    dest: package.json
+  - source: package.js.json
+    dest: package.json
 
 files:
   - iii.worker.ts.yaml
