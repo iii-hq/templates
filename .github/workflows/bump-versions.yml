@@ -69,8 +69,16 @@ jobs:
           git checkout -b "$BRANCH"
           git commit -am "chore: bump iii SDK pins to $VERSION"
           git push -u origin "$BRANCH" --force-with-lease
+
+          # If a PR from this branch already exists (e.g. a re-run for the same
+          # version), there's nothing to do — the force-pushed branch updates it.
+          # Otherwise open one; any other gh failure is a real error and fails.
+          existing=$(gh pr list --head "$BRANCH" --state open --json number --jq 'length')
+          if [[ "$existing" -gt 0 ]]; then
+            echo "PR already exists for $BRANCH; branch updated via push."
+            exit 0
+          fi
           gh pr create \
             --title "chore: bump iii SDK pins to $VERSION" \
             --body "Automated bump of \`iii-sdk\` / \`iii-observability\` pins and \`template.yaml\` versions to **$VERSION**. Triggered by the iii engine release. Review and merge once the published packages are available on the registries." \
-            --head "$BRANCH" \
-            || echo "PR may already exist for $BRANCH"
+            --head "$BRANCH"
