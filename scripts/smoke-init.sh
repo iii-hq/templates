@@ -55,10 +55,13 @@ assert_file "$PROJECT_DIR/config.yaml"
 assert_file "$PROJECT_DIR/.gitignore"
 assert_absent "$PROJECT_DIR/iii.worker.yaml"
 
+# Worker manifests scaffolded by `iii worker init` declare a `runtime.base_image`
+# and `scripts` block (install/start). The legacy `kind:`/`entry:` fields were
+# dropped when worker-bare moved to per-language manifests.
 test_worker() {
   local lang="$1"
-  local manifest_kind="$2"
-  local entry="$3"
+  local base_image="$2"
+  local start_cmd="$3"
   shift 3
 
   local worker_dir="$TMP_DIR/worker-$lang"
@@ -73,28 +76,29 @@ test_worker() {
   assert_contains "$worker_dir/.iii/worker.ini" "name=worker-$lang"
   assert_contains "$worker_dir/.iii/worker.ini" "source=init"
   assert_contains "$worker_dir/iii.worker.yaml" "name: worker-$lang"
-  assert_contains "$worker_dir/iii.worker.yaml" "kind: $manifest_kind"
-  assert_contains "$worker_dir/iii.worker.yaml" "entry: $entry"
+  assert_contains "$worker_dir/iii.worker.yaml" "base_image: $base_image"
+  assert_contains "$worker_dir/iii.worker.yaml" "start: $start_cmd"
 
   for expected in "$@"; do
     assert_file "$worker_dir/$expected"
   done
 }
 
-test_worker ts typescript ./src/index.ts package.json tsconfig.json src/index.ts
+test_worker ts docker.io/iiidev/node:latest "npm run start" package.json tsconfig.json src/index.ts
 assert_absent "$TMP_DIR/worker-ts/main.py"
 assert_absent "$TMP_DIR/worker-ts/Cargo.toml"
 
-test_worker js javascript ./src/index.js package.json src/index.js
+test_worker js docker.io/iiidev/node:latest "node --watch src/index.js" package.json src/index.js
 assert_absent "$TMP_DIR/worker-js/tsconfig.json"
 assert_absent "$TMP_DIR/worker-js/main.py"
 assert_absent "$TMP_DIR/worker-js/Cargo.toml"
 
-test_worker py python ./main.py pyproject.toml main.py
+test_worker py docker.io/iiidev/python:latest "watchfiles 'python src/main.py'" pyproject.toml src/main.py
 assert_absent "$TMP_DIR/worker-py/package.json"
 assert_absent "$TMP_DIR/worker-py/Cargo.toml"
+assert_absent "$TMP_DIR/worker-py/main.py"
 
-test_worker rust rust ./src/main.rs Cargo.toml src/main.rs
+test_worker rust docker.io/library/rust:slim-bookworm "cargo watch -x run" Cargo.toml src/main.rs
 assert_absent "$TMP_DIR/worker-rust/package.json"
 assert_absent "$TMP_DIR/worker-rust/main.py"
 
