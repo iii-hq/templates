@@ -1,6 +1,0 @@
-# Default standalone-worker manifest. Edit name, language, and entry as needed.
-name: {{worker_name}}
-runtime:
-  kind: {{worker_language}}
-  package_manager: {{worker_package_manager}}
-  entry: {{worker_entry}}

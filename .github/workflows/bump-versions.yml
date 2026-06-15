@@ -1,0 +1,84 @@
+name: Bump SDK Versions
+
+# Keeps the templates' iii-sdk / iii-observability pins and template.yaml
+# versions in lockstep with an iii engine release. Fired by the engine's
+# release workflow via repository_dispatch; can also be run by hand.
+on:
+  repository_dispatch:
+    types: [iii-release]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, e.g. 0.19.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    name: Bump and open PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Use the org CI app so the bump commit/PR is authored by iii-ci[bot]
+      # and pushing the branch triggers the repo's CI on the PR.
+      - name: Generate token
+        id: token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.III_CI_APP_ID }}
+          private-key: ${{ secrets.III_CI_APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.token.outputs.token }}
+
+      - name: Resolve version input
+        id: ver
+        env:
+          # repository_dispatch carries the payload; workflow_dispatch the input.
+          DISPATCH_VERSION: ${{ github.event.client_payload.version }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          VERSION="${DISPATCH_VERSION:-$INPUT_VERSION}"
+          if [[ -z "$VERSION" ]]; then
+            echo "::error::no version provided (client_payload.version or inputs.version)"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Bump manifests
+        run: python3 scripts/bump_versions.py --version "${{ steps.ver.outputs.version }}"
+
+      - name: Open pull request
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          if git diff --quiet; then
+            echo "No manifest changes for $VERSION; nothing to open."
+            exit 0
+          fi
+          BRANCH="chore/bump-sdk-$VERSION"
+          git config user.name "iii-ci[bot]"
+          git config user.email "iii-ci[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git commit -am "chore: bump iii SDK pins to $VERSION"
+          git push -u origin "$BRANCH" --force-with-lease
+
+          # If a PR from this branch already exists (e.g. a re-run for the same
+          # version), there's nothing to do — the force-pushed branch updates it.
+          # Otherwise open one; any other gh failure is a real error and fails.
+          existing=$(gh pr list --head "$BRANCH" --state open --json number --jq 'length')
+          if [[ "$existing" -gt 0 ]]; then
+            echo "PR already exists for $BRANCH; branch updated via push."
+            exit 0
+          fi
+          gh pr create \
+            --title "chore: bump iii SDK pins to $VERSION" \
+            --body "Automated bump of \`iii-sdk\` / \`iii-observability\` pins and \`template.yaml\` versions to **$VERSION**. Triggered by the iii engine release. Review and merge once the published packages are available on the registries." \
+            --head "$BRANCH"

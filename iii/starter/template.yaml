@@ -1,7 +1,7 @@
 name: Starter
 description: A basic iii project with TypeScript
-version: "0.1.0"
-min_iii_version: "0.11.0"
+version: "0.19.0"
+min_iii_version: "0.19.3"
 
 # Languages that must be included (user cannot deselect)
 requires:
