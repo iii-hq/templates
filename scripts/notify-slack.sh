@@ -25,6 +25,7 @@ ref="${GITHUB_REF_NAME:-${GITHUB_REF:-local}}"
 sha="${GITHUB_SHA:-local}"
 short_sha="${sha:0:7}"
 workflow="${GITHUB_WORKFLOW:-init-smoke}"
+channel="${III_CHANNEL:-}"
 run_url="${RUN_URL:-https://github.com/${repo}/actions}"
 thread_file="$artifact_dir/slack/thread_ts.txt"
 
@@ -152,6 +153,9 @@ build_blocks() {
   emoji=$(status_emoji "$status")
   label=$(status_label "$status")
   header="$emoji templates init smoke: $label"
+  if [[ -n "$channel" ]]; then
+    header="$header [$channel]"
+  fi
 
   jq -nc \
     --arg header "$header" \
@@ -160,16 +164,17 @@ build_blocks() {
     --arg ref "$ref" \
     --arg sha "$short_sha" \
     --arg workflow "$workflow" \
+    --arg channel "$channel" \
     --arg url "$run_url" \
     '[
       {type: "header", text: {type: "plain_text", text: $header, emoji: true}},
-      {type: "section", fields: [
+      {type: "section", fields: ([
         {type: "mrkdwn", text: ("*Status:* " + $status)},
         {type: "mrkdwn", text: ("*Repo:* " + $repo)},
         {type: "mrkdwn", text: ("*Ref:* " + $ref)},
         {type: "mrkdwn", text: ("*Commit:* " + $sha)},
         {type: "mrkdwn", text: ("*Workflow:* " + $workflow)}
-      ]},
+      ] + (if $channel == "" then [] else [{type: "mrkdwn", text: ("*Channel:* " + $channel)}] end))},
       {type: "actions", elements: [
         {type: "button", text: {type: "plain_text", text: "Open run"}, url: $url}
       ]}

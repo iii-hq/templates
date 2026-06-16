@@ -8,21 +8,47 @@ on:
   schedule:
     - cron: "0 */12 * * *"
   workflow_dispatch:
+    inputs:
+      channel:
+        description: "iii release channel to smoke-test the templates against"
+        type: choice
+        options:
+          - both
+          - main
+          - next
+        default: both
 
 permissions:
   contents: read
 
 jobs:
   init-smoke:
-    name: Project and worker init
+    name: Project and worker init (channel=${{ matrix.channel }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # Cron / push / pull_request (non-dispatch) and dispatch with `both`
+        # run both legs. Dispatch with `main` or `next` narrows to a single
+        # matrix leg. GitHub expressions have no ternary; we rely on `&&`/`||`
+        # short-circuit plus the fact that non-empty `fromJSON` arrays are truthy.
+        channel: >-
+          ${{
+            (github.event_name != 'workflow_dispatch' || inputs.channel == 'both')
+            && fromJSON('["main","next"]')
+            || fromJSON(format('["{0}"]', inputs.channel))
+          }}
     env:
       III_TEMPLATE_DIR: ${{ github.workspace }}/iii
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      # III_CHANNEL is surfaced in the Slack header so the main/next legs are
+      # distinguishable; III_NEXT switches the install below to the next channel.
+      III_CHANNEL: ${{ matrix.channel }}
+      III_NEXT: ${{ matrix.channel == 'next' && '1' || '0' }}
 
     steps:
       - name: Checkout templates
@@ -56,12 +82,21 @@ jobs:
           ttyd --version
           ffmpeg -version | head -1
 
-      - name: Install iii
+      - name: Install iii (channel=${{ matrix.channel }})
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          curl -fsSL https://install.iii.dev/iii/main/install.sh | sh
+          if [ "${{ matrix.channel }}" = "next" ]; then
+            curl -fsSL https://install.iii.dev/iii/main/install.sh | sh -s -- --next
+          else
+            curl -fsSL https://install.iii.dev/iii/main/install.sh | sh
+          fi
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.iii/bin" >> "$GITHUB_PATH"
+
+      - name: Notify Slack -- started
+        if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        run: scripts/notify-slack.sh started artifacts
 
       - name: Run init smoke tests
         run: |
@@ -76,11 +111,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: init-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          name: init-smoke-${{ matrix.channel }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/
           if-no-files-found: warn
           retention-days: 14
 
       - name: Notify Slack -- result
-        if: always() && github.event_name == 'schedule'
+        if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         run: scripts/notify-slack.sh finished "${{ job.status }}" artifacts
