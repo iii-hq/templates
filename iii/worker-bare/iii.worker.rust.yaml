@@ -3,6 +3,11 @@ runtime:
   # Base OCI image used as the worker rootfs.
   base_image: docker.io/library/rust:slim-bookworm
 scripts:
-  setup: cargo install cargo-watch
-  install: cargo build
-  start: cargo watch -x run
+  # Release on purpose: a worker's build cache (target/) is per-worker and never
+  # shared, so debug's full debuginfo + incremental churn pile up on disk across
+  # workers (MOT-3459). `cargo run --release` reuses install's build, and iii's
+  # host watcher restarts the VM on source change (rebuilding on restart), so an
+  # in-worker `cargo watch` is redundant. In the overlay rootfs it can't even see
+  # host edits, since the source is copied in and the host share is detached.
+  install: cargo build --release
+  start: cargo run --release
