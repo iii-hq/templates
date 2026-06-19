@@ -98,7 +98,7 @@ assert_absent "$TMP_DIR/worker-py/package.json"
 assert_absent "$TMP_DIR/worker-py/Cargo.toml"
 assert_absent "$TMP_DIR/worker-py/main.py"
 
-test_worker rust docker.io/library/rust:slim-bookworm "cargo watch -x run" Cargo.toml src/main.rs
+test_worker rust docker.io/library/rust:slim-bookworm "cargo run --release" Cargo.toml src/main.rs
 assert_absent "$TMP_DIR/worker-rust/package.json"
 assert_absent "$TMP_DIR/worker-rust/main.py"
 
