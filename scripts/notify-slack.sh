@@ -26,6 +26,9 @@ sha="${GITHUB_SHA:-local}"
 short_sha="${sha:0:7}"
 workflow="${GITHUB_WORKFLOW:-init-smoke}"
 channel="${III_CHANNEL:-}"
+# Surface the pinned alpha version alongside the channel, e.g. "alpha (0.19.6-alpha.1)".
+iii_version="${III_VERSION:-}"
+[[ -n "$channel" && -n "$iii_version" ]] && channel="$channel ($iii_version)"
 run_url="${RUN_URL:-https://github.com/${repo}/actions}"
 thread_file="$artifact_dir/slack/thread_ts.txt"
 
