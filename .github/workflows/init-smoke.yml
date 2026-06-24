@@ -16,7 +16,12 @@ on:
           - both
           - main
           - next
+          - alpha
         default: both
+      version:
+        description: "exact alpha version (e.g. 0.19.6-alpha.1) -- required when channel=alpha"
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -49,6 +54,9 @@ jobs:
       # distinguishable; III_NEXT switches the install below to the next channel.
       III_CHANNEL: ${{ matrix.channel }}
       III_NEXT: ${{ matrix.channel == 'next' && '1' || '0' }}
+      # Only set on the alpha leg (single-channel dispatch with a version);
+      # empty for schedule/push/PR and the main/next legs.
+      III_VERSION: ${{ inputs.version }}
 
     steps:
       - name: Checkout templates
@@ -86,7 +94,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          if [ "${{ matrix.channel }}" = "next" ]; then
+          if [ "${{ matrix.channel }}" = "alpha" ]; then
+            if [ -z "${III_VERSION}" ]; then
+              echo "::error::channel=alpha requires a 'version' input (e.g. 0.19.6-alpha.1)"
+              exit 1
+            fi
+            case "$III_VERSION" in
+              */*) TAG="$III_VERSION" ;;            # full release tag given
+              *)   TAG="iii-alpha/v${III_VERSION#v}" ;;
+            esac
+            echo "installing pinned alpha tag: $TAG"
+            curl -fsSL https://install.iii.dev/iii/main/install.sh | III_RELEASE_TAG="$TAG" sh
+          elif [ "${{ matrix.channel }}" = "next" ]; then
             curl -fsSL https://install.iii.dev/iii/main/install.sh | sh -s -- --next
           else
             curl -fsSL https://install.iii.dev/iii/main/install.sh | sh
