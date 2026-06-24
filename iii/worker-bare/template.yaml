@@ -1,7 +1,7 @@
 name: Worker Bare
 description: Minimal standalone iii worker scaffold (one language).
-version: "0.19.0"
-min_iii_version: "0.19.3"
+version: "0.19.7"
+min_iii_version: "0.19.7"
 
 # User must pick exactly one language. None required up-front; the
 # scaffolder presents an "optional" picker. `treat_required_as_included`
