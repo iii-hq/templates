@@ -14,6 +14,6 @@ COPY config.yaml /app/config.yaml
 # isn't an option.)
 
 # Add 49135 here when enabling iii-worker-manager in config.yaml (Browser SDK / RBAC).
-EXPOSE 49134 3111 3112 9464
+EXPOSE 49134 3111 3112
 ENTRYPOINT ["/app/iii"]
 CMD ["--config", "/app/config.yaml"]
