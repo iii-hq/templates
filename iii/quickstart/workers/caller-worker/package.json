@@ -8,7 +8,6 @@
     "start": "tsx watch src/worker.ts"
   },
   "dependencies": {
-    "@iii-dev/observability": "0.20.0",
     "iii-sdk": "0.20.0",
     "tsx": "^4.0.0"
   },

@@ -5,7 +5,6 @@ description = "Math worker exposing math::add over iii"
 requires-python = ">=3.11"
 dependencies = [
     "iii-sdk==0.20.0",
-    "iii-observability==0.20.0",
     "watchfiles",
 ]
 
