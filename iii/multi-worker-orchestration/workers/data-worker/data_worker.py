@@ -3,7 +3,7 @@
 
 import os
 from iii import register_worker, InitOptions
-from iii_observability import Logger
+from iii_helpers.observability import Logger
 from pydantic import BaseModel, ValidationError
 
 class TransformInput(BaseModel):

@@ -7,7 +7,7 @@
     "start": "node --watch src/index.js"
   },
   "dependencies": {
-    "@iii-dev/observability": "0.19.0",
-    "iii-sdk": "0.19.0"
+    "@iii-dev/helpers": "0.20.0",
+    "iii-sdk": "0.20.0"
   }
 }

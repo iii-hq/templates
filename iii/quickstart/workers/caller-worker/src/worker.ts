@@ -1,5 +1,5 @@
 import { registerWorker } from 'iii-sdk';
-import { Logger } from '@iii-dev/observability';
+import { Logger } from '@iii-dev/helpers/observability';
 
 const worker = registerWorker(process.env.III_URL ?? 'ws://localhost:49134');
 const logger = new Logger();
@@ -9,7 +9,10 @@ worker.registerFunction(
   async (payload: { a: number; b: number }) => {
     logger.info('math::add_two_numbers called in TypeScript', payload);
 
-    const result = await worker.trigger({
+    const result = await worker.trigger<
+      { a: number; b: number },
+      { c: number; running_total?: number }
+    >({
       function_id: 'math::add',
       payload,
     });

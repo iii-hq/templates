@@ -8,10 +8,10 @@ templates always pin the just-published SDK packages. Can also be run by hand:
 
 Rewrites, in lockstep, every manifest under the templates root:
 
-  * package.json        -> "iii-sdk" / "@iii-dev/observability" dep versions
-  * pyproject.toml       -> "iii-sdk==" / "iii-observability==" pins
-  * requirements.txt     -> iii-sdk== / iii-observability== pins
-  * Cargo.toml           -> iii-sdk = "..." / iii-observability = "..."
+  * package.json        -> "iii-sdk" / "@iii-dev/helpers" dep versions
+  * pyproject.toml       -> "iii-sdk==" / "iii-helpers==" pins
+  * requirements.txt     -> iii-sdk== / iii-helpers== pins
+  * Cargo.toml           -> iii-sdk = "..." / iii-helpers = "..."
   * <template>/template.yaml -> version: / min_iii_version:
 
 A single `--version` applies to every ecosystem. The templates only bump on
@@ -30,9 +30,9 @@ import sys
 from pathlib import Path
 
 # Package identifiers per ecosystem. Keep in sync with the templates' manifests.
-NODE_PACKAGES = ("iii-sdk", "@iii-dev/observability")
-PY_PACKAGES = ("iii-sdk", "iii-observability")
-CARGO_PACKAGES = ("iii-sdk", "iii-observability")
+NODE_PACKAGES = ("iii-sdk", "@iii-dev/helpers")
+PY_PACKAGES = ("iii-sdk", "iii-helpers")
+CARGO_PACKAGES = ("iii-sdk", "iii-helpers")
 
 
 def bump_json_dep(text: str, dep_name: str, new_version: str) -> str:

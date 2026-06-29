@@ -7,7 +7,7 @@ import json
 import os
 
 from iii import register_worker, InitOptions
-from iii_observability import Logger
+from iii_helpers.observability import Logger
 
 iii = register_worker(
     os.environ.get("III_BRIDGE_URL", "ws://localhost:49134"),
@@ -113,7 +113,7 @@ def strategic_observer(event: dict) -> dict:
     return analysis
 
 
-iii.register_function({"id": "agents::strategic-observer"}, strategic_observer)
+iii.register_function("agents::strategic-observer", strategic_observer)
 
 iii.register_trigger(
     {

@@ -2,7 +2,7 @@
 // It can be thought of as an orchestrator, but iii does not require one.
 
 import { registerWorker } from "iii-sdk";
-import { Logger } from "@iii-dev/observability";
+import { Logger } from "@iii-dev/helpers/observability";
 const iii = registerWorker(process.env.III_URL ?? "ws://localhost:49134");
 const logger = new Logger();
 
