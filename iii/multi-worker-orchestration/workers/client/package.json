@@ -8,7 +8,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@iii-dev/observability": "0.20.0",
+    "@iii-dev/helpers": "0.20.0",
     "iii-sdk": "0.20.0"
   },
   "devDependencies": {

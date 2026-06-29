@@ -1,4 +1,5 @@
-use iii_sdk::{IIIError, InitOptions, RegisterFunction, register_worker};
+use iii_sdk::errors::Error;
+use iii_sdk::{InitOptions, RegisterFunction, register_worker};
 use serde_json::{Value, json};
 
 #[tokio::main]
@@ -14,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
                 .get("name")
                 .and_then(|v| v.as_str())
                 .unwrap_or("world");
-            Ok::<Value, IIIError>(json!({ "greeting": format!("hey, {name}") }))
+            Ok::<Value, Error>(json!({ "greeting": format!("hey, {name}") }))
         }),
     );
 
