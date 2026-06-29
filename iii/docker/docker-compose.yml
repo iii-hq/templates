@@ -12,6 +12,7 @@ services:
       # - "49135:49135"  # Browser SDK / RBAC — enable iii-worker-manager in config.yaml
     volumes:
       - ./config.yaml:/app/config.yaml:ro
+    env_file: .env
     environment:
       - RUST_LOG=info
       - III_EXECUTION_CONTEXT=docker
