@@ -65,13 +65,10 @@ DOCKER_PROJECT_DIR="$TMP_DIR/docker-project"
 assert_file "$DOCKER_PROJECT_DIR/Dockerfile"
 assert_file "$DOCKER_PROJECT_DIR/docker-compose.yml"
 assert_file "$DOCKER_PROJECT_DIR/.env"
-assert_contains "$DOCKER_PROJECT_DIR/Dockerfile" "EXPOSE 49134 3111 3112"
+assert_contains "$DOCKER_PROJECT_DIR/Dockerfile" "EXPOSE 49134 3111 3112 9464"
 assert_contains "$DOCKER_PROJECT_DIR/docker-compose.yml" "iii_data:/app/data"
 assert_contains "$DOCKER_PROJECT_DIR/docker-compose.yml" "iii_data:"
-if grep -Fq "9464" "$DOCKER_PROJECT_DIR/Dockerfile" "$DOCKER_PROJECT_DIR/docker-compose.yml"; then
-  echo "error: generated Docker assets should not expose stale port 9464" >&2
-  exit 1
-fi
+assert_contains "$DOCKER_PROJECT_DIR/docker-compose.yml" "9464:9464"
 
 # Worker manifests scaffolded by `iii worker init` declare a `runtime.base_image`
 # and `scripts` block (install/start). The legacy `kind:`/`entry:` fields were
