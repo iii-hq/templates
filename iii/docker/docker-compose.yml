@@ -12,6 +12,7 @@ services:
       # - "49135:49135"  # Browser SDK / RBAC — enable iii-worker-manager in config.yaml
     volumes:
       - ./config.yaml:/app/config.yaml:ro
+      - iii_data:/app/data
     env_file: .env
     environment:
       - RUST_LOG=info
@@ -40,6 +41,7 @@ services:
   #     - rabbitmq_data:/var/lib/rabbitmq
   #   restart: unless-stopped
 
-# volumes:
+volumes:
+  iii_data:
 #   redis_data:
 #   rabbitmq_data:
