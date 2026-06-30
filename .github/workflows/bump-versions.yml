@@ -1,6 +1,6 @@
 name: Bump SDK Versions
 
-# Keeps the templates' iii-sdk / iii-observability pins and template.yaml
+# Keeps the templates' iii-sdk / iii-helpers pins and template.yaml
 # versions in lockstep with an iii engine release. Fired by the engine's
 # release workflow via repository_dispatch; can also be run by hand.
 on:
@@ -80,5 +80,5 @@ jobs:
           fi
           gh pr create \
             --title "chore: bump iii SDK pins to $VERSION" \
-            --body "Automated bump of \`iii-sdk\` / \`iii-observability\` pins and \`template.yaml\` versions to **$VERSION**. Triggered by the iii engine release. Review and merge once the published packages are available on the registries." \
+            --body "Automated bump of \`iii-sdk\` / \`iii-helpers\` pins and \`template.yaml\` versions to **$VERSION**. Triggered by the iii engine release. Review and merge once the published packages are available on the registries." \
             --head "$BRANCH"

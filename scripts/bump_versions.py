@@ -8,10 +8,10 @@ templates always pin the just-published SDK packages. Can also be run by hand:
 
 Rewrites, in lockstep, every manifest under the templates root:
 
-  * package.json        -> "iii-sdk" / "@iii-dev/observability" dep versions
-  * pyproject.toml       -> "iii-sdk==" / "iii-observability==" pins
-  * requirements.txt     -> iii-sdk== / iii-observability== pins
-  * Cargo.toml           -> iii-sdk = "..." / iii-observability = "..."
+  * package.json        -> "iii-sdk" / "@iii-dev/helpers" dep versions
+  * pyproject.toml       -> "iii-sdk==" / "iii-helpers==" pins
+  * requirements.txt     -> iii-sdk== / iii-helpers== pins
+  * Cargo.toml           -> iii-sdk = "..." / iii-helpers = "..."
   * <template>/template.yaml -> version: / min_iii_version:
 
 A single `--version` applies to every ecosystem. The templates only bump on
@@ -30,9 +30,14 @@ import sys
 from pathlib import Path
 
 # Package identifiers per ecosystem. Keep in sync with the templates' manifests.
-NODE_PACKAGES = ("iii-sdk", "@iii-dev/observability")
-PY_PACKAGES = ("iii-sdk", "iii-observability")
-CARGO_PACKAGES = ("iii-sdk", "iii-observability")
+NODE_PACKAGES = ("iii-sdk", "@iii-dev/helpers")
+PY_PACKAGES = ("iii-sdk", "iii-helpers")
+CARGO_PACKAGES = ("iii-sdk", "iii-helpers")
+
+# Node manifest filenames. worker-bare ships per-language package.*.json files
+# (renamed to package.json at scaffold time); they pin the same deps and must
+# bump in lockstep with plain package.json manifests.
+NODE_MANIFESTS = ("package.json", "package.js.json", "package.ts.json")
 
 
 def bump_json_dep(text: str, dep_name: str, new_version: str) -> str:
@@ -87,7 +92,7 @@ def rewrite_file(path: Path, version: str) -> bool:
     original = path.read_text()
     text = original
 
-    if name == "package.json":
+    if name in NODE_MANIFESTS:
         for dep in NODE_PACKAGES:
             text = bump_json_dep(text, dep, version)
     elif name == "pyproject.toml":
@@ -112,7 +117,7 @@ def rewrite_file(path: Path, version: str) -> bool:
 
 def rewrite_all(root: Path, version: str) -> list[Path]:
     """Walk `root`, rewriting every recognized manifest. Returns changed paths."""
-    targets = {"package.json", "pyproject.toml", "requirements.txt", "Cargo.toml", "template.yaml"}
+    targets = {*NODE_MANIFESTS, "pyproject.toml", "requirements.txt", "Cargo.toml", "template.yaml"}
     changed: list[Path] = []
     for path in sorted(root.rglob("*")):
         if path.is_file() and path.name in targets and "node_modules" not in path.parts:

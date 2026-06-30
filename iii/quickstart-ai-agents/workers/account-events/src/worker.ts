@@ -3,7 +3,7 @@
 // Follow the steps below to progressively build out the full system.
 
 import { registerWorker, TriggerAction } from "iii-sdk";
-import { Logger } from "@iii-dev/observability";
+import { Logger } from "@iii-dev/helpers/observability";
 
 const iii = registerWorker(
   process.env.III_BRIDGE_URL ?? "ws://localhost:49134",
@@ -30,7 +30,7 @@ const accounts: Record<
 
 // This function is called cross-worker by the ai-agent worker.
 iii.registerFunction(
-  { id: "accounts::get-details" },
+  "accounts::get-details",
   async (payload) => {
     const companyId = payload.companyId ?? payload.data?.companyId;
     const account = accounts[companyId];
@@ -41,7 +41,7 @@ iii.registerFunction(
 
 // Simulate an account upgrade — publishes an event to the bus.
 const onUpgrade = iii.registerFunction(
-  { id: "accounts::on-upgrade" },
+  "accounts::on-upgrade",
   async (payload) => {
     const companyId =
       payload.body?.companyId ?? payload.companyId ?? "acme-corp";
@@ -88,7 +88,7 @@ console.log("");
 
 // --- UNCOMMENT STEP 2 START ---
 // iii.registerFunction(
-//   { id: "sales::notify-team" },
+//   "sales::notify-team",
 //   async (event) => {
 //     const companyId = event.companyId ?? event.data?.companyId;
 //     logger.info("Sales team notified", { companyId });
@@ -123,7 +123,7 @@ console.log("");
 
 // --- UNCOMMENT STEP 4 START ---
 // iii.registerFunction(
-//   { id: "legacy::get-status" },
+//   "legacy::get-status",
 //   async (payload) => {
 //     const companyId =
 //       payload.body?.companyId ?? payload.companyId ?? "unknown";
