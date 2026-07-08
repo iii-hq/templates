@@ -8,8 +8,8 @@
     "start": "tsx watch src/index.ts"
   },
   "dependencies": {
-    "@iii-dev/helpers": "0.20.0",
-    "iii-sdk": "0.20.0",
+    "@iii-dev/helpers": "0.21.3",
+    "iii-sdk": "0.21.3",
     "tsx": "^4.0.0"
   },
   "devDependencies": {
