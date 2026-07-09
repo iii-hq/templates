@@ -18,3 +18,15 @@ workers:
     config:
       adapter:
         name: builtin
+
+  # Where the configuration worker persists runtime values (one YAML file per
+  # entry). Locally this is ./config. In Docker the generated Dockerfile sets
+  # III_CONFIG_STORE_DIR=./data/configuration so the store lands inside the
+  # mounted data volume — /app is not writable by the container user, and
+  # entries outside the volume would be lost on container recreate.
+  - name: configuration
+    config:
+      adapter:
+        name: fs
+        config:
+          directory: ${III_CONFIG_STORE_DIR:./config}
