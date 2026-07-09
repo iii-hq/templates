@@ -1,7 +1,7 @@
 name: Multi Worker Orchestration Example
 description: Learn the iii basics while orchestrating workers
-version: "0.20.0"
-min_iii_version: "0.20.0"
+version: "0.21.4"
+min_iii_version: "0.21.4"
 
 # Shown as "Included", always selected (not deselectable); runtime checks advisory
 treat_required_as_included: true
