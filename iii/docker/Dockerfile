@@ -4,10 +4,6 @@ FROM iiidev/iii:latest
 
 ENV III_EXECUTION_CONTEXT=docker
 ENV III_HOST_USER_ID=__III_DEVICE_ID__
-# Persist the configuration store inside the mounted data volume: /app is
-# root-owned (the engine runs as a non-root user and cannot create ./config
-# there), and entries outside the volume would be lost on container recreate.
-ENV III_CONFIG_STORE_DIR=./data/configuration
 
 WORKDIR /app
 COPY config.yaml /app/config.yaml
