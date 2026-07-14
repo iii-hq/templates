@@ -2,7 +2,9 @@
 // so that other workers connected to iii can trigger them.
 
 import { registerWorker } from "iii-sdk";
-const iii = registerWorker(process.env.III_URL ?? "ws://localhost:49134");
+const iii = registerWorker(process.env.III_URL ?? "ws://localhost:49134", {
+  workerName: "payment-worker",
+});
 
 iii.registerFunction("payment-worker::record", async (payload) => {
   // A real worker would call an external API:

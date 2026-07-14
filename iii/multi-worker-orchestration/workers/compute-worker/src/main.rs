@@ -1,4 +1,5 @@
-use iii_sdk::{register_worker, RegisterFunction};
+use iii_sdk::runtime::WorkerMetadata;
+use iii_sdk::{register_worker, InitOptions, RegisterFunction};
 use serde_json::Value;
 use std::time::Duration;
 
@@ -6,7 +7,16 @@ use std::time::Duration;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let url = std::env::var("III_URL")
         .unwrap_or_else(|_| "ws://localhost:49134".into());
-    let iii = register_worker(&url, Default::default());
+    let iii = register_worker(
+        &url,
+        InitOptions {
+            metadata: Some(WorkerMetadata {
+                name: "compute-worker".into(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        },
+    );
 
     iii.register_function(
         "compute-worker::compute",

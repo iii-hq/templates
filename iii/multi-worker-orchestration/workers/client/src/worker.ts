@@ -3,7 +3,9 @@
 
 import { registerWorker } from "iii-sdk";
 import { Logger } from "@iii-dev/helpers/observability";
-const iii = registerWorker(process.env.III_URL ?? "ws://localhost:49134");
+const iii = registerWorker(process.env.III_URL ?? "ws://localhost:49134", {
+  workerName: "client",
+});
 const logger = new Logger();
 
 // All workers behave as a single application — scoped state set

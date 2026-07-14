@@ -7,6 +7,7 @@ import { Logger } from "@iii-dev/helpers/observability";
 
 const iii = registerWorker(
   process.env.III_BRIDGE_URL ?? "ws://localhost:49134",
+  { workerName: "account-events" },
 );
 const logger = new Logger();
 
