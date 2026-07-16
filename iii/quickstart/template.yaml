@@ -18,6 +18,8 @@ files:
   - workers/caller-worker/package.json
   - workers/caller-worker/tsconfig.json
   - workers/caller-worker/iii.worker.yaml
+  - workers/caller-worker/src/demo.ts
+  - workers/caller-worker/src/demo.test.ts
   - workers/caller-worker/src/worker.ts
 
 next_steps:

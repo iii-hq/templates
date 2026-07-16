@@ -5,7 +5,8 @@
   "description": "Calls math::add in the Python worker and returns the result",
   "scripts": {
     "build": "tsc",
-    "start": "tsx watch src/worker.ts"
+    "start": "tsx watch src/worker.ts",
+    "test": "tsx --test src/demo.test.ts"
   },
   "dependencies": {
     "@iii-dev/helpers": "0.21.6",
