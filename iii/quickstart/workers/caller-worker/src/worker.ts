@@ -1,7 +1,9 @@
 import { registerWorker } from 'iii-sdk';
 import { Logger } from '@iii-dev/helpers/observability';
 
-const worker = registerWorker(process.env.III_URL ?? 'ws://localhost:49134');
+const worker = registerWorker(process.env.III_URL ?? 'ws://localhost:49134', {
+  workerName: 'caller-worker',
+});
 const logger = new Logger();
 
 worker.registerFunction(
