@@ -20,26 +20,26 @@ worker.registerFunction(
   },
 );
 
-// --- Uncomment after: iii worker add iii-http ---
+// --- Uncomment after: iii worker add http ---
 // worker.registerFunction(
-//   'http::add_two_numbers',
+//   "http::add_two_numbers",
 //   async (payload: { body: { a: number; b: number } }) => {
-//     const result = await worker.trigger({
-//       function_id: 'math::add_two_numbers',
+//     const result = await worker.trigger<{ a: number; b: number }, { c: number; running_total: number }>({
+//       function_id: "math::add_two_numbers",
 //       payload: payload.body,
 //     });
 //     return {
 //       status_code: 200,
 //       body: { c: result.c, running_total: result.running_total },
-//       headers: { 'Content-Type': 'application/json' },
+//       headers: { "Content-Type": "application/json" },
 //     };
 //   },
 // );
-
+//
 // worker.registerTrigger({
-//   type: 'http',
-//   function_id: 'http::add_two_numbers',
-//   config: { api_path: '/math/add-two-numbers', http_method: 'POST' },
+//   type: "http",
+//   function_id: "http::add_two_numbers",
+//   config: { api_path: "/math/add-two-numbers", http_method: "POST" },
 // });
 
 console.log('Caller worker started - listening for calls');
