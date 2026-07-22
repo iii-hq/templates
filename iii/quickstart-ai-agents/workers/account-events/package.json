@@ -8,8 +8,8 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@iii-dev/helpers": "0.21.6",
-    "iii-sdk": "0.21.6"
+    "@iii-dev/helpers": "0.22.0",
+    "iii-sdk": "0.22.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
