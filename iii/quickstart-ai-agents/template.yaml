@@ -1,7 +1,7 @@
 name: AI Agents Quickstart
 description: Build an AI agent system with event-driven architecture, step by step
-version: "0.21.6"
-min_iii_version: "0.21.6"
+version: "0.21.8"
+min_iii_version: "0.21.8"
 
 treat_required_as_included: true
 requires:
