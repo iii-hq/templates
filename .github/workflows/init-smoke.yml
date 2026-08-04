@@ -15,7 +15,7 @@ on:
         options:
           - both
           - main
-          - next
+          - rc
           - alpha
         default: both
       version:
@@ -35,13 +35,13 @@ jobs:
       fail-fast: false
       matrix:
         # Cron / push / pull_request (non-dispatch) and dispatch with `both`
-        # run both legs. Dispatch with `main` or `next` narrows to a single
+        # run both legs. Dispatch with `main` or `rc` narrows to a single
         # matrix leg. GitHub expressions have no ternary; we rely on `&&`/`||`
         # short-circuit plus the fact that non-empty `fromJSON` arrays are truthy.
         channel: >-
           ${{
             (github.event_name != 'workflow_dispatch' || inputs.channel == 'both')
-            && fromJSON('["main","next"]')
+            && fromJSON('["main","rc"]')
             || fromJSON(format('["{0}"]', inputs.channel))
           }}
     env:
@@ -50,12 +50,12 @@ jobs:
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
       SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      # III_CHANNEL is surfaced in the Slack header so the main/next legs are
-      # distinguishable; III_NEXT switches the install below to the next channel.
+      # III_CHANNEL is surfaced in the Slack header so the main/rc legs are
+      # distinguishable; III_RC switches the install below to the rc channel.
       III_CHANNEL: ${{ matrix.channel }}
-      III_NEXT: ${{ matrix.channel == 'next' && '1' || '0' }}
+      III_RC: ${{ matrix.channel == 'rc' && '1' || '0' }}
       # Only set on the alpha leg (single-channel dispatch with a version);
-      # empty for schedule/push/PR and the main/next legs.
+      # empty for schedule/push/PR and the main/rc legs.
       III_VERSION: ${{ matrix.channel == 'alpha' && inputs.version || '' }}
 
     steps:
@@ -106,8 +106,8 @@ jobs:
             esac
             echo "installing pinned alpha tag: $TAG"
             curl -fsSL https://install.iii.dev/iii/main/install.sh | III_RELEASE_TAG="$TAG" sh
-          elif [ "$CHANNEL" = "next" ]; then
-            curl -fsSL https://install.iii.dev/iii/main/install.sh | sh -s -- --next
+          elif [ "$CHANNEL" = "rc" ]; then
+            curl -fsSL https://install.iii.dev/iii/main/install.sh | sh -s -- --rc
           else
             curl -fsSL https://install.iii.dev/iii/main/install.sh | sh
           fi
