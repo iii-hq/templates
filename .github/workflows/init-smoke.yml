@@ -107,11 +107,7 @@ jobs:
             echo "installing pinned alpha tag: $TAG"
             curl -fsSL https://install.iii.dev/iii/main/install.sh | III_RELEASE_TAG="$TAG" sh
           elif [ "$CHANNEL" = "rc" ]; then
-            TAG=$(curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" \
-              'https://api.github.com/repos/iii-hq/iii/releases?per_page=100' \
-              | jq -er 'first(.[] | select(.tag_name | test("^iii/v[0-9]+\\.[0-9]+\\.[0-9]+-rc\\.[0-9]+$")) | .tag_name)')
-            echo "installing latest release candidate tag: $TAG"
-            III_RELEASE_TAG="$TAG" sh <(curl -fsSL https://install.iii.dev/iii/main/install.sh)
+            curl -fsSL https://install.iii.dev/iii/main/install.sh | sh -s -- --rc
           else
             curl -fsSL https://install.iii.dev/iii/main/install.sh | sh
           fi
