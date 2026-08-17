@@ -1,0 +1,26 @@
+name: Harness
+description: Start developing with a iii-powered harness
+version: "0.22.0"
+# min_iii_version: "0.22.0"
+
+treat_required_as_included: true
+requires:
+  - typescript # no language is needed, workaround for old logic TODO: fix
+optional: []
+
+# Explicit list of files to copy (shared_files from root are added automatically)
+files:
+  - README.md
+  - .env.example
+  - config.yaml
+  - worker-compose.yaml
+
+next_steps:
+  - '# Open the README or do the following:'
+  - '# Start iii'
+  - 'iii'
+  - '# Start compose in another terminal'
+  - 'iii compose --namespace default'
+  - '# Start the harness in another terminal'
+  - 'iii trigger compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000'
+  - '# Open your browser to: http://127.0.0.1:3113'

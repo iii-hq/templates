@@ -7,6 +7,7 @@ templates:
   # - multi-worker-orchestration
   # - quickstart-ai-agents
   - starter
+  - harness
 
 # Shared files from this directory included in every template
 # Supports renaming: source is the file in this directory, dest is the name in each template
@@ -37,6 +38,7 @@ language_files:
     - 'Dockerfile'
     - 'docker-compose.yml'
     - 'docker-compose.*.yml'
+    - 'worker-compose.yaml'
 
   # Files only included when Python is selected
   python:
