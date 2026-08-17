@@ -16,11 +16,4 @@ files:
   - worker-compose.yaml
 
 next_steps:
-  - '# Open the README or do the following:'
-  - '# Start iii'
-  - 'iii'
-  - '# Start compose in another terminal'
-  - 'iii compose --namespace default'
-  - '# Start the harness in another terminal'
-  - 'iii trigger compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000'
-  - '# Open your browser to: http://127.0.0.1:3113'
+  - 'Open README.md for simple step by step instructions to configure and start the harness'

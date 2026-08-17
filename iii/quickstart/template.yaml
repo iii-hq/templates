@@ -11,6 +11,7 @@ optional: []
 
 # Explicit list of files to copy (shared_files from root are added automatically)
 files:
+  - config.yaml
   - README.md
   - workers/math-worker/iii.worker.yaml
   - workers/math-worker/pyproject.toml

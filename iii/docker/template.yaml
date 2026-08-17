@@ -12,6 +12,7 @@ requires: []
 optional: []
 
 files:
+  - config.yaml
   - Dockerfile
   - docker-compose.yml
 

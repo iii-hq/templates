@@ -50,6 +50,7 @@ renames:
     dest: package.json
 
 files:
+  - config.yaml
   - iii.worker.ts.yaml
   - iii.worker.js.yaml
   - iii.worker.py.yaml

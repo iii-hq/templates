@@ -37,7 +37,31 @@ iii trigger compose::up --namespace default file=./worker-compose.yaml --timeout
 
 ## Use the harness
 
-Then open the console at **http://127.0.0.1:3113**. It's all setup and ready for you
+Once the harnesses is started you should see output from the `iii compose` daemon like:
+
+```bash
+$ iii compose --namespace default
+compose serving
+  engine: ws://127.0.0.1:49134
+  namespace: default
+  start a project: iii trigger compose::up --namespace default file=./worker-compose.yaml
+[compose] project /Users/tony/iii/projects/testing/compose/harness/worker-compose.yaml loaded into default
+✓ state ready (1.4s)
+✓ queue ready (1.2s)
+✓ cron ready (1.2s)
+✓ shell ready (962ms)
+✓ session-manager ready (1.2s)
+✓ iii-directory ready (1.2s)
+✓ llm-router ready (1.7s)
+✓ provider-anthropic ready (2.1s)
+✓ provider-openai ready (2.1s)
+✓ context-manager ready (2.0s)
+✓ harness ready (6.6s)
+✓ console ready (956ms)
+up: 12 of 12 changed in 22.8s
+```
+
+Once you see that output open the console at **http://127.0.0.1:3113**. It's all setup and ready for you
 to start developing iii applications with agentic assistance.
 
 ## About this project
