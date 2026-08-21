@@ -1,6 +1,7 @@
 # iii unifying backend engine files
 .env
 data/
+config/
 
 #Sqlite
 *.db

@@ -1,6 +1,7 @@
 /.secrets
 /artifacts/
-
+target
 # Python bytecode
 __pycache__/
 *.py[cod]
+Cargo.lock

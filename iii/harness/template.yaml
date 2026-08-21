@@ -1,0 +1,19 @@
+name: Harness
+description: Start developing with a iii-powered harness
+version: "0.22.0"
+# min_iii_version: "0.22.0"
+
+treat_required_as_included: true
+requires:
+  - typescript # no language is needed, workaround for old logic TODO: fix
+optional: []
+
+# Explicit list of files to copy (shared_files from root are added automatically)
+files:
+  - README.md
+  - .env.example
+  - config.yaml
+  - worker-compose.yaml
+
+next_steps:
+  - 'Open README.md for simple step by step instructions to configure and start the harness'
