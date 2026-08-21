@@ -1,17 +1,24 @@
 # harness + console: a base compose template
 
 The smallest compose project that gives you a working iii agent harness and the
-web console in front of it. Twelve containers: `harness`, `console`, and the ten
+web console in front of it. Thirteen containers: `harness`, `console`, and the eleven
 workers the registry says `harness` needs. Nothing optional, nothing to trim.
 
-Copy this directory, add an API key, run three commands.
+Copy this directory, export an API key, run three commands.
 
 ## Setup your harness authentication (API Key or Provider Login)
 
+Export the key in the shell you start the compose daemon from:
+
 ```bash
-cp .env.example .env      # then edit .env
-chmod 600 .env
+export ANTHROPIC_API_KEY=sk-ant-...
+export OPENAI_API_KEY=sk-...
 ```
+
+`worker-compose.yaml` reads them as `${ANTHROPIC_API_KEY:-}` and passes them to
+`llm-router`. There is no `.env` file. One working provider is enough: an unset
+key still starts its container, which answers with an auth error the first time
+the harness calls it.
 
 ## Start the engine
 
@@ -55,10 +62,11 @@ compose serving
 ✓ llm-router ready (1.7s)
 ✓ provider-anthropic ready (2.1s)
 ✓ provider-openai ready (2.1s)
+✓ provider-openai-codex ready (2.1s)
 ✓ context-manager ready (2.0s)
 ✓ harness ready (6.6s)
 ✓ console ready (956ms)
-up: 12 of 12 changed in 22.8s
+up: 13 of 13 changed in 22.8s
 ```
 
 Once you see that output open the console at **http://127.0.0.1:3113**. It's all setup and ready for you
@@ -78,19 +86,21 @@ that they are cached.
 | ---- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | 1    | `state`, `queue`, `cron`, `shell`, `session-manager`, `iii-directory` | Direct `harness` dependencies with no dependencies of their own                     |
 | 2    | `llm-router`                                                          | Model routing. Needs `state`                                                        |
-| 3    | `provider-anthropic`, `provider-openai`, `context-manager`            | `harness` names both providers explicitly, so both are required even if you use one |
+| 3    | `provider-anthropic`, `provider-openai`, `provider-openai-codex`, `context-manager` | `harness` names both providers explicitly, so both are required even if you use one |
 | 4    | `harness`                                                             | The turn loop                                                                       |
 | 5    | `console`                                                             | The web UI                                                                          |
 
 ## Credentials
 
-`.env` is read by `provider-anthropic`, `provider-openai`, `harness`, and any other
-`provider-*` you add to `worker-compose.yaml`. Each provider reads its own key from its
-own environment.
+Provider keys resolve in the `llm-router` process, not in the provider workers.
+They are declared once, under `llm-router`'s `environment` block in
+`worker-compose.yaml`, and read from the shell that runs the compose daemon. A
+key exported only into another container reads back as `configured: false`.
 
 `worker-compose.yaml` has a ready-to-uncomment container block for every
-provider below, each with its variable named in a comment beside it. Adding one
-is: uncomment the block, uncomment its key in `.env`, restart the compose daemon.
+provider below, plus a matching commented line under `llm-router`. Adding one
+is: uncomment the container, uncomment its key on the router, export the key,
+restart the compose daemon.
 
 | Provider              | Environment variable |
 | --------------------- | -------------------- |
