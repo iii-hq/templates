@@ -13,6 +13,7 @@ optional:
 
 # Explicit list of files to copy (shared_files from root are added automatically)
 files:
+  - config.yaml
   - package.json
   - tsconfig.json
   - src/index.ts

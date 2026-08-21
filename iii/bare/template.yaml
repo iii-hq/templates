@@ -10,12 +10,13 @@ treat_required_as_included: true
 requires: []
 optional: []
 
-# All scaffolded content comes from the root template.yaml's `shared_files`
-# (default-iii-config.yaml -> config.yaml, default-gitignore -> .gitignore).
+# config.yaml is local to this template; .gitignore comes from the root
+# template.yaml's `shared_files` (default-gitignore -> .gitignore).
 # `data/` is iii-state managed by the engine at runtime, not part of the
 # scaffold; it's already in default-gitignore so users don't accidentally
 # commit it.
-files: []
+files:
+  - config.yaml
 
 next_steps:
   - "Add a worker: iii worker add <package>"
