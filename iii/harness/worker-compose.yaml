@@ -49,16 +49,7 @@ containers:
     start_after: [state]
     # Every provider key resolves in the router's process, not in the provider
     # worker. A key set anywhere else reads back as `configured: false`.
-    environment:
-      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
-      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
-      # Uncomment the line for each extra provider you enable below.
-      # DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
-      # MOONSHOT_API_KEY: "${MOONSHOT_API_KEY:-}"
-      # XAI_API_KEY: "${XAI_API_KEY:-}"
-      # ZAI_API_KEY: "${ZAI_API_KEY:-}"
-      # OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
-      # LLAMACPP_API_KEY: "${LLAMACPP_API_KEY:-}"
+    env_file: ['./.env']
 
   provider-anthropic:
     worker: package://provider-anthropic
