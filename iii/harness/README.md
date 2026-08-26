@@ -1,42 +1,31 @@
 # harness + console: a base compose template
 
 The smallest compose project that gives you a working iii agent harness and the
-web console in front of it. Thirteen containers: `harness`, `console`, and the eleven
-workers the registry says `harness` needs. Nothing optional, nothing to trim.
-
-Copy this directory, export an API key, run three commands.
+web console.
 
 ## Setup your harness authentication (API Key or Provider Login)
 
 Export the key in the shell you start the compose daemon from:
 
+If you need to provide an API key you can either set one in `.env` or
+your environment. Either works.
+
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
 export OPENAI_API_KEY=sk-...
 ```
-
-`worker-compose.yaml` reads them as `${ANTHROPIC_API_KEY:-}` and passes them to
-`llm-router`. There is no `.env` file. One working provider is enough: an unset
-key still starts its container, which answers with an auth error the first time
-the harness calls it.
-
-## Start the engine
-
-```bash
-iii
-```
-
-## Start the compose worker
+## Start the compose worker and bring the iii engine up in one command
 
 In a new terminal from the project directory run:
 
 ```bash
-iii compose --namespace default
+iii compose --up
 ```
 
 ## Start the harness via worker-compose.yaml
 
-In another terminal from the project directory run:
+Compose can also be controlled like any other iii worker, for example here's what you
+would run if you started `iii compose` without the `--up flag`:
 
 ```bash
 iii trigger compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000
@@ -92,15 +81,9 @@ that they are cached.
 
 ## Credentials
 
-Provider keys resolve in the `llm-router` process, not in the provider workers.
-They are declared once, under `llm-router`'s `environment` block in
-`worker-compose.yaml`, and read from the shell that runs the compose daemon. A
-key exported only into another container reads back as `configured: false`.
-
 `worker-compose.yaml` has a ready-to-uncomment container block for every
-provider below, plus a matching commented line under `llm-router`. Adding one
-is: uncomment the container, uncomment its key on the router, export the key,
-restart the compose daemon.
+provider below, plus a matching environment variable. Adding one
+is: uncomment the worker, set its environment variable, start compose.
 
 | Provider              | Environment variable |
 | --------------------- | -------------------- |
