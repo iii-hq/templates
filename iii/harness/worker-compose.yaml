@@ -46,7 +46,7 @@ containers:
   llm-router:
     worker: package://llm-router
     version: "1.4.12"
-    depends_on: [state]
+    start_after: [state]
     # Every provider key resolves in the router's process, not in the provider
     # worker. A key set anywhere else reads back as `configured: false`.
     environment:
@@ -63,17 +63,17 @@ containers:
   provider-anthropic:
     worker: package://provider-anthropic
     version: "1.2.8"
-    depends_on: [state, llm-router]
+    start_after: [state, llm-router]
 
   provider-openai:
     worker: package://provider-openai
     version: "1.2.7"
-    depends_on: [state, llm-router]
+    start_after: [state, llm-router]
 
   provider-openai-codex:
     worker: package://provider-openai-codex
     version: "0.4.4"
-    depends_on: [state, llm-router]
+    start_after: [state, llm-router]
 
   # Additional providers that use API Keys
   #
@@ -83,33 +83,33 @@ containers:
   #  provider-deepseek:            # DEEPSEEK_API_KEY
   #    worker: package://provider-deepseek
   #    version: "0.1.6"
-  #    depends_on: [state, llm-router]
+  #    start_after: [state, llm-router]
 
   #  provider-kimi:                # MOONSHOT_API_KEY, not KIMI_API_KEY
   #    worker: package://provider-kimi
   #    version: "1.1.5"
-  #    depends_on: [state, llm-router]
+  #    start_after: [state, llm-router]
 
   #  provider-xai:                 # XAI_API_KEY
   #    worker: package://provider-xai
   #    version: "1.3.4"
-  #    depends_on: [state, llm-router]
+  #    start_after: [state, llm-router]
 
   #  provider-zai:                 # ZAI_API_KEY
   #    worker: package://provider-zai
   #    version: "0.5.4"
-  #    depends_on: [state, llm-router]
+  #    start_after: [state, llm-router]
 
   #  provider-openrouter:          # OPENROUTER_API_KEY
   #    # Latest stable release; not compatible with state 0.22.2 yet.
   #    worker: package://provider-openrouter
   #    version: "0.1.2"
-  #    depends_on: [state, llm-router]
+  #    start_after: [state, llm-router]
 
   #  provider-llamacpp:            # LLAMACPP_API_KEY
   #    worker: package://provider-llamacpp
   #    version: "0.3.1"
-  #    depends_on: [state, llm-router]
+  #    start_after: [state, llm-router]
 
   # Providers that do not require an API Key
   # Note: These providers are experimental.
@@ -124,22 +124,22 @@ containers:
   #  provider-claude-code:
   #    worker: package://provider-claude-code
   #    version: "0.1.5"
-  #    depends_on: [state, llm-router]
+  #    start_after: [state, llm-router]
 
   #  provider-github-copilot:
   #    worker: package://provider-github-copilot
   #    version: "0.1.2"
-  #    depends_on: [state, llm-router]
+  #    start_after: [state, llm-router]
 
   context-manager:
     worker: package://context-manager
     version: "1.1.3"
-    depends_on: [llm-router]
+    start_after: [llm-router]
 
   harness:
     worker: package://harness
     version: "1.8.5"
-    depends_on:
+    start_after:
       - context-manager
       - cron
       - iii-directory
@@ -155,5 +155,4 @@ containers:
   console:
     worker: package://console
     version: "1.9.11"
-    depends_on:
-      harness
+    start_after: [harness]
