@@ -13,14 +13,6 @@ workers:
       logs_exporter: memory
       logs_console_output: true
       sampling_ratio: 1.0
-      # Durable trace storage: persists completed spans to SQLite so traces
-      # survive engine restarts. Omitting this block keeps legacy memory-only
-      # behavior (traces are lost on restart).
-      trace_storage:
-        enabled: true
-        directory: ./data/observability/traces
-        max_disk_bytes: 1073741824 # 1 GiB
-        retention_seconds: 2592000 # 30 days
 
   - name: queue
     config:
