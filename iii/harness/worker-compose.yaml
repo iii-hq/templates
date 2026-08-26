@@ -6,6 +6,9 @@ namespace: default
 startup_timeout: 360s
 stop_timeout: 30s
 
+engine:
+  url: ws://127.0.0.1:49134
+
 # Refer to https://iii.dev/docs/next/using-iii/compose for more information
 # about using compose and setting up a worker-compose.yaml file.
 #
@@ -137,7 +140,6 @@ containers:
     worker: package://harness
     version: "1.8.5"
     start_after:
-      - console
       - context-manager
       - cron
       - iii-directory
@@ -153,3 +155,4 @@ containers:
   console:
     worker: package://console
     version: "1.9.11"
+    start_after: [harness]
