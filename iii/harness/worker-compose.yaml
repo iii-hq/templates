@@ -136,7 +136,7 @@ containers:
   harness:
     worker: package://harness
     version: "1.8.5"
-    depends_on:
+    start_after:
       - console
       - context-manager
       - cron
