@@ -9,6 +9,7 @@
 # tenants that need their own copy of the same worker.
 # Docs: https://iii.dev/docs/next/using-iii/namespaces
 namespace: default
+startup_timeout: 360s
 
 engine:
   url: ws://127.0.0.1:49134
@@ -61,10 +62,6 @@ containers:
   #
   #   ANTHROPIC_API_KEY=sk-ant-...
   #   OPENAI_API_KEY=sk-...
-  #
-  # The first `compose::up` downloads the harness binaries into
-  # ~/.iii/compose/packages, so raise the readiness budget for that first run:
-  # add `startup_timeout: 360s` at the top of this file.
 
   #  shell:
   #    worker: package://shell
@@ -83,9 +80,6 @@ containers:
   #    worker: package://llm-router
   #    version: "1.4.14"
   #    start_after: [state]
-  #    # Every provider key resolves in the router's process, not in the
-  #    # provider worker. A key set anywhere else reads back as
-  #    # `configured: false`.
   #    env_file: ['./.env']
 
   #  provider-anthropic:
