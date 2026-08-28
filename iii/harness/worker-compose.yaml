@@ -1,149 +1,93 @@
-# The engine's default namespace. Change it when you have a project with multiple
-# tenants that need to run the same workers (ex. 2 copies of state).
-# Refer to https://iii.dev/docs/next/using-iii/namespaces for more information.
-namespace: default
-
-startup_timeout: 360s
-stop_timeout: 30s
+namespace: harness-ns
+startup_timeout: 15m
+stop_timeout: 10s
 
 engine:
-  url: ws://127.0.0.1:49134
+  url: ws://127.0.0.1:49135
 
-# Refer to https://iii.dev/docs/next/using-iii/compose for more information
-# about using compose and setting up a worker-compose.yaml file.
-#
-# Credentials come from the shell that runs the compose daemon. Export your keys
-# there and `${VAR}` below picks them up. `:-` gives an unset variable an empty
-# default, so a missing key never blocks compose::up.
 containers:
-  state:
-    worker: package://state
-    version: "next"
-    working_dir: .
-
   queue:
     worker: package://queue
-    version: "next"
-    working_dir: .
+    version: "0.21.7-rc.3"
 
-  cron:
-    worker: package://cron
-    version: "next"
-
-  shell:
-    worker: package://shell
-    version: "next"
-    working_dir: .
+  state:
+    worker: package://state
+    version: "0.22.3-rc.3"
 
   session-manager:
     worker: package://session-manager
-    version: "next"
-
-  iii-directory:
-    worker: package://iii-directory
-    version: "next"
+    version: "1.0.14-rc.3"
 
   llm-router:
     worker: package://llm-router
-    version: "next"
-    start_after: [state]
-    # Every provider key resolves in the router's process, not in the provider
-    # worker. A key set anywhere else reads back as `configured: false`.
-    env_file: ['./.env']
-
-  provider-anthropic:
-    worker: package://provider-anthropic
-    version: "next"
-    start_after: [state, llm-router]
-
-  provider-openai:
-    worker: package://provider-openai
-    version: "next"
-    start_after: [state, llm-router]
+    version: "1.4.15-rc.4"
+    start_after:
+      - state
+    environment:
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
 
   provider-openai-codex:
     worker: package://provider-openai-codex
-    version: "next"
-    start_after: [state, llm-router]
+    version: "0.4.6-rc.4"
+    start_after:
+      - llm-router
+      - state
 
-  # Additional providers that use API Keys
-  #
-  # Uncomment a block, uncomment its key under llm-router's `environment`,
-  # export that key, and restart the compose daemon so it re-reads this file.
+  provider-openai:
+    worker: package://provider-openai
+    version: "1.2.9-rc.3"
+    start_after:
+      - llm-router
+      - state
+    environment:
+      RUST_LOG: info
 
-  #  provider-deepseek:            # DEEPSEEK_API_KEY
-  #    worker: package://provider-deepseek
-  #    version: "next"
-  #    start_after: [state, llm-router]
-
-  #  provider-kimi:                # MOONSHOT_API_KEY, not KIMI_API_KEY
-  #    worker: package://provider-kimi
-  #    version: "next"
-  #    start_after: [state, llm-router]
-
-  #  provider-xai:                 # XAI_API_KEY
-  #    worker: package://provider-xai
-  #    version: "next"
-  #    start_after: [state, llm-router]
-
-  #  provider-zai:                 # ZAI_API_KEY
-  #    worker: package://provider-zai
-  #    version: "next"
-  #    start_after: [state, llm-router]
-
-  #  provider-openrouter:          # OPENROUTER_API_KEY
-  #    # Latest stable release; not compatible with state 0.22.2 yet.
-  #    worker: package://provider-openrouter
-  #    version: "next"
-  #    start_after: [state, llm-router]
-
-  #  provider-llamacpp:            # LLAMACPP_API_KEY
-  #    worker: package://provider-llamacpp
-  #    version: "next"
-  #    start_after: [state, llm-router]
-
-  # Providers that do not require an API Key
-  # Note: These providers are experimental.
-  #
-  #   provider-claude-code     reads ~/.claude/.credentials.json, written by the
-  #                            Claude Code CLI when you sign in there
-  #   provider-github-copilot  no file and no env var: it runs a GitHub device
-  #                            flow. Run iii trigger provider::github-copilot::login::start,
-  #                            enter the user_code it returns at the verification
-  #                            URL, then call iii trigger provider::github-copilot::login::poll.
-
-  #  provider-claude-code:
-  #    worker: package://provider-claude-code
-  #    version: "next"
-  #    start_after: [state, llm-router]
-
-  #  provider-github-copilot:
-  #    worker: package://provider-github-copilot
-  #    version: "next"
-  #    start_after: [state, llm-router]
+  provider-anthropic:
+    worker: package://provider-anthropic
+    version: "1.2.11-rc.3"
+    start_after:
+      - llm-router
+      - state
 
   context-manager:
     worker: package://context-manager
-    version: "next"
-    start_after: [llm-router]
-
-  harness:
-    worker: package://harness
-    version: "next"
+    version: "1.1.4-rc.3"
     start_after:
-      - context-manager
-      - cron
-      - iii-directory
       - llm-router
-      - provider-anthropic
-      - provider-openai
-      - provider-openai-codex
-      - queue
-      - session-manager
-      - shell
-      - state
+
+  iii-directory:
+    worker: package://iii-directory
+    version: "1.2.5-rc.2"
+
+  cron:
+    worker: package://cron
+    version: "0.21.11-rc.1"
 
   console:
     worker: package://console
-    version: "next"
-    start_after: [harness]
+    version: "1.9.15-rc.5"
+
+  shell:
+    worker: package://shell
+    version: "0.11.13-rc.3"
+
+  harness:
+    worker: package://harness
+    version: "1.8.8-rc.2"
+    start_after:
+      - state
+      - queue
+      - session-manager
+      - llm-router
+      - provider-openai-codex
+      - provider-openai
+      - provider-anthropic
+      - context-manager
+      - iii-directory
+      - cron
+      - shell
+
+  web:
+    worker: package://web
+    version: "1.2.11-rc.1"
