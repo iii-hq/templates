@@ -1,7 +1,7 @@
 name: Bare
-description: Minimal iii project scaffold — just config.yaml and .gitignore.
-version: "0.21.6"
-min_iii_version: "0.21.6"
+description: Minimal iii project scaffold — worker-compose.yaml and the console.
+version: "0.23.0"
+min_iii_version: "0.23.0"
 
 # No language requirements: this template is the bare scaffold used by
 # `iii project init`. Languages are added later via `iii worker add` or by
@@ -10,15 +10,19 @@ treat_required_as_included: true
 requires: []
 optional: []
 
-# config.yaml is local to this template; .gitignore comes from the root
-# template.yaml's `shared_files` (default-gitignore -> .gitignore).
-# `data/` is iii-state managed by the engine at runtime, not part of the
-# scaffold; it's already in default-gitignore so users don't accidentally
-# commit it.
+# worker-compose.yaml is local to this template; .gitignore comes from the root
+# template.yaml's `shared_files` (default-gitignore -> .gitignore). `config.yaml`
+# is not scaffolded: `iii compose --up` does not need one, a standalone `iii`
+# writes an empty one on first start, and project workers belong in
+# worker-compose.yaml. `data/` is iii-state managed by the engine at runtime,
+# not part of the scaffold; it's already in default-gitignore so users don't
+# accidentally commit it.
 files:
-  - config.yaml
+  - README.md
+  - worker-compose.yaml
 
 next_steps:
-  - "Add a worker: iii worker add <package>"
-  - "Start the engine: iii"
+  - "Start the engine and the console: iii compose --up"
+  - "Open the console: http://127.0.0.1:3113"
+  - "Add more workers: uncomment a block in worker-compose.yaml, or run iii trigger compose::add"
   - "Docs: https://iii.dev/docs/quickstart"

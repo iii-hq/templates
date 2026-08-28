@@ -1,0 +1,125 @@
+# Project workers for the iii engine.
+# Docs: https://iii.dev/docs/next/using-iii/compose
+#
+# Start everything with one command:
+#
+#   iii compose --up
+#
+# The engine's default namespace. Change it only when one project runs several
+# tenants that need their own copy of the same worker.
+# Docs: https://iii.dev/docs/next/using-iii/namespaces
+namespace: default
+
+engine:
+  url: ws://127.0.0.1:49134
+
+containers:
+  # Web UI on http://127.0.0.1:3113 — workers, functions, config, traces.
+  console:
+    worker: package://console
+    version: "1.9.15"
+
+  # ---------------------------------------------------------------------------
+  # Optional: persistent key-value store, used by most other workers.
+  #
+  #  state:
+  #    worker: package://state
+  #    version: "0.22.2"
+  #    working_dir: .
+
+  # Optional: durable job queue with retries and a dead-letter queue.
+  #
+  #  queue:
+  #    worker: package://queue
+  #    version: "0.21.6"
+  #    working_dir: .
+
+  # Optional: scheduled triggers.
+  #
+  #  cron:
+  #    worker: package://cron
+  #    version: "0.21.10"
+
+  # Optional: SQL database (SQLite and Postgres).
+  #
+  #  database:
+  #    worker: package://database
+  #    version: "0.5.4"
+  #    working_dir: .
+
+  # Optional: HTTP server that exposes functions as REST endpoints.
+  #
+  #  http:
+  #    worker: package://http
+  #    version: "0.21.4"
+
+  # ---------------------------------------------------------------------------
+  # Optional: the agent harness — a coding agent inside the console.
+  #
+  # Uncomment every block below, plus `state`, `queue` and `cron` above. Add a
+  # `.env` file next to this one with the provider key you use:
+  #
+  #   ANTHROPIC_API_KEY=sk-ant-...
+  #   OPENAI_API_KEY=sk-...
+  #
+  # The first `compose::up` downloads the harness binaries into
+  # ~/.iii/compose/packages, so raise the readiness budget for that first run:
+  # add `startup_timeout: 360s` at the top of this file.
+
+  #  shell:
+  #    worker: package://shell
+  #    version: "0.11.12"
+  #    working_dir: .
+
+  #  session-manager:
+  #    worker: package://session-manager
+  #    version: "1.0.13"
+
+  #  iii-directory:
+  #    worker: package://iii-directory
+  #    version: "1.2.4"
+
+  #  llm-router:
+  #    worker: package://llm-router
+  #    version: "1.4.14"
+  #    start_after: [state]
+  #    # Every provider key resolves in the router's process, not in the
+  #    # provider worker. A key set anywhere else reads back as
+  #    # `configured: false`.
+  #    env_file: ['./.env']
+
+  #  provider-anthropic:
+  #    worker: package://provider-anthropic
+  #    version: "1.2.10"
+  #    start_after: [state, llm-router]
+
+  #  provider-openai:
+  #    worker: package://provider-openai
+  #    version: "1.2.8"
+  #    start_after: [state, llm-router]
+
+  #  provider-openai-codex:
+  #    worker: package://provider-openai-codex
+  #    version: "0.4.5"
+  #    start_after: [state, llm-router]
+
+  #  context-manager:
+  #    worker: package://context-manager
+  #    version: "1.1.3"
+  #    start_after: [llm-router]
+
+  #  harness:
+  #    worker: package://harness
+  #    version: "1.8.7"
+  #    start_after:
+  #      - context-manager
+  #      - cron
+  #      - iii-directory
+  #      - llm-router
+  #      - provider-anthropic
+  #      - provider-openai
+  #      - provider-openai-codex
+  #      - queue
+  #      - session-manager
+  #      - shell
+  #      - state
