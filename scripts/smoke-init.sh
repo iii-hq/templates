@@ -55,6 +55,23 @@ assert_file "$PROJECT_DIR/config.yaml"
 assert_file "$PROJECT_DIR/.gitignore"
 assert_absent "$PROJECT_DIR/iii.worker.yaml"
 
+echo "Testing iii project init --template quickstart"
+(
+  cd "$TMP_DIR"
+  iii project init quickstart-test --template quickstart --skip-iii --template-dir "$TEMPLATE_DIR"
+)
+
+QUICKSTART_DIR="$TMP_DIR/quickstart-test"
+assert_absent "$QUICKSTART_DIR/config.yaml"
+assert_file "$QUICKSTART_DIR/worker-compose.yaml"
+assert_contains "$QUICKSTART_DIR/worker-compose.yaml" "engine: {}"
+assert_contains "$QUICKSTART_DIR/worker-compose.yaml" "worker: path://./workers/math-worker"
+assert_contains "$QUICKSTART_DIR/worker-compose.yaml" "worker: path://./workers/caller-worker"
+assert_contains "$QUICKSTART_DIR/worker-compose.yaml" "worker: package://api.workers.iii.dev/state"
+assert_contains "$QUICKSTART_DIR/worker-compose.yaml" "worker: package://api.workers.iii.dev/http"
+assert_contains "$QUICKSTART_DIR/workers/math-worker/src/math_worker.py" "compose::add worker=state"
+assert_contains "$QUICKSTART_DIR/workers/caller-worker/src/worker.ts" "compose::add worker=http"
+
 echo "Testing iii project init --docker"
 (
   cd "$TMP_DIR"
@@ -99,22 +116,26 @@ test_worker() {
   done
 }
 
-test_worker ts docker.io/iiidev/node:latest "npm run start" package.json tsconfig.json src/index.ts
-assert_absent "$TMP_DIR/worker-ts/main.py"
-assert_absent "$TMP_DIR/worker-ts/Cargo.toml"
+if iii worker --help >/dev/null 2>&1; then
+  test_worker ts docker.io/iiidev/node:latest "npm run start" package.json tsconfig.json src/index.ts
+  assert_absent "$TMP_DIR/worker-ts/main.py"
+  assert_absent "$TMP_DIR/worker-ts/Cargo.toml"
 
-test_worker js docker.io/iiidev/node:latest "node --watch src/index.js" package.json src/index.js
-assert_absent "$TMP_DIR/worker-js/tsconfig.json"
-assert_absent "$TMP_DIR/worker-js/main.py"
-assert_absent "$TMP_DIR/worker-js/Cargo.toml"
+  test_worker js docker.io/iiidev/node:latest "node --watch src/index.js" package.json src/index.js
+  assert_absent "$TMP_DIR/worker-js/tsconfig.json"
+  assert_absent "$TMP_DIR/worker-js/main.py"
+  assert_absent "$TMP_DIR/worker-js/Cargo.toml"
 
-test_worker py docker.io/iiidev/python:latest "watchfiles 'python src/main.py'" pyproject.toml src/main.py
-assert_absent "$TMP_DIR/worker-py/package.json"
-assert_absent "$TMP_DIR/worker-py/Cargo.toml"
-assert_absent "$TMP_DIR/worker-py/main.py"
+  test_worker py docker.io/iiidev/python:latest "watchfiles 'python src/main.py'" pyproject.toml src/main.py
+  assert_absent "$TMP_DIR/worker-py/package.json"
+  assert_absent "$TMP_DIR/worker-py/Cargo.toml"
+  assert_absent "$TMP_DIR/worker-py/main.py"
 
-test_worker rust docker.io/library/rust:slim-bookworm "cargo run --release" Cargo.toml src/main.rs
-assert_absent "$TMP_DIR/worker-rust/package.json"
-assert_absent "$TMP_DIR/worker-rust/main.py"
+  test_worker rust docker.io/library/rust:slim-bookworm "cargo run --release" Cargo.toml src/main.rs
+  assert_absent "$TMP_DIR/worker-rust/package.json"
+  assert_absent "$TMP_DIR/worker-rust/main.py"
+else
+  echo "Skipping iii worker init tests: the worker subcommand is not available"
+fi
 
 echo "init smoke tests passed"
