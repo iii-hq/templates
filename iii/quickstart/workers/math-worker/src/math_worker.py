@@ -15,18 +15,21 @@ def add_handler(payload: dict) -> dict:
     logger.info(f"math::add called in Python with a={a}, b={b}")
     result = {"c": a + b}
 
-    # --- Uncomment after: iii trigger compose::add worker=state ---
-    update_result = worker.trigger(
-        {
-            "function_id": "state::update",
-            "payload": {
-                "scope": "math",
-                "key": "running_total",
-                "ops": [{"type": "increment", "path": "", "by": result["c"]}],
-            },
-        }
-    )
-    result["running_total"] = update_result["new_value"]
+    # --- Uncomment after: iii worker add state ---
+    # running_total = worker.trigger(
+    #     {
+    #         "function_id": "state::get",
+    #         "payload": {"scope": "math", "key": "running_total"},
+    #     }
+    # )
+    # new_total = (running_total or 0) + result["c"]
+    # worker.trigger(
+    #     {
+    #         "function_id": "state::set",
+    #         "payload": {"scope": "math", "key": "running_total", "value": new_total},
+    #     }
+    # )
+    # result["running_total"] = new_total
 
     return result
 
