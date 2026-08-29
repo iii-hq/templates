@@ -16,20 +16,17 @@ def add_handler(payload: dict) -> dict:
     result = {"c": a + b}
 
     # --- Uncomment after: iii trigger compose::add worker=state ---
-    running_total = worker.trigger(
+    update_result = worker.trigger(
         {
-            "function_id": "state::get",
-            "payload": {"scope": "math", "key": "running_total"},
+            "function_id": "state::update",
+            "payload": {
+                "scope": "math",
+                "key": "running_total",
+                "ops": [{"type": "increment", "path": "", "by": result["c"]}],
+            },
         }
     )
-    new_total = (running_total or 0) + result["c"]
-    worker.trigger(
-        {
-            "function_id": "state::set",
-            "payload": {"scope": "math", "key": "running_total", "value": new_total},
-        }
-    )
-    result["running_total"] = new_total
+    result["running_total"] = update_result["new_value"]
 
     return result
 

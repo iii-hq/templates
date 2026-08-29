@@ -70,6 +70,8 @@ assert_contains "$QUICKSTART_DIR/worker-compose.yaml" "worker: path://./workers/
 assert_contains "$QUICKSTART_DIR/worker-compose.yaml" "worker: package://api.workers.iii.dev/state"
 assert_contains "$QUICKSTART_DIR/worker-compose.yaml" "worker: package://api.workers.iii.dev/http"
 assert_contains "$QUICKSTART_DIR/workers/math-worker/src/math_worker.py" "compose::add worker=state"
+assert_contains "$QUICKSTART_DIR/workers/math-worker/src/math_worker.py" '"function_id": "state::update"'
+assert_contains "$QUICKSTART_DIR/workers/math-worker/src/math_worker.py" '"type": "increment"'
 assert_contains "$QUICKSTART_DIR/workers/caller-worker/src/worker.ts" "compose::add worker=http"
 
 echo "Testing iii project init --docker"
@@ -116,7 +118,11 @@ test_worker() {
   done
 }
 
-if iii worker --help >/dev/null 2>&1; then
+WORKER_HELP_OUTPUT=""
+WORKER_HELP_STATUS=0
+WORKER_HELP_OUTPUT="$(iii worker --help 2>&1)" || WORKER_HELP_STATUS=$?
+
+if (( WORKER_HELP_STATUS == 0 )); then
   test_worker ts docker.io/iiidev/node:latest "npm run start" package.json tsconfig.json src/index.ts
   assert_absent "$TMP_DIR/worker-ts/main.py"
   assert_absent "$TMP_DIR/worker-ts/Cargo.toml"
@@ -134,8 +140,11 @@ if iii worker --help >/dev/null 2>&1; then
   test_worker rust docker.io/library/rust:slim-bookworm "cargo run --release" Cargo.toml src/main.rs
   assert_absent "$TMP_DIR/worker-rust/package.json"
   assert_absent "$TMP_DIR/worker-rust/main.py"
-else
+elif [[ "$WORKER_HELP_OUTPUT" == *"unrecognized subcommand 'worker'"* ]]; then
   echo "Skipping iii worker init tests: the worker subcommand is not available"
+else
+  printf '%s\n' "$WORKER_HELP_OUTPUT" >&2
+  exit "$WORKER_HELP_STATUS"
 fi
 
 echo "init smoke tests passed"
