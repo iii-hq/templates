@@ -20,6 +20,7 @@ optional: []
 files:
   - README.md
   - worker-compose.yaml
+  - .env
 
 next_steps:
   - "Start the engine and the console: iii compose --up"
