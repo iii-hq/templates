@@ -70,9 +70,80 @@ assert_contains "$DOCKER_PROJECT_DIR/docker-compose.yml" "iii_data:/app/data"
 assert_contains "$DOCKER_PROJECT_DIR/docker-compose.yml" "iii_data:"
 assert_contains "$DOCKER_PROJECT_DIR/docker-compose.yml" "9464:9464"
 
-# Worker manifests scaffolded by `iii worker init` declare a `runtime.base_image`
-# and `scripts` block (install/start). The legacy `kind:`/`entry:` fields were
-# dropped when worker-bare moved to per-language manifests.
+echo "Testing iii project init --template linkly"
+(
+  cd "$TMP_DIR"
+  iii project init linkly-test -t linkly --skip-iii --template-dir "$TEMPLATE_DIR" </dev/null
+)
+
+LINKLY_DIR="$TMP_DIR/linkly-test"
+for expected in \
+  README.md worker-compose.yaml .env .gitignore data/.gitkeep \
+  link/iii.worker.yaml link/package.json link/tsconfig.json link/src/index.ts \
+  analytics/iii.worker.yaml analytics/requirements.txt analytics/src/main.py \
+  click-streamer/iii.worker.yaml click-streamer/package.json click-streamer/src/index.ts \
+  bulk-importer/iii.worker.yaml bulk-importer/package.json bulk-importer/src/index.ts \
+  auth/iii.worker.yaml auth/package.json auth/src/index.ts \
+  channel-client/package.json channel-client/import-links.js; do
+  assert_file "$LINKLY_DIR/$expected"
+done
+assert_absent "$LINKLY_DIR/frontend"
+assert_absent "$LINKLY_DIR/config"
+
+# One compose block per chapter, and the Agentic block for the harness.
+for chapter in 1 2 3 4 5 6 7; do
+  assert_contains "$LINKLY_DIR/worker-compose.yaml" "# Ch. $chapter:"
+done
+assert_contains "$LINKLY_DIR/worker-compose.yaml" "# Agentic path:"
+
+# Chapter 1 is live; every later chapter is commented out.
+assert_contains "$LINKLY_DIR/worker-compose.yaml" "worker: path://./link"
+assert_contains "$LINKLY_DIR/worker-compose.yaml" "  # database:"
+
+# Every source file carries a tagged block for each chapter that touches it.
+assert_contains "$LINKLY_DIR/link/src/index.ts" "// --- Ch. 1 | prelude ---"
+assert_contains "$LINKLY_DIR/link/src/index.ts" "// --- Ch. 7 | link::request_delete ---"
+assert_contains "$LINKLY_DIR/analytics/src/main.py" "# --- Ch. 4 | analytics::on_link_created ---"
+assert_contains "$LINKLY_DIR/click-streamer/src/index.ts" "// --- Ch. 5 | click-streamer::broadcast ---"
+assert_contains "$LINKLY_DIR/bulk-importer/src/index.ts" "// --- Ch. 6 | bulk-importer::import_csv ---"
+assert_contains "$LINKLY_DIR/auth/src/index.ts" "// --- Ch. 7 | auth::browser ---"
+assert_contains "$LINKLY_DIR/channel-client/import-links.js" "// --- Ch. 6 | import-links ---"
+
+# Uncommenting every block leaves a compose file the daemon accepts.
+python3 - "$LINKLY_DIR/worker-compose.yaml" >"$TMP_DIR/linkly-all-on.yaml" <<'PYEOF'
+import re
+import sys
+
+YAML_LINE = re.compile(r"^\s*(-\s|[A-Za-z][\w.#-]*:)")
+HEADING = re.compile(r"^\s*# (Ch\. \d+|Agentic path):")
+
+active = False
+with open(sys.argv[1]) as handle:
+    for line in handle.read().splitlines():
+        if HEADING.match(line):
+            active = True
+            print(line)
+            continue
+        body = line.lstrip()
+        if active and body.startswith("# ") and YAML_LINE.match(body[2:]):
+            indent = line[: len(line) - len(body)]
+            print(indent + body[2:])
+        else:
+            print(line)
+PYEOF
+(
+  cd "$LINKLY_DIR"
+  cp "$TMP_DIR/linkly-all-on.yaml" ./all-on.yaml
+  iii compose build --file all-on.yaml
+  rm -f ./all-on.yaml
+)
+
+# `worker init` lives on the `iii-worker` binary, which the `iii` CLI installs
+# and manages. Override the path with III_WORKER_BIN.
+III_WORKER_BIN="${III_WORKER_BIN:-iii-worker}"
+
+# Worker manifests scaffolded by `iii-worker init` declare a `runtime.base_image`
+# and `scripts` block (install/start).
 test_worker() {
   local lang="$1"
   local base_image="$2"
@@ -80,10 +151,10 @@ test_worker() {
   shift 3
 
   local worker_dir="$TMP_DIR/worker-$lang"
-  echo "Testing iii worker init --language $lang"
+  echo "Testing iii-worker init --language $lang"
   (
     cd "$TMP_DIR"
-    iii worker init "worker-$lang" --language "$lang" --skip-iii --template-dir "$TEMPLATE_DIR"
+    "$III_WORKER_BIN" init "worker-$lang" --language "$lang" --skip-iii --template-dir "$TEMPLATE_DIR"
   )
 
   assert_file "$worker_dir/.iii/worker.ini"

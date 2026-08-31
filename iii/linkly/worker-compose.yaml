@@ -1,0 +1,158 @@
+# Project workers for Linkly.
+# Docs: https://iii.dev/docs/next/tutorials/linkly/overview
+#
+# Start the engine and every enabled worker with: iii compose --up
+#
+# Each chapter has its own block below. Uncomment the block for the chapter you
+# are on, then restart Compose.
+namespace: default
+startup_timeout: 360s
+
+engine:
+  url: ws://127.0.0.1:49134
+
+  # Ch. 5: real-time streams.
+  # workers:
+  #   iii-stream: {}
+
+  # Ch. 7: the trusted listener for local workers, and the browser-facing
+  # listener that auth::browser admits connections to.
+  #   iii-worker-manager:
+  #     host: 127.0.0.1
+  #     port: 49134
+  #   iii-worker-manager#browser:
+  #     host: 127.0.0.1
+  #     port: 3110
+  #     rbac:
+  #       auth_function_id: auth::browser
+  #       expose_functions:
+  #         - match("link::create")
+  #         - match("link::request_delete")
+  #         - match("stream::*")
+
+containers:
+  # Ch. 1: HTTP endpoints, an in-memory key-value store, and the link worker.
+  http:
+    worker: package://http
+    version: "0.21.6"
+    config_name: http
+
+  state:
+    worker: package://state
+    version: "0.22.4"
+    config_name: state
+    config_override:
+      adapter:
+        name: kv
+        config:
+          store_method: in_memory
+
+  link:
+    worker: path://./link
+    # Ch. 3: the schema is created at startup, after database is up.
+    # start_after: [database]
+
+  # Ch. 2: the engine injects iii-observability. Nothing to add.
+
+  # Ch. 3: SQLite storage for links and clicks.
+  # database:
+  #   worker: package://database
+  #   version: "0.5.6"
+  #   config_name: database
+  #   working_dir: .
+  #   config_override:
+  #     databases:
+  #       primary:
+  #         pool:
+  #           acquire_timeout_ms: 5000
+  #           idle_timeout_ms: 30000
+  #           max: 10
+  #         url: sqlite:./data/iii.db
+  # Ch. 4: the analytics worker keeps its counts in its own database.
+  #       analytics:
+  #         url: sqlite:./data/analytics.db
+
+  # Ch. 4: a click queue, pub/sub events, and the Python analytics worker.
+  # queue:
+  #   worker: package://queue
+  #   version: "0.21.8"
+  #   config_name: queue
+  #   working_dir: .
+  #   config_override:
+  #     queue_configs:
+  #       clicks:
+  #         type: standard
+  #         max_retries: 5
+  #         concurrency: 5
+  # pubsub:
+  #   worker: package://pubsub
+  #   version: "0.21.2"
+  # analytics:
+  #   worker: path://./analytics
+  #   start_after: [database, pubsub]
+
+  # Ch. 5: the live click stream. Uncomment iii-stream above as well.
+  # click-streamer:
+  #   worker: path://./click-streamer
+  #   start_after: [pubsub]
+
+  # Ch. 6: bulk CSV import over a channel.
+  # bulk-importer:
+  #   worker: path://./bulk-importer
+  #   start_after: [link]
+
+  # Ch. 7: browser connections. Uncomment both iii-worker-manager entries above
+  # as well.
+  # auth:
+  #   worker: path://./auth
+
+  # Agentic path: the agent harness. Uncomment every entry below. It also needs
+  # state from Ch. 1 and queue from Ch. 4. Set the provider key you use in the
+  # .env file next to this one.
+  # cron:
+  #   worker: package://cron
+  #   version: "0.21.12"
+  # console:
+  #   worker: package://console
+  #   version: "1.9.14"
+  # shell:
+  #   worker: package://shell
+  #   version: "0.11.13"
+  #   working_dir: .
+  # session-manager:
+  #   worker: package://session-manager
+  #   version: "1.0.13"
+  # iii-directory:
+  #   worker: package://iii-directory
+  #   version: "1.2.4"
+  # llm-router:
+  #   worker: package://llm-router
+  #   version: "1.4.14"
+  #   start_after: [state]
+  #   env_file: ['./.env']
+  # provider-anthropic:
+  #   worker: package://provider-anthropic
+  #   version: "1.2.10"
+  #   start_after: [state, llm-router]
+  # provider-openai:
+  #   worker: package://provider-openai
+  #   version: "1.2.8"
+  #   start_after: [state, llm-router]
+  # context-manager:
+  #   worker: package://context-manager
+  #   version: "1.1.3"
+  #   start_after: [llm-router]
+  # harness:
+  #   worker: package://harness
+  #   version: "1.8.9"
+  #   start_after:
+  #     - context-manager
+  #     - cron
+  #     - iii-directory
+  #     - llm-router
+  #     - provider-anthropic
+  #     - provider-openai
+  #     - queue
+  #     - session-manager
+  #     - shell
+  #     - state
