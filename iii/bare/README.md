@@ -44,7 +44,7 @@ iii compose
 In a third terminal, bring the project up:
 
 ```bash
-iii trigger compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000
+iii trigger compose::up
 ```
 
 ## Use the console

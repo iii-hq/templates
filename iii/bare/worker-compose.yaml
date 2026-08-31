@@ -18,7 +18,7 @@ containers:
   # Web UI on http://127.0.0.1:3113 — workers, functions, config, traces.
   console:
     worker: package://console
-    version: "1.9.15"
+    version: "1.9.14"
 
   # ---------------------------------------------------------------------------
   # Optional: persistent key-value store, used by most other workers.
@@ -57,11 +57,9 @@ containers:
   # ---------------------------------------------------------------------------
   # Optional: the agent harness — a coding agent inside the console.
   #
-  # Uncomment every block below, plus `state`, `queue` and `cron` above. Add a
-  # `.env` file next to this one with the provider key you use:
-  #
-  #   ANTHROPIC_API_KEY=sk-ant-...
-  #   OPENAI_API_KEY=sk-...
+  # The harness requires every block below, plus `state`, `queue` and `cron`
+  # above. Uncomment them all. It also requires one provider key: uncomment the
+  # key you use in the `.env` file next to this one.
 
   #  shell:
   #    worker: package://shell
