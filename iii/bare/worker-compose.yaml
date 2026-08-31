@@ -18,41 +18,41 @@ containers:
   # Web UI on http://127.0.0.1:3113 — workers, functions, config, traces.
   console:
     worker: package://console
-    version: "1.9.15"
+    version: "1.9.15-rc.6"
 
   # ---------------------------------------------------------------------------
   # Optional: persistent key-value store, used by most other workers.
   #
   #  state:
   #    worker: package://state
-  #    version: "0.22.2"
+  #    version: "0.22.4"
   #    working_dir: .
 
   # Optional: durable job queue with retries and a dead-letter queue.
   #
   #  queue:
   #    worker: package://queue
-  #    version: "0.21.6"
+  #    version: "0.21.8"
   #    working_dir: .
 
   # Optional: scheduled triggers.
   #
   #  cron:
   #    worker: package://cron
-  #    version: "0.21.10"
+  #    version: "0.21.12"
 
   # Optional: SQL database (SQLite and Postgres).
   #
   #  database:
   #    worker: package://database
-  #    version: "0.5.4"
+  #    version: "0.5.6"
   #    working_dir: .
 
   # Optional: HTTP server that exposes functions as REST endpoints.
   #
   #  http:
   #    worker: package://http
-  #    version: "0.21.4"
+  #    version: "0.21.6"
 
   # ---------------------------------------------------------------------------
   # Optional: the agent harness — a coding agent inside the console.
@@ -63,46 +63,46 @@ containers:
 
   #  shell:
   #    worker: package://shell
-  #    version: "0.11.12"
+  #    version: "0.11.13"
   #    working_dir: .
 
   #  session-manager:
   #    worker: package://session-manager
-  #    version: "1.0.13"
+  #    version: "1.0.14-rc.3"
 
   #  iii-directory:
   #    worker: package://iii-directory
-  #    version: "1.2.4"
+  #    version: "1.2.5-rc.3"
 
   #  llm-router:
   #    worker: package://llm-router
-  #    version: "1.4.14"
+  #    version: "1.4.15-rc.4"
   #    start_after: [state]
   #    env_file: ['./.env']
 
   #  provider-anthropic:
   #    worker: package://provider-anthropic
-  #    version: "1.2.10"
+  #    version: "1.2.12-rc.1"
   #    start_after: [state, llm-router]
 
   #  provider-openai:
   #    worker: package://provider-openai
-  #    version: "1.2.8"
+  #    version: "1.2.9-rc.3"
   #    start_after: [state, llm-router]
 
   #  provider-openai-codex:
   #    worker: package://provider-openai-codex
-  #    version: "0.4.5"
+  #    version: "0.4.6-rc.4"
   #    start_after: [state, llm-router]
 
   #  context-manager:
   #    worker: package://context-manager
-  #    version: "1.1.3"
+  #    version: "1.1.4-rc.3"
   #    start_after: [llm-router]
 
   #  harness:
   #    worker: package://harness
-  #    version: "1.8.7"
+  #    version: "1.8.9"
   #    start_after:
   #      - context-manager
   #      - cron
