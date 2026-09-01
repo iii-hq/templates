@@ -4,8 +4,9 @@ version: "0.23.0"
 min_iii_version: "0.23.0"
 
 # No language requirements: this template is the bare scaffold used by
-# `iii project init`. Languages are added later via `iii worker add` or by
-# scaffolding from a worker-bearing template like `quickstart`.
+# `iii project init`. Workers are added later via
+# `iii trigger compose::add worker=<path-or-name>` or by scaffolding from a
+# worker-bearing template like `quickstart`.
 treat_required_as_included: true
 requires: []
 optional: []

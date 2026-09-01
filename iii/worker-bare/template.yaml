@@ -68,4 +68,4 @@ files:
 next_steps:
   - "Install deps (npm install / pip install -e . / cargo build --release)"
   - "Edit iii.worker.yaml to declare your entry point"
-  - "Add to a parent project: iii worker add ./path/to/this-worker"
+  - "Add to a parent Compose project: iii trigger compose::add worker=./path/to/this-worker"

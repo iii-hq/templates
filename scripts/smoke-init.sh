@@ -68,9 +68,28 @@ echo "Testing iii project init"
 
 PROJECT_DIR="$TMP_DIR/project-test"
 assert_file "$PROJECT_DIR/.iii/project.ini"
-assert_file "$PROJECT_DIR/config.yaml"
+assert_file "$PROJECT_DIR/worker-compose.yaml"
 assert_file "$PROJECT_DIR/.gitignore"
+assert_absent "$PROJECT_DIR/config.yaml"
 assert_absent "$PROJECT_DIR/iii.worker.yaml"
+assert_contains "$PROJECT_DIR/worker-compose.yaml" "namespace: default"
+
+echo "Testing iii project init --template quickstart"
+(
+  cd "$TMP_DIR"
+  iii project init quickstart-test --template quickstart --skip-iii --template-dir "$TEMPLATE_DIR"
+)
+
+QUICKSTART_PROJECT_DIR="$TMP_DIR/quickstart-test"
+assert_file "$QUICKSTART_PROJECT_DIR/.iii/project.ini"
+assert_file "$QUICKSTART_PROJECT_DIR/worker-compose.yaml"
+assert_file "$QUICKSTART_PROJECT_DIR/workers/math-worker/iii.worker.yaml"
+assert_file "$QUICKSTART_PROJECT_DIR/workers/math-worker/src/math_worker.py"
+assert_file "$QUICKSTART_PROJECT_DIR/workers/caller-worker/iii.worker.yaml"
+assert_file "$QUICKSTART_PROJECT_DIR/workers/caller-worker/src/worker.ts"
+assert_absent "$QUICKSTART_PROJECT_DIR/config.yaml"
+assert_contains "$QUICKSTART_PROJECT_DIR/worker-compose.yaml" "namespace: default"
+assert_contains "$QUICKSTART_PROJECT_DIR/worker-compose.yaml" "containers: {}"
 
 echo "Testing iii project init --docker"
 (
