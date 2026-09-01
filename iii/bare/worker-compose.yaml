@@ -18,7 +18,7 @@ containers:
   # Web UI on http://127.0.0.1:3113 — workers, functions, config, traces.
   console:
     worker: package://console
-    version: "1.9.16"
+    version: "1.9.17"
 
   # ---------------------------------------------------------------------------
   # LLM base. `state` and `llm-router` power the providers below. `llm-router`
