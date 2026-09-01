@@ -94,7 +94,6 @@ assert_absent "$LINKLY_DIR/config"
 for chapter in 1 2 3 4 5 6 7; do
   assert_contains "$LINKLY_DIR/worker-compose.yaml" "# Ch. $chapter:"
 done
-assert_contains "$LINKLY_DIR/worker-compose.yaml" "# Agentic path:"
 
 # Chapter 1 is live; every later chapter is commented out.
 assert_contains "$LINKLY_DIR/worker-compose.yaml" "worker: path://./link"
@@ -136,6 +135,44 @@ PYEOF
   cp "$TMP_DIR/linkly-all-on.yaml" ./all-on.yaml
   iii compose build --file all-on.yaml
   rm -f ./all-on.yaml
+)
+
+echo "Testing iii project init --template linkly-agentic"
+(
+  cd "$TMP_DIR"
+  iii project init la-test -t linkly-agentic --skip-iii --template-dir "$TEMPLATE_DIR" </dev/null
+)
+
+LA_DIR="$TMP_DIR/la-test"
+for expected in \
+  README.md worker-compose.yaml .env .gitignore data/.gitkeep \
+  link/iii.worker.yaml link/package.json link/tsconfig.json link/src/index.ts; do
+  assert_file "$LA_DIR/$expected"
+done
+# The agent builds these; the scaffold ships only the link stub.
+assert_absent "$LA_DIR/analytics"
+assert_absent "$LA_DIR/click-streamer"
+assert_absent "$LA_DIR/auth"
+
+# The link file is a stub: it registers no functions and carries no chapter blocks.
+assert_contains "$LA_DIR/link/src/index.ts" "link worker ready"
+if grep -q "registerFunction" "$LA_DIR/link/src/index.ts"; then
+  echo "FAIL: linkly-agentic link stub already implements functions" >&2
+  exit 1
+fi
+
+# The agent stack ships live; providers are added later, not in the file.
+assert_contains "$LA_DIR/worker-compose.yaml" "worker: package://harness"
+assert_contains "$LA_DIR/worker-compose.yaml" "env_file: ['./.env']"
+if grep -q "package://provider-" "$LA_DIR/worker-compose.yaml"; then
+  echo "FAIL: linkly-agentic ships a provider in worker-compose.yaml" >&2
+  exit 1
+fi
+
+# The shipped file resolves: the agent stack plus the Ch. 1 workers.
+(
+  cd "$LA_DIR"
+  iii compose build --file worker-compose.yaml
 )
 
 # `worker init` lives on the `iii-worker` binary, which the `iii` CLI installs

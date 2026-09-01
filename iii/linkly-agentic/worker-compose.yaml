@@ -1,10 +1,14 @@
-# Project workers for Linkly.
-# Docs: https://iii.dev/docs/next/tutorials/linkly/overview
+# Project workers for Linkly, agentic path.
+# Docs: https://iii.dev/docs/next/tutorials/linkly/agentic
 #
 # Start the engine and every enabled worker with: iii compose --up
 #
-# Each chapter has its own block below. Uncomment the block for the chapter you
-# are on, then restart Compose.
+# The agent stack below is live: an agent runs in the console and builds Linkly
+# with you. Add your provider after the first start with:
+#   iii trigger compose::add worker=provider-<name>
+#
+# Each chapter has its own block. As the agent builds a chapter, it creates that
+# chapter's worker and uncomments the block here.
 namespace: default
 startup_timeout: 360s
 
@@ -51,6 +55,45 @@ containers:
     worker: path://./link
     # Ch. 3: the schema is created at startup, after database is up.
     # start_after: [database]
+
+  # The agent stack. llm-router reads your provider key from .env. Add a provider
+  # after `iii compose --up` with: iii trigger compose::add worker=provider-<name>
+  cron:
+    worker: package://cron
+    version: "0.21.12"
+  console:
+    worker: package://console
+    version: "1.9.16"
+  shell:
+    worker: package://shell
+    version: "0.12.0"
+    working_dir: .
+  session-manager:
+    worker: package://session-manager
+    version: "1.0.13"
+  iii-directory:
+    worker: package://iii-directory
+    version: "1.2.6"
+  llm-router:
+    worker: package://llm-router
+    version: "1.4.14"
+    start_after: [state]
+    env_file: ['./.env']
+  context-manager:
+    worker: package://context-manager
+    version: "1.1.4"
+    start_after: [llm-router]
+  harness:
+    worker: package://harness
+    version: "1.8.11"
+    start_after:
+      - context-manager
+      - cron
+      - iii-directory
+      - llm-router
+      - session-manager
+      - shell
+      - state
 
   # Ch. 2: the engine injects iii-observability. Nothing to add.
 
