@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "iii-sdk": "0.23.0-rc.9"
+    "iii-sdk": "0.23.0-rc.10"
   }
 }
