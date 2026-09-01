@@ -1,4 +1,4 @@
-namespace: harness-ns
+namespace: default
 startup_timeout: 15m
 stop_timeout: 10s
 
