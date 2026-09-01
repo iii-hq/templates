@@ -1,9 +1,9 @@
 namespace: default
-startup_timeout: 15m
+startup_timeout: 360s
 stop_timeout: 10s
 
 engine:
-  url: ws://127.0.0.1:49135
+  url: ws://127.0.0.1:49134
 
 containers:
   queue:
