@@ -22,31 +22,32 @@ containers:
 
   # ---------------------------------------------------------------------------
   # LLM base. `state` and `llm-router` power the providers below. `llm-router`
-  # reads every provider key from the `.env` file next to this one.
-  state:
-    worker: package://state
-    version: "0.22.5-rc.1"
-    working_dir: .
+  # reads every provider key from the `.env` file next to this one. Uncomment
+  # both to enable an LLM.
+  #
+  #  state:
+  #    worker: package://state
+  #    version: "0.22.5-rc.1"
+  #    working_dir: .
 
-  llm-router:
-    worker: package://llm-router
-    version: "1.4.15-rc.5"
-    start_after: [state]
-    env_file: ['./.env']
+  #  llm-router:
+  #    worker: package://llm-router
+  #    version: "1.4.15-rc.5"
+  #    start_after: [state]
+  #    env_file: ['./.env']
 
   # ---------------------------------------------------------------------------
-  # Providers. `provider-anthropic` and `provider-openai` are enabled. Add your
-  # key to `.env` (ANTHROPIC_API_KEY / OPENAI_API_KEY). To use another provider,
-  # uncomment its block and add its key to `.env`.
-  provider-anthropic:
-    worker: package://provider-anthropic
-    version: "1.2.12-rc.2"
-    start_after: [state, llm-router]
+  # Providers. Uncomment a provider block (plus `state` and `llm-router` above)
+  # and add its key to `.env` (ANTHROPIC_API_KEY / OPENAI_API_KEY / ...).
+  #  provider-anthropic:
+  #    worker: package://provider-anthropic
+  #    version: "1.2.12-rc.2"
+  #    start_after: [state, llm-router]
 
-  provider-openai:
-    worker: package://provider-openai
-    version: "1.2.9-rc.4"
-    start_after: [state, llm-router]
+  #  provider-openai:
+  #    worker: package://provider-openai
+  #    version: "1.2.9-rc.4"
+  #    start_after: [state, llm-router]
 
   #  provider-deepseek:            # DEEPSEEK_API_KEY
   #    worker: package://provider-deepseek
@@ -131,9 +132,9 @@ containers:
   #    version: "0.21.6"
 
   # ---------------------------------------------------------------------------
-  # Optional: the agent harness — a coding agent inside the console. Uncomment
-  # every block below, plus `queue` and `cron` above. (`state`, `llm-router` and
-  # the two providers it needs are already enabled above.)
+  # Optional: the agent harness, a coding agent inside the console. Uncomment
+  # every block below, plus `state`, `llm-router`, a provider, `queue` and
+  # `cron` above.
 
   #  shell:
   #    worker: package://shell
