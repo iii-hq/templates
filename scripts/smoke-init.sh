@@ -36,12 +36,29 @@ assert_contains() {
   fi
 }
 
+# `iii worker` was removed in 0.23: worker lifecycle moved to Worker Compose and
+# the worker-bare scaffolder is no longer reachable from the CLI. Older channels
+# still ship it, and this repo serves templates to both, so the worker-init
+# assertions below only run when the installed iii predates the removal.
+# A prerelease (0.23.0-rc.N) already has the command removed, so the
+# prerelease suffix is stripped before comparing.
+worker_init_supported() {
+  local version="${1%%-*}"
+  local major="${version%%.*}"
+  local minor="${version#*.}"
+  minor="${minor%%.*}"
+
+  [[ "$major" =~ ^[0-9]+$ && "$minor" =~ ^[0-9]+$ ]] || return 1
+  ((major == 0 && minor < 23))
+}
+
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 echo "Using templates: $TEMPLATE_DIR"
 echo "Using iii: $(command -v iii)"
-iii --version
+III_INSTALLED_VERSION="$(iii --version | tr -d '[:space:]')"
+echo "$III_INSTALLED_VERSION"
 
 echo "Testing iii project init"
 (
@@ -99,22 +116,26 @@ test_worker() {
   done
 }
 
-test_worker ts docker.io/iiidev/node:latest "npm run start" package.json tsconfig.json src/index.ts
-assert_absent "$TMP_DIR/worker-ts/main.py"
-assert_absent "$TMP_DIR/worker-ts/Cargo.toml"
+if worker_init_supported "$III_INSTALLED_VERSION"; then
+  test_worker ts docker.io/iiidev/node:latest "npm run start" package.json tsconfig.json src/index.ts
+  assert_absent "$TMP_DIR/worker-ts/main.py"
+  assert_absent "$TMP_DIR/worker-ts/Cargo.toml"
 
-test_worker js docker.io/iiidev/node:latest "node --watch src/index.js" package.json src/index.js
-assert_absent "$TMP_DIR/worker-js/tsconfig.json"
-assert_absent "$TMP_DIR/worker-js/main.py"
-assert_absent "$TMP_DIR/worker-js/Cargo.toml"
+  test_worker js docker.io/iiidev/node:latest "node --watch src/index.js" package.json src/index.js
+  assert_absent "$TMP_DIR/worker-js/tsconfig.json"
+  assert_absent "$TMP_DIR/worker-js/main.py"
+  assert_absent "$TMP_DIR/worker-js/Cargo.toml"
 
-test_worker py docker.io/iiidev/python:latest "watchfiles 'python src/main.py'" pyproject.toml src/main.py
-assert_absent "$TMP_DIR/worker-py/package.json"
-assert_absent "$TMP_DIR/worker-py/Cargo.toml"
-assert_absent "$TMP_DIR/worker-py/main.py"
+  test_worker py docker.io/iiidev/python:latest "watchfiles 'python src/main.py'" pyproject.toml src/main.py
+  assert_absent "$TMP_DIR/worker-py/package.json"
+  assert_absent "$TMP_DIR/worker-py/Cargo.toml"
+  assert_absent "$TMP_DIR/worker-py/main.py"
 
-test_worker rust docker.io/library/rust:slim-bookworm "cargo run --release" Cargo.toml src/main.rs
-assert_absent "$TMP_DIR/worker-rust/package.json"
-assert_absent "$TMP_DIR/worker-rust/main.py"
+  test_worker rust docker.io/library/rust:slim-bookworm "cargo run --release" Cargo.toml src/main.rs
+  assert_absent "$TMP_DIR/worker-rust/package.json"
+  assert_absent "$TMP_DIR/worker-rust/main.py"
+else
+  echo "Skipping iii worker init checks: removed in 0.23 (installed $III_INSTALLED_VERSION)"
+fi
 
 echo "init smoke tests passed"
