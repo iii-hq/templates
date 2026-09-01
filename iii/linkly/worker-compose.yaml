@@ -75,7 +75,7 @@ containers:
   # Ch. 4: a click queue, pub/sub events, and the Python analytics worker.
   # queue:
   #   worker: package://queue
-  #   version: "0.21.8"
+  #   version: "0.21.9"
   #   config_name: queue
   #   working_dir: .
   #   config_override:
