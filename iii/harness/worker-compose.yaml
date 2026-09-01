@@ -8,81 +8,157 @@ engine:
 containers:
   queue:
     worker: package://queue
-    version: "0.21.7-rc.3"
+    version: "0.21.9"
 
   state:
     worker: package://state
-    version: "0.22.3-rc.3"
+    version: "0.22.5-rc.1"
 
   session-manager:
     worker: package://session-manager
-    version: "1.0.14-rc.3"
+    version: "1.0.14-rc.4"
 
   llm-router:
     worker: package://llm-router
-    version: "1.4.15-rc.4"
-    env_file:
-      - ./.env
+    version: "1.4.15-rc.5"
     start_after:
       - state
+    # Every provider key resolves in the router's process, not in the provider
+    # worker. When you uncomment a provider below, uncomment its key here too.
     environment:
       ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
       OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      #DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
+      #MOONSHOT_API_KEY: "${MOONSHOT_API_KEY:-}"
+      #XAI_API_KEY: "${XAI_API_KEY:-}"
+      #ZAI_API_KEY: "${ZAI_API_KEY:-}"
+      #OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      #LLAMACPP_API_KEY: "${LLAMACPP_API_KEY:-}"
 
-  provider-openai-codex:
-    worker: package://provider-openai-codex
-    version: "0.4.6-rc.4"
+  provider-anthropic:
+    worker: package://provider-anthropic
+    version: "1.2.12-rc.2"
     start_after:
       - llm-router
       - state
 
   provider-openai:
     worker: package://provider-openai
-    version: "1.2.9-rc.3"
+    version: "1.2.9-rc.4"
     start_after:
       - llm-router
       - state
     environment:
       RUST_LOG: info
 
-  provider-anthropic:
-    worker: package://provider-anthropic
-    version: "1.2.11-rc.3"
-    start_after:
-      - llm-router
-      - state
+  # Additional providers. Uncomment a block, uncomment its key under
+  # llm-router's `environment` above, export that key, and restart the compose
+  # daemon so it re-reads this file. Add the container to the `harness`
+  # start_after list below if the harness should wait for it.
+
+  #  provider-deepseek:            # DEEPSEEK_API_KEY
+  #    worker: package://provider-deepseek
+  #    version: "0.1.9-rc.3"
+  #    start_after:
+  #      - llm-router
+  #      - state
+
+  #  provider-kimi:                # MOONSHOT_API_KEY, not KIMI_API_KEY
+  #    worker: package://provider-kimi
+  #    version: "1.1.7-rc.3"
+  #    start_after:
+  #      - llm-router
+  #      - state
+
+  #  provider-xai:                 # XAI_API_KEY
+  #    worker: package://provider-xai
+  #    version: "1.3.7-rc.3"
+  #    start_after:
+  #      - llm-router
+  #      - state
+
+  #  provider-zai:                 # ZAI_API_KEY
+  #    worker: package://provider-zai
+  #    version: "0.5.7-rc.3"
+  #    start_after:
+  #      - llm-router
+  #      - state
+
+  #  provider-openrouter:          # OPENROUTER_API_KEY
+  #    worker: package://provider-openrouter
+  #    version: "0.1.4"
+  #    start_after:
+  #      - llm-router
+  #      - state
+
+  #  provider-llamacpp:            # LLAMACPP_API_KEY
+  #    worker: package://provider-llamacpp
+  #    version: "0.3.4"
+  #    start_after:
+  #      - llm-router
+  #      - state
+
+  # Providers that need no API key (experimental):
+  #   provider-openai-codex    reads ~/.codex/auth.json, written by the Codex CLI
+  #                            when you sign in there.
+  #   provider-claude-code     reads ~/.claude/.credentials.json, written by the
+  #                            Claude Code CLI when you sign in there.
+  #   provider-github-copilot  runs a GitHub device flow. Run
+  #                            iii trigger provider::github-copilot::login::start,
+  #                            enter the user_code at the verification URL, then
+  #                            iii trigger provider::github-copilot::login::poll.
+
+  #  provider-openai-codex:
+  #    worker: package://provider-openai-codex
+  #    version: "0.4.7"
+  #    start_after:
+  #      - llm-router
+  #      - state
+
+  #  provider-claude-code:
+  #    worker: package://provider-claude-code
+  #    version: "0.1.8-rc.3"
+  #    start_after:
+  #      - llm-router
+  #      - state
+
+  #  provider-github-copilot:
+  #    worker: package://provider-github-copilot
+  #    version: "0.1.5-rc.3"
+  #    start_after:
+  #      - llm-router
+  #      - state
 
   context-manager:
     worker: package://context-manager
-    version: "1.1.4-rc.3"
+    version: "1.1.4"
     start_after:
       - llm-router
 
   iii-directory:
     worker: package://iii-directory
-    version: "1.2.5-rc.2"
+    version: "1.2.6"
 
   cron:
     worker: package://cron
-    version: "0.21.11-rc.1"
+    version: "0.21.13-rc.1"
 
   console:
     worker: package://console
-    version: "1.9.15-rc.5"
+    version: "1.9.16"
 
   shell:
     worker: package://shell
-    version: "0.11.13-rc.3"
+    version: "0.12.0"
 
   harness:
     worker: package://harness
-    version: "1.8.8-rc.2"
+    version: "1.8.11"
     start_after:
       - state
       - queue
       - session-manager
       - llm-router
-      - provider-openai-codex
       - provider-openai
       - provider-anthropic
       - context-manager
