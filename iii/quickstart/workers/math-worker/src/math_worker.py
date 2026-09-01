@@ -15,7 +15,7 @@ def add_handler(payload: dict) -> dict:
     logger.info(f"math::add called in Python with a={a}, b={b}")
     result = {"c": a + b}
 
-    # --- Uncomment after: iii worker add state ---
+    # --- Uncomment after: iii trigger compose::add worker=state ---
     # running_total = worker.trigger(
     #     {
     #         "function_id": "state::get",

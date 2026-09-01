@@ -27,7 +27,7 @@ worker.registerFunction(
   },
 );
 
-// --- Uncomment after: iii worker add http ---
+// --- Uncomment after: iii trigger compose::add worker=http ---
 // worker.registerFunction(
 //   "http::add_two_numbers",
 //   async (payload: { body: { a: number; b: number } }) => {
