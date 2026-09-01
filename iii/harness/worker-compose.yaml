@@ -56,13 +56,6 @@ containers:
   # daemon so it re-reads this file. Add the container to the `harness`
   # start_after list below if the harness should wait for it.
 
-  #  provider-openai-codex:        # reuses OPENAI_API_KEY
-  #    worker: package://provider-openai-codex
-  #    version: "0.4.7"
-  #    start_after:
-  #      - llm-router
-  #      - state
-
   #  provider-deepseek:            # DEEPSEEK_API_KEY
   #    worker: package://provider-deepseek
   #    version: "0.1.9-rc.3"
@@ -106,12 +99,21 @@ containers:
   #      - state
 
   # Providers that need no API key (experimental):
+  #   provider-openai-codex    reads ~/.codex/auth.json, written by the Codex CLI
+  #                            when you sign in there.
   #   provider-claude-code     reads ~/.claude/.credentials.json, written by the
   #                            Claude Code CLI when you sign in there.
   #   provider-github-copilot  runs a GitHub device flow. Run
   #                            iii trigger provider::github-copilot::login::start,
   #                            enter the user_code at the verification URL, then
   #                            iii trigger provider::github-copilot::login::poll.
+
+  #  provider-openai-codex:
+  #    worker: package://provider-openai-codex
+  #    version: "0.4.7"
+  #    start_after:
+  #      - llm-router
+  #      - state
 
   #  provider-claude-code:
   #    worker: package://provider-claude-code
