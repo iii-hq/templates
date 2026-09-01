@@ -1,0 +1,15 @@
+# Compose starts and manages the iii engine for this project.
+# Docs: https://iii.dev/docs/next/using-iii/compose
+#
+# Start the engine and its daemon with one command:
+#
+#   iii compose --up
+#
+# The quickstart tutorial adds workers into this file as you go, with
+#   iii trigger compose::add worker=<path-or-name>
+namespace: default
+
+engine:
+  url: ws://127.0.0.1:49134
+
+containers: {}
