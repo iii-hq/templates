@@ -1,5 +1,6 @@
 # iii unifying backend engine files
 .env
+.env.*
 data/
 config/
 
