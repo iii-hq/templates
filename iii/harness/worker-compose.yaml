@@ -21,6 +21,8 @@ containers:
   llm-router:
     worker: package://llm-router
     version: "1.4.15-rc.4"
+    env_file:
+      - ./.env
     start_after:
       - state
     environment:
