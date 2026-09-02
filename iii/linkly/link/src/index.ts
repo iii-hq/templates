@@ -63,10 +63,23 @@
 
 // --- Ch. 1 | link::create ---
 // worker.registerFunction("link::create", async (payload: { url: string; code?: string }) => {
-//   const code = payload.code ?? makeCode();
 //   // Store an absolute URL so the redirect's Location header is absolute, not
 //   // resolved relative to /s/:code.
 //   const url = /^https?:\/\//i.test(payload.url) ? payload.url : `https://${payload.url}`;
+//   const taken = async (c: string) =>
+//     Boolean(
+//       await worker.trigger({ function_id: "state::get", payload: { scope: "links", key: c } }),
+//     );
+//   let code = payload.code;
+//   if (code) {
+//     // A requested code must be free; creating never overwrites an existing link.
+//     if (await taken(code)) throw new Error(`code "${code}" is taken`);
+//   } else {
+//     // A generated code retries until it finds a free one.
+//     do {
+//       code = makeCode();
+//     } while (await taken(code));
+//   }
 //   await worker.trigger({
 //     function_id: "state::set",
 //     payload: { scope: "links", key: code, value: { url } },
@@ -170,15 +183,25 @@
 //       headers: { "Content-Type": "application/json" },
 //     };
 //   }
-//   const link = await worker.trigger<{ url: string; code?: string }, { code: string; url: string }>({
-//     function_id: "link::create",
-//     payload: { url, code },
-//   });
-//   return {
-//     status_code: 201,
-//     body: link,
-//     headers: { "Content-Type": "application/json" },
-//   };
+//   try {
+//     const link = await worker.trigger<{ url: string; code?: string }, { code: string; url: string }>({
+//       function_id: "link::create",
+//       payload: { url, code },
+//     });
+//     return {
+//       status_code: 201,
+//       body: link,
+//       headers: { "Content-Type": "application/json" },
+//     };
+//   } catch (err) {
+//     // link::create throws when a requested code is already taken (Ch. 3 on,
+//     // the database's PRIMARY KEY on code raises the same conflict).
+//     return {
+//       status_code: 409,
+//       body: { error: err instanceof Error ? err.message : "conflict" },
+//       headers: { "Content-Type": "application/json" },
+//     };
+//   }
 // });
 
 // --- Ch. 1 | POST /links ---
@@ -387,17 +410,22 @@
 // });
 
 // --- Ch. 7 | link::request_delete ---
-// worker.registerFunction("link::request_delete", async (payload: { code: string }) => {
-//   const { confirmed } = await worker.trigger<
-//     { code: string; action: string },
-//     { confirmed: boolean }
-//   >({
-//     function_id: "user::confirm_destructive_op",
-//     payload: { code: payload.code, action: `delete link "${payload.code}"` },
-//   });
-//   if (!confirmed) {
-//     return { deleted: false };
-//   }
-//   await worker.trigger({ function_id: "link::delete", payload: { code: payload.code } });
-//   return { deleted: true };
-// });
+// worker.registerFunction(
+//   "link::request_delete",
+//   async (payload: { code: string; session: string }) => {
+//     const { confirmed } = await worker.trigger<
+//       { code: string; action: string },
+//       { confirmed: boolean }
+//     >({
+//       function_id: "user::confirm_destructive_op",
+//       // Ask the one tab that owns this session, in its private namespace.
+//       namespace: `browser-${payload.session}`,
+//       payload: { code: payload.code, action: `delete link "${payload.code}"` },
+//     });
+//     if (!confirmed) {
+//       return { deleted: false };
+//     }
+//     await worker.trigger({ function_id: "link::delete", payload: { code: payload.code } });
+//     return { deleted: true };
+//   },
+// );

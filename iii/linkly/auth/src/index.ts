@@ -26,11 +26,19 @@
 //     if (!expected || token !== expected) {
 //       throw new Error("unauthorized");
 //     }
+//     // Each tab sends a unique session id and registers in its own
+//     // `browser-<session>` namespace, so the functions two tabs register never
+//     // collide. Granting only that namespace key keeps a tab out of `default`.
+//     const session = input.query_params.session?.[0];
+//     if (!session) {
+//       throw new Error("missing session");
+//     }
 //     return {
-//       allowed_functions: [],
-//       forbidden_functions: [],
 //       allow_trigger_type_registration: false,
 //       allow_function_registration: true,
+//       namespaces: {
+//         [`browser-${session}`]: ["ui::on_click", "user::confirm_destructive_op"],
+//       },
 //       context: { source: "browser" },
 //     };
 //   },
