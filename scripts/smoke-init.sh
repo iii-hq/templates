@@ -161,13 +161,11 @@ if grep -q "registerFunction" "$LA_DIR/link/src/index.ts"; then
   exit 1
 fi
 
-# The agent stack ships live; providers are added later, not in the file.
+# The agent stack ships live, including the Anthropic and OpenAI providers.
 assert_contains "$LA_DIR/worker-compose.yaml" "worker: package://harness"
 assert_contains "$LA_DIR/worker-compose.yaml" "env_file: ['./.env']"
-if grep -q "package://provider-" "$LA_DIR/worker-compose.yaml"; then
-  echo "FAIL: linkly-agentic ships a provider in worker-compose.yaml" >&2
-  exit 1
-fi
+assert_contains "$LA_DIR/worker-compose.yaml" "worker: package://provider-anthropic"
+assert_contains "$LA_DIR/worker-compose.yaml" "worker: package://provider-openai"
 
 # The shipped file resolves: the agent stack plus the Ch. 1 workers.
 (

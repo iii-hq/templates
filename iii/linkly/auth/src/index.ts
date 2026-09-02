@@ -20,8 +20,10 @@
 //     query_params: Record<string, string[]>;
 //     ip_address: string;
 //   }) => {
+//     // Fail closed: no LINKLY_BROWSER_TOKEN set means no browser is admitted.
+//     const expected = process.env.LINKLY_BROWSER_TOKEN;
 //     const token = input.query_params.token?.[0];
-//     if (!token || token !== (process.env.LINKLY_BROWSER_TOKEN ?? "dev-token")) {
+//     if (!expected || token !== expected) {
 //       throw new Error("unauthorized");
 //     }
 //     return {
