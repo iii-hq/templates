@@ -1,0 +1,160 @@
+# Project workers for Linkly, agentic path.
+# Docs: https://iii.dev/docs/next/tutorials/linkly/agentic
+#
+# Start the engine and every enabled worker with: iii compose --up
+#
+# The agent stack below is live: an agent runs in the console and builds Linkly
+# with you. The Anthropic and OpenAI providers ship enabled; put your key in
+# .env before you start Compose. For a different provider, add it after the
+# first start with: iii trigger compose::add worker=provider-<name>
+#
+# Each chapter has its own block. As the agent builds a chapter, it creates that
+# chapter's worker and uncomments the block here.
+namespace: default
+startup_timeout: 360s
+
+engine:
+  url: ws://127.0.0.1:49134
+
+  # Ch. 5: real-time streams.
+  # workers:
+  #   iii-stream: {}
+
+containers:
+  # Ch. 1: HTTP endpoints, an in-memory key-value store, and the link worker.
+  http:
+    worker: package://http
+    version: "0.21.8"
+    config_name: http
+
+  state:
+    worker: package://state
+    version: "0.22.7"
+    config_name: state
+    config_override:
+      adapter:
+        name: kv
+        config:
+          store_method: in_memory
+
+  # Ch. 1: your link worker. Build it, install its deps, then add it with
+  # `iii trigger compose::add worker=./link`. http and state above are ready for it.
+  # link:
+  #   worker: path://./link
+  #   # Ch. 3: the schema is created at startup, after database is up.
+  #   # start_after: [database]
+
+  # The agent stack. llm-router and the providers read your keys from .env. The
+  # Anthropic and OpenAI providers ship enabled; add another after `iii compose
+  # --up` with: iii trigger compose::add worker=provider-<name>
+  cron:
+    worker: package://cron
+    version: "0.21.15"
+  queue:
+    worker: package://queue
+    version: "0.21.10"
+    working_dir: .
+  console:
+    worker: package://console
+    version: "1.9.18"
+  shell:
+    worker: package://shell
+    version: "0.12.1"
+    working_dir: .
+  session-manager:
+    worker: package://session-manager
+    version: "1.0.16"
+  iii-directory:
+    worker: package://iii-directory
+    version: "1.2.7"
+  llm-router:
+    worker: package://llm-router
+    version: "1.4.17"
+    start_after: [state]
+    env_file: ['./.env']
+  provider-anthropic:
+    worker: package://provider-anthropic
+    version: "1.2.14"
+    env_file: ['./.env']
+    start_after: [state, llm-router]
+  provider-openai:
+    worker: package://provider-openai
+    version: "1.2.10"
+    env_file: ['./.env']
+    start_after: [state, llm-router]
+  context-manager:
+    worker: package://context-manager
+    version: "1.1.5"
+    start_after: [llm-router]
+  harness:
+    worker: package://harness
+    version: "1.8.12"
+    start_after:
+      - context-manager
+      - cron
+      - iii-directory
+      - llm-router
+      - provider-anthropic
+      - provider-openai
+      - queue
+      - session-manager
+      - shell
+      - state
+
+  # Ch. 2: the engine injects iii-observability. Nothing to add.
+
+  # Ch. 3: SQLite storage for links and clicks.
+  # database:
+  #   worker: package://database
+  #   version: "0.5.8"
+  #   config_name: database
+  #   working_dir: .
+  #   config_override:
+  #     databases:
+  #       primary:
+  #         pool:
+  #           acquire_timeout_ms: 5000
+  #           idle_timeout_ms: 30000
+  #           max: 10
+  #         url: sqlite:./data/iii.db
+  # Ch. 4: the analytics worker keeps its counts in its own database.
+  #       analytics:
+  #         url: sqlite:./data/analytics.db
+
+  # Ch. 4: pub/sub events and the Python analytics worker. The queue worker is
+  # already running (the harness uses it); define a clicks queue with queue::define.
+  # pubsub:
+  #   worker: package://pubsub
+  #   version: "0.21.4"
+  # analytics:
+  #   worker: path://./analytics
+  #   start_after: [database, pubsub]
+
+  # Ch. 5: the live click stream. Uncomment iii-stream above as well.
+  # click-streamer:
+  #   worker: path://./click-streamer
+  #   start_after: [pubsub]
+
+  # Ch. 6: bulk CSV import over a channel.
+  # bulk-importer:
+  #   worker: path://./bulk-importer
+  #   start_after: [link]
+
+  # Ch. 7: browser connections. The rbac-proxy worker fronts a public port and
+  # admits browsers via auth::browser; the engine's 49134 stays the trusted
+  # listener for local workers. The configuration worker it needs always runs.
+  # rbac-proxy:
+  #   worker: package://rbac-proxy
+  #   version: "1.0.5"
+  #   config_name: rbac-proxy
+  #   config_override:
+  #     host: 127.0.0.1
+  #     port: 3110
+  #     engine_url: ws://127.0.0.1:49134
+  #     rbac:
+  #       auth_function_id: auth::browser
+  #       expose_functions:
+  #         - match("link::create")
+  #         - match("link::request_delete")
+  # auth:
+  #   worker: path://./auth

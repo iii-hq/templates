@@ -1,0 +1,43 @@
+name: Linkly
+description: Scaffold for the Linkly tutorial - a link shortener built one worker at a time
+version: "0.23.0"
+min_iii_version: "0.23.0"
+
+treat_required_as_included: true
+requires:
+  - typescript
+  - javascript
+  - python
+optional: []
+
+files:
+  - README.md
+  - worker-compose.yaml
+  - .env
+  - data/.gitkeep
+  - link/iii.worker.yaml
+  - link/package.json
+  - link/tsconfig.json
+  - link/src/index.ts
+  - analytics/iii.worker.yaml
+  - analytics/requirements.txt
+  - analytics/src/main.py
+  - click-streamer/iii.worker.yaml
+  - click-streamer/package.json
+  - click-streamer/tsconfig.json
+  - click-streamer/src/index.ts
+  - bulk-importer/iii.worker.yaml
+  - bulk-importer/package.json
+  - bulk-importer/tsconfig.json
+  - bulk-importer/src/index.ts
+  - auth/iii.worker.yaml
+  - auth/package.json
+  - auth/tsconfig.json
+  - auth/src/index.ts
+  - channel-client/package.json
+  - channel-client/import-links.js
+
+next_steps:
+  - 'Open README.md to pick a path'
+  - 'Agentic: https://iii.dev/docs/next/tutorials/linkly/agentic'
+  - 'Exploration: https://iii.dev/docs/next/tutorials/linkly/foundations'

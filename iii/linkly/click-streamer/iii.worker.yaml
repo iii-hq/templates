@@ -1,0 +1,3 @@
+name: click-streamer
+scripts:
+  start: npm start

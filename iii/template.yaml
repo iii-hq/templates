@@ -8,6 +8,8 @@ templates:
   # - quickstart-ai-agents
   - starter
   - harness
+  - linkly
+  - linkly-agentic
 
 # Shared files from this directory included in every template
 # Supports renaming: source is the file in this directory, dest is the name in each template

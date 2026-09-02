@@ -1,0 +1,23 @@
+name: Linkly (agentic)
+description: Scaffold for the agentic path of the Linkly tutorial - build a link shortener with a coding agent
+version: "0.23.0"
+min_iii_version: "0.23.0"
+
+treat_required_as_included: true
+requires:
+  - typescript
+optional: []
+
+files:
+  - README.md
+  - worker-compose.yaml
+  - .env
+  - data/.gitkeep
+  - link/iii.worker.yaml
+  - link/package.json
+  - link/tsconfig.json
+  - link/src/index.ts
+
+next_steps:
+  - 'Add your provider key to .env, then run: iii compose --up'
+  - 'Agentic path: https://iii.dev/docs/next/tutorials/linkly/agentic'

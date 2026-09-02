@@ -1,0 +1,107 @@
+# Project workers for Linkly.
+# Docs: https://iii.dev/docs/next/tutorials/linkly/overview
+#
+# Start the engine and every enabled worker with: iii compose --up
+#
+# Each chapter has its own block below. Uncomment the block for the chapter you
+# are on, then restart Compose.
+namespace: default
+startup_timeout: 360s
+
+engine:
+  url: ws://127.0.0.1:49134
+
+  # Ch. 5: real-time streams.
+  # workers:
+  #   iii-stream: {}
+
+containers:
+  # Ch. 1: HTTP endpoints, an in-memory key-value store, and the link worker.
+  http:
+    worker: package://http
+    version: "0.21.8"
+    config_name: http
+
+  state:
+    worker: package://state
+    version: "0.22.7"
+    config_name: state
+    config_override:
+      adapter:
+        name: kv
+        config:
+          store_method: in_memory
+
+  link:
+    worker: path://./link
+    # Ch. 3: the schema is created at startup, after database is up.
+    # start_after: [database]
+
+  # Ch. 2: the engine injects iii-observability. Nothing to add.
+
+  # Ch. 3: SQLite storage for links and clicks.
+  # database:
+  #   worker: package://database
+  #   version: "0.5.8"
+  #   config_name: database
+  #   working_dir: .
+  #   config_override:
+  #     databases:
+  #       primary:
+  #         pool:
+  #           acquire_timeout_ms: 5000
+  #           idle_timeout_ms: 30000
+  #           max: 10
+  #         url: sqlite:./data/iii.db
+  # Ch. 4: the analytics worker keeps its counts in its own database.
+  #       analytics:
+  #         url: sqlite:./data/analytics.db
+
+  # Ch. 4: a click queue, pub/sub events, and the Python analytics worker.
+  # queue:
+  #   worker: package://queue
+  #   version: "0.21.10"
+  #   config_name: queue
+  #   working_dir: .
+  #   config_override:
+  #     queue_configs:
+  #       clicks:
+  #         type: standard
+  #         max_retries: 5
+  #         concurrency: 5
+  # pubsub:
+  #   worker: package://pubsub
+  #   version: "0.21.4"
+  # analytics:
+  #   worker: path://./analytics
+  #   start_after: [database, pubsub]
+
+  # Ch. 5: the live click stream. Uncomment iii-stream above as well.
+  # click-streamer:
+  #   worker: path://./click-streamer
+  #   start_after: [pubsub]
+
+  # Ch. 6: bulk CSV import over a channel.
+  # bulk-importer:
+  #   worker: path://./bulk-importer
+  #   start_after: [link]
+
+  # Ch. 7: browser connections. The rbac-proxy worker fronts a public port and
+  # admits browsers via auth::browser; the engine's 49134 stays the trusted
+  # listener for local workers. The configuration worker it needs always runs.
+  # rbac-proxy:
+  #   worker: package://rbac-proxy
+  #   version: "1.0.5"
+  #   config_name: rbac-proxy
+  #   config_override:
+  #     host: 127.0.0.1
+  #     port: 3110
+  #     engine_url: ws://127.0.0.1:49134
+  #     rbac:
+  #       auth_function_id: auth::browser
+  #       expose_functions:
+  #         - match("link::create")
+  #         - match("link::request_delete")
+  # auth:
+  #   worker: path://./auth
+  #   env_file: ['./.env']
