@@ -4,8 +4,9 @@
 # Start the engine and every enabled worker with: iii compose --up
 #
 # The agent stack below is live: an agent runs in the console and builds Linkly
-# with you. Add your provider after the first start with:
-#   iii trigger compose::add worker=provider-<name>
+# with you. The Anthropic and OpenAI providers ship enabled; put your key in
+# .env before you start Compose. For a different provider, add it after the
+# first start with: iii trigger compose::add worker=provider-<name>
 #
 # Each chapter has its own block. As the agent builds a chapter, it creates that
 # chapter's worker and uncomments the block here.
@@ -58,8 +59,9 @@ containers:
   #   # Ch. 3: the schema is created at startup, after database is up.
   #   # start_after: [database]
 
-  # The agent stack. llm-router reads your provider key from .env. Add a provider
-  # after `iii compose --up` with: iii trigger compose::add worker=provider-<name>
+  # The agent stack. llm-router and the providers read your keys from .env. The
+  # Anthropic and OpenAI providers ship enabled; add another after `iii compose
+  # --up` with: iii trigger compose::add worker=provider-<name>
   cron:
     worker: package://cron
     version: "0.21.15"
@@ -85,6 +87,16 @@ containers:
     version: "1.4.17"
     start_after: [state]
     env_file: ['./.env']
+  provider-anthropic:
+    worker: package://provider-anthropic
+    version: "1.2.14"
+    env_file: ['./.env']
+    start_after: [state, llm-router]
+  provider-openai:
+    worker: package://provider-openai
+    version: "1.2.10"
+    env_file: ['./.env']
+    start_after: [state, llm-router]
   context-manager:
     worker: package://context-manager
     version: "1.1.5"
@@ -97,6 +109,8 @@ containers:
       - cron
       - iii-directory
       - llm-router
+      - provider-anthropic
+      - provider-openai
       - queue
       - session-manager
       - shell
