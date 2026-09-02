@@ -82,6 +82,63 @@ containers:
     version: "1.2.10"
     env_file: ['./.env']
     start_after: [state, llm-router]
+
+  # Additional providers that use API Keys
+  #
+  # Uncomment a block, uncomment its key in .env, put the key there, and
+  # restart the compose daemon so it re-reads this file.
+
+  #  provider-deepseek:            # DEEPSEEK_API_KEY
+  #    worker: package://provider-deepseek
+  #    version: "next"
+  #    start_after: [state, llm-router]
+
+  #  provider-kimi:                # MOONSHOT_API_KEY, not KIMI_API_KEY
+  #    worker: package://provider-kimi
+  #    version: "next"
+  #    start_after: [state, llm-router]
+
+  #  provider-xai:                 # XAI_API_KEY
+  #    worker: package://provider-xai
+  #    version: "next"
+  #    start_after: [state, llm-router]
+
+  #  provider-zai:                 # ZAI_API_KEY
+  #    worker: package://provider-zai
+  #    version: "next"
+  #    start_after: [state, llm-router]
+
+  #  provider-openrouter:          # OPENROUTER_API_KEY
+  #    # Latest stable release; not compatible with state 0.22.2 yet.
+  #    worker: package://provider-openrouter
+  #    version: "next"
+  #    start_after: [state, llm-router]
+
+  #  provider-llamacpp:            # LLAMACPP_API_KEY
+  #    worker: package://provider-llamacpp
+  #    version: "next"
+  #    start_after: [state, llm-router]
+
+  # Providers that do not require an API Key
+  # Note: These providers are experimental.
+  #
+  #   provider-claude-code     reads ~/.claude/.credentials.json, written by the
+  #                            Claude Code CLI when you sign in there
+  #   provider-github-copilot  no file and no env var: it runs a GitHub device
+  #                            flow. Run iii trigger provider::github-copilot::login::start,
+  #                            enter the user_code it returns at the verification
+  #                            URL, then call iii trigger provider::github-copilot::login::poll.
+
+  #  provider-claude-code:
+  #    worker: package://provider-claude-code
+  #    version: "next"
+  #    start_after: [state, llm-router]
+
+  #  provider-github-copilot:
+  #    worker: package://provider-github-copilot
+  #    version: "next"
+  #    start_after: [state, llm-router]
+
   context-manager:
     worker: package://context-manager
     version: "1.1.5"
