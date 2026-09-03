@@ -22,6 +22,7 @@
 //   const rows = csv.trim().split("\n").slice(1); // skip the header row
 //
 //   let imported = 0;
+//   let skipped = 0;
 //   for (const row of rows) {
 //     // Split on the first comma only, so commas inside the URL survive.
 //     const comma = row.indexOf(",");
@@ -29,14 +30,20 @@
 //     const code = row.slice(0, comma).trim();
 //     const url = row.slice(comma + 1).trim();
 //     if (!url) continue;
-//     await worker.trigger({
-//       function_id: "link::create",
-//       payload: { code, url },
-//     });
-//     imported += 1;
+//     try {
+//       await worker.trigger({
+//         function_id: "link::create",
+//         payload: { code, url },
+//       });
+//       imported += 1;
+//     } catch (err) {
+//       // One bad row (a code already taken, say) must not abort the batch.
+//       skipped += 1;
+//       logger.error("bulk import row skipped", { code, error: String(err) });
+//     }
 //   }
-//   logger.info("bulk import complete", { imported });
-//   return { imported };
+//   logger.info("bulk import complete", { imported, skipped });
+//   return { imported, skipped };
 // });
 //
 // logger.info("bulk-importer ready");
