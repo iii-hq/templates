@@ -42,7 +42,7 @@ containers:
   # Ch. 3: SQLite storage for links and clicks.
   # database:
   #   worker: package://database
-  #   version: "0.5.8"
+  #   version: "0.5.10"
   #   config_name: database
   #   working_dir: .
   #   config_override:
