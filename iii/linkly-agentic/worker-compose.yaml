@@ -56,10 +56,10 @@ containers:
     working_dir: .
   console:
     worker: package://console
-    version: "1.9.18"
+    version: "1.9.19"
   shell:
     worker: package://shell
-    version: "0.12.1"
+    version: "0.12.3"
     working_dir: .
   session-manager:
     worker: package://session-manager
@@ -163,7 +163,7 @@ containers:
   # Ch. 3: SQLite storage for links and clicks.
   # database:
   #   worker: package://database
-  #   version: "0.5.8"
+  #   version: "0.5.10"
   #   config_name: database
   #   working_dir: .
   #   config_override:
