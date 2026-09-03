@@ -109,7 +109,6 @@ containers:
   #    start_after: [state, llm-router]
 
   #  provider-openrouter:          # OPENROUTER_API_KEY
-  #    # Latest stable release; not compatible with state 0.22.2 yet.
   #    worker: package://provider-openrouter
   #    version: "next"
   #    start_after: [state, llm-router]
