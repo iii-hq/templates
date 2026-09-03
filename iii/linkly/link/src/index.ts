@@ -236,26 +236,35 @@
 // });
 
 // --- Ch. 3 | ensureSchema ---
+// The database worker may register a moment after link, so retry until it
+// answers instead of crashing on the first call.
 // async function ensureSchema(): Promise<void> {
-//   await worker.trigger({
-//     function_id: "database::execute",
-//     payload: {
-//       db: DB,
-//       sql: "CREATE TABLE IF NOT EXISTS links (code TEXT PRIMARY KEY, url TEXT NOT NULL, created_at TEXT NOT NULL)",
-//     },
-//   });
-//   await worker.trigger({
-//     function_id: "database::execute",
-//     payload: {
-//       db: DB,
-//       sql: "CREATE TABLE IF NOT EXISTS clicks (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL, clicked_at TEXT NOT NULL)",
-//     },
-//   });
+//   for (let attempt = 1; ; attempt++) {
+//     try {
+//       await worker.trigger({
+//         function_id: "database::execute",
+//         payload: {
+//           db: DB,
+//           sql: "CREATE TABLE IF NOT EXISTS links (code TEXT PRIMARY KEY, url TEXT NOT NULL, created_at TEXT NOT NULL)",
+//         },
+//       });
+//       await worker.trigger({
+//         function_id: "database::execute",
+//         payload: {
+//           db: DB,
+//           sql: "CREATE TABLE IF NOT EXISTS clicks (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL, clicked_at TEXT NOT NULL)",
+//         },
+//       });
+//       logger.info("database: ready");
+//       return;
+//     } catch (err) {
+//       if (attempt >= 30) throw err;
+//       await new Promise((resolve) => setTimeout(resolve, 1000));
+//     }
+//   }
 // }
 //
-// ensureSchema()
-//   .then(() => logger.info("database: ready"))
-//   .catch((err) => logger.error("database: schema init failed", { error: String(err) }));
+// ensureSchema().catch((err) => logger.error("database: schema init failed", { error: String(err) }));
 
 // --- Ch. 3 | link::record_click ---
 // worker.registerFunction(
