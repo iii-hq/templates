@@ -6,6 +6,7 @@
 
 # --- Ch. 4 | analytics::on_link_created ---
 # import os
+# import time
 # from datetime import datetime, timezone
 #
 # from iii import register_worker, InitOptions
@@ -20,16 +21,27 @@
 # DB = "analytics"
 #
 # def ensure_schema() -> None:
-#     """The analytics worker owns its own table, in its own database."""
-#     worker.trigger(
-#         {
-#             "function_id": "database::execute",
-#             "payload": {
-#                 "db": DB,
-#                 "sql": "CREATE TABLE IF NOT EXISTS daily_link_counts (day TEXT PRIMARY KEY, count INTEGER NOT NULL)",
-#             },
-#         }
-#     )
+#     """The analytics worker owns its own table, in its own database.
+#
+#     The database worker may register a moment after analytics, so retry until it
+#     answers instead of crashing on the first call.
+#     """
+#     for attempt in range(1, 31):
+#         try:
+#             worker.trigger(
+#                 {
+#                     "function_id": "database::execute",
+#                     "payload": {
+#                         "db": DB,
+#                         "sql": "CREATE TABLE IF NOT EXISTS daily_link_counts (day TEXT PRIMARY KEY, count INTEGER NOT NULL)",
+#                     },
+#                 }
+#             )
+#             return
+#         except Exception:
+#             if attempt >= 30:
+#                 raise
+#             time.sleep(1)
 #
 # def on_link_created(data: dict) -> dict:
 #     """Runs whenever link publishes `link.created`. Counts links per day."""

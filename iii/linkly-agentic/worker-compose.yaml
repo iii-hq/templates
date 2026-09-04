@@ -16,9 +16,10 @@ startup_timeout: 360s
 engine:
   url: ws://127.0.0.1:49134
 
-  # Ch. 5: real-time streams.
-  # workers:
-  #   iii-stream: {}
+  # The engine-managed stream worker runs from the start; Ch. 5 wires clicks into it.
+  # Engine workers cannot be added later without an engine restart, so it is enabled here.
+  workers:
+    iii-stream: {}
 
 containers:
   # Ch. 1: HTTP endpoints, an in-memory key-value store, and the link worker.
@@ -187,7 +188,7 @@ containers:
   #   worker: path://./analytics
   #   start_after: [database, pubsub]
 
-  # Ch. 5: the live click stream. Uncomment iii-stream above as well.
+  # Ch. 5: the live click stream. The iii-stream engine worker is already running.
   # click-streamer:
   #   worker: path://./click-streamer
   #   start_after: [pubsub]
