@@ -37,9 +37,12 @@
 //       });
 //       imported += 1;
 //     } catch (err) {
-//       // One bad row (a code already taken, say) must not abort the batch.
+//       // Skip a row the application rejects (a code already taken). Re-throw
+//       // anything else (a timeout, a worker that is down) so a broken import
+//       // fails loudly instead of counting rows it never created as "skipped".
+//       if (!String(err).includes("already taken")) throw err;
 //       skipped += 1;
-//       logger.error("bulk import row skipped", { code, error: String(err) });
+//       logger.warn("bulk import row skipped", { code, error: String(err) });
 //     }
 //   }
 //   logger.info("bulk import complete", { imported, skipped });
