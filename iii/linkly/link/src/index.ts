@@ -236,8 +236,6 @@
 // });
 
 // --- Ch. 3 | ensureSchema ---
-// The database worker may register a moment after link, so retry until it
-// answers instead of crashing on the first call.
 // async function ensureSchema(): Promise<void> {
 //   for (let attempt = 1; ; attempt++) {
 //     try {
