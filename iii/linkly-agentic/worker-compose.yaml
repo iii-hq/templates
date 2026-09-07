@@ -50,37 +50,37 @@ containers:
   # --up` with: iii trigger compose::add worker=provider-<name>
   cron:
     worker: package://cron
-    version: "0.21.17"
+    version: "0.21.18"
   queue:
     worker: package://queue
     version: "0.21.11"
     working_dir: .
   console:
     worker: package://console
-    version: "1.9.21"
+    version: "1.9.24"
   shell:
     worker: package://shell
-    version: "0.12.4"
+    version: "0.12.5"
     working_dir: .
   session-manager:
     worker: package://session-manager
     version: "1.0.17"
   iii-directory:
     worker: package://iii-directory
-    version: "1.2.8"
+    version: "1.2.11"
   llm-router:
     worker: package://llm-router
-    version: "1.4.18"
+    version: "1.4.19"
     start_after: [state]
     env_file: ['./.env']
   provider-anthropic:
     worker: package://provider-anthropic
-    version: "1.2.15"
+    version: "1.2.16"
     env_file: ['./.env']
     start_after: [state, llm-router]
   provider-openai:
     worker: package://provider-openai
-    version: "1.2.11"
+    version: "1.2.12"
     env_file: ['./.env']
     start_after: [state, llm-router]
 
@@ -91,32 +91,32 @@ containers:
 
   #  provider-deepseek:            # DEEPSEEK_API_KEY
   #    worker: package://provider-deepseek
-  #    version: "0.1.10"
+  #    version: "0.1.11"
   #    start_after: [state, llm-router]
 
   #  provider-kimi:                # MOONSHOT_API_KEY, not KIMI_API_KEY
   #    worker: package://provider-kimi
-  #    version: "1.1.8"
+  #    version: "1.1.10"
   #    start_after: [state, llm-router]
 
   #  provider-xai:                 # XAI_API_KEY
   #    worker: package://provider-xai
-  #    version: "1.3.9"
+  #    version: "1.3.10"
   #    start_after: [state, llm-router]
 
   #  provider-zai:                 # ZAI_API_KEY
   #    worker: package://provider-zai
-  #    version: "0.5.8"
+  #    version: "0.5.9"
   #    start_after: [state, llm-router]
 
   #  provider-openrouter:          # OPENROUTER_API_KEY
   #    worker: package://provider-openrouter
-  #    version: "0.1.5"
+  #    version: "0.1.6"
   #    start_after: [state, llm-router]
 
   #  provider-llamacpp:            # LLAMACPP_API_KEY
   #    worker: package://provider-llamacpp
-  #    version: "0.3.6"
+  #    version: "0.3.8"
   #    start_after: [state, llm-router]
 
   # Providers that do not require an API Key
@@ -131,12 +131,12 @@ containers:
 
   #  provider-claude-code:
   #    worker: package://provider-claude-code
-  #    version: "0.1.9"
+  #    version: "0.1.10"
   #    start_after: [state, llm-router]
 
   #  provider-github-copilot:
   #    worker: package://provider-github-copilot
-  #    version: "0.1.6"
+  #    version: "0.1.7"
   #    start_after: [state, llm-router]
 
   context-manager:
@@ -145,7 +145,7 @@ containers:
     start_after: [llm-router]
   harness:
     worker: package://harness
-    version: "1.8.13"
+    version: "1.8.17"
     start_after:
       - context-manager
       - cron
@@ -163,7 +163,7 @@ containers:
   # Ch. 3: SQLite storage for links and clicks.
   # database:
   #   worker: package://database
-  #   version: "0.5.12"
+  #   version: "0.5.13"
   #   config_name: database
   #   working_dir: .
   #   config_override:
