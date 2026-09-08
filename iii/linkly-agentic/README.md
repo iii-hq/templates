@@ -21,17 +21,19 @@ as it reaches each chapter.
 
 ## Start
 
-1. Add your provider key to `.env`.
+1. Add your provider key to `.env`. Anthropic and OpenAI ship enabled in `worker-compose.yaml`;
+   nothing else to add for those two.
 2. Start the engine and the agent stack:
 
    ```bash
    iii compose --up
    ```
 
-3. Add your provider (Anthropic shown; swap the name for yours):
+3. Only for a provider that does not ship enabled (OpenAI Codex, DeepSeek, Kimi, xAI, ...), add its
+   worker after start:
 
    ```bash
-   iii trigger compose::add worker=provider-anthropic
+   iii trigger compose::add worker=provider-<name>
    ```
 
 4. Open the console at [http://127.0.0.1:3113](http://127.0.0.1:3113) and start a session.
