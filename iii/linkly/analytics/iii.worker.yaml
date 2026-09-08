@@ -1,4 +1,7 @@
 name: analytics
+runtime:
+  # Base OCI image used as the worker rootfs when virtualized.
+  base_image: docker.io/iiidev/python:latest
 scripts:
   install: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
   start: .venv/bin/python src/main.py
