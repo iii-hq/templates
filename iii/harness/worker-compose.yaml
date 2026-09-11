@@ -8,19 +8,19 @@ engine:
 containers:
   queue:
     worker: package://queue
-    version: "^0.21.12"
+    version: "latest"
 
   state:
     worker: package://state
-    version: "^0.22.9"
+    version: "latest"
 
   session-manager:
     worker: package://session-manager
-    version: "^1.0.18"
+    version: "latest"
 
   llm-router:
     worker: package://llm-router
-    version: "^1.4.20"
+    version: "latest"
     start_after:
       - state
     # Every provider key resolves in the router's process, not in the provider
@@ -29,14 +29,14 @@ containers:
 
   provider-anthropic:
     worker: package://provider-anthropic
-    version: "^1.2.17"
+    version: "latest"
     start_after:
       - llm-router
       - state
 
   provider-openai:
     worker: package://provider-openai
-    version: "^1.2.13"
+    version: "latest"
     start_after:
       - llm-router
       - state
@@ -51,42 +51,42 @@ containers:
 
   #  provider-deepseek:            # DEEPSEEK_API_KEY
   #    worker: package://provider-deepseek
-  #    version: "^0.1.12"
+  #    version: "latest"
   #    start_after:
   #      - llm-router
   #      - state
 
   #  provider-kimi:                # MOONSHOT_API_KEY, not KIMI_API_KEY
   #    worker: package://provider-kimi
-  #    version: "^1.1.11"
+  #    version: "latest"
   #    start_after:
   #      - llm-router
   #      - state
 
   #  provider-xai:                 # XAI_API_KEY
   #    worker: package://provider-xai
-  #    version: "^1.3.11"
+  #    version: "latest"
   #    start_after:
   #      - llm-router
   #      - state
 
   #  provider-zai:                 # ZAI_API_KEY
   #    worker: package://provider-zai
-  #    version: "^0.5.10"
+  #    version: "latest"
   #    start_after:
   #      - llm-router
   #      - state
 
   #  provider-openrouter:          # OPENROUTER_API_KEY
   #    worker: package://provider-openrouter
-  #    version: "^0.1.7"
+  #    version: "latest"
   #    start_after:
   #      - llm-router
   #      - state
 
   #  provider-llamacpp:            # LLAMACPP_API_KEY
   #    worker: package://provider-llamacpp
-  #    version: "^0.3.9"
+  #    version: "latest"
   #    start_after:
   #      - llm-router
   #      - state
@@ -103,50 +103,50 @@ containers:
 
   #  provider-openai-codex:
   #    worker: package://provider-openai-codex
-  #    version: "^0.4.10"
+  #    version: "latest"
   #    start_after:
   #      - llm-router
   #      - state
 
   #  provider-claude-code:
   #    worker: package://provider-claude-code
-  #    version: "^0.1.11"
+  #    version: "latest"
   #    start_after:
   #      - llm-router
   #      - state
 
   #  provider-github-copilot:
   #    worker: package://provider-github-copilot
-  #    version: "^0.1.8"
+  #    version: "latest"
   #    start_after:
   #      - llm-router
   #      - state
 
   context-manager:
     worker: package://context-manager
-    version: "^1.1.7"
+    version: "latest"
     start_after:
       - llm-router
 
   iii-directory:
     worker: package://iii-directory
-    version: "^1.2.14"
+    version: "latest"
 
   cron:
     worker: package://cron
-    version: "^0.21.18"
+    version: "latest"
 
   console:
     worker: package://ade
-    version: "^1.9.26"
+    version: "latest"
 
   shell:
     worker: package://shell
-    version: "^0.12.7"
+    version: "latest"
 
   harness:
     worker: package://harness
-    version: "^1.8.20"
+    version: "latest"
     start_after:
       - state
       - queue
@@ -161,4 +161,4 @@ containers:
 
   web:
     worker: package://web
-    version: "^1.2.14"
+    version: "latest"
