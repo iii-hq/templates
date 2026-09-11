@@ -137,7 +137,7 @@ containers:
     version: "^0.21.18"
 
   console:
-    worker: package://console
+    worker: package://ade
     version: "^1.9.26"
 
   shell:
