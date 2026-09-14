@@ -20,12 +20,12 @@ containers:
   # Ch. 1: HTTP endpoints, an in-memory key-value store, and the link worker.
   http:
     worker: package://http
-    version: "0.21.9"
+    version: latest
     config_name: http
 
   state:
     worker: package://state
-    version: "0.22.8"
+    version: latest
     config_name: state
     config_override:
       adapter:
@@ -43,7 +43,7 @@ containers:
   # Ch. 3: SQLite storage for links and clicks.
   # database:
   #   worker: package://database
-  #   version: "0.5.13"
+  #   version: latest
   #   config_name: database
   #   working_dir: .
   #   config_override:
@@ -61,7 +61,7 @@ containers:
   # Ch. 4: a click queue, pub/sub events, and the Python analytics worker.
   # queue:
   #   worker: package://queue
-  #   version: "0.21.11"
+  #   version: latest
   #   config_name: queue
   #   working_dir: .
   #   config_override:
@@ -72,7 +72,7 @@ containers:
   #         concurrency: 5
   # pubsub:
   #   worker: package://pubsub
-  #   version: "0.21.5"
+  #   version: latest
   # analytics:
   #   worker: path://./analytics
   #   start_after: [database, pubsub]
@@ -92,7 +92,7 @@ containers:
   # listener for local workers. The configuration worker it needs always runs.
   # rbac-proxy:
   #   worker: package://rbac-proxy
-  #   version: "1.0.6"
+  #   version: latest
   #   config_name: rbac-proxy
   #   config_override:
   #     host: 127.0.0.1
