@@ -1,7 +1,8 @@
-# harness + console: a base compose template
+# harness + console + kanban: a compose template
 
-The smallest compose project that gives you a working iii agent harness and the
-web console.
+The smallest compose project that gives you a working iii agent harness, the
+web console, and a kanban board whose five agent profiles plan, build and
+review work as tickets.
 
 ## Setup your harness authentication (API Key or Provider Login)
 
@@ -51,12 +52,12 @@ compose serving
 ✓ llm-router ready (1.7s)
 ✓ provider-anthropic ready (2.1s)
 ✓ provider-openai ready (2.1s)
-✓ provider-openai-codex ready (2.1s)
+✓ browser ready (2.1s)
 ✓ context-manager ready (2.0s)
 ✓ harness ready (6.6s)
 ✓ ade ready (956ms)
 ✓ kanban ready (956ms)
-up: 13 of 13 changed in 22.8s
+up: 14 of 14 changed in 22.8s
 ```
 
 Once you see that output open the console at **http://127.0.0.1:3113**. It's all setup and ready for you
@@ -76,9 +77,32 @@ that they are cached.
 | ---- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | 1    | `state`, `queue`, `cron`, `shell`, `session-manager`, `iii-directory` | Direct `harness` dependencies with no dependencies of their own                     |
 | 2    | `llm-router`                                                          | Model routing. Needs `state`                                                        |
-| 3    | `provider-anthropic`, `provider-openai`, `provider-openai-codex`, `context-manager` | `harness` names both providers explicitly, so both are required even if you use one |
+| 3    | `provider-anthropic`, `provider-openai`, `context-manager`             | `harness` names both providers explicitly, so both are required even if you use one |
 | 4    | `harness`                                                             | The turn loop                                                                       |
-| 5    | `console`                                                             | The web UI                                                                          |
+| 5    | `ade`                                                                 | The web console                                                                     |
+| 6    | `browser`                                                             | Chromium sessions and one-shot fetches (`browser::fetch`) the profiles verify with |
+| 7    | `kanban`                                                              | The board, its console pages, and the five agent profiles                           |
+
+## Kanban board and agent profiles
+
+`kanban` keeps tickets, threaded comments and assignments in
+`data/kanban/board.json` and injects two console pages: the board at
+`#/ext/kanban-board` and a ticket screen at `#/ext/kanban-ticket`. Tickets get
+human keys (`KAN-1`), and every mutation is a `kanban::*` function, so the board
+can also be driven from the CLI:
+
+```bash
+iii trigger kanban::ticket::create title="Search filters persist" priority=high
+```
+
+The worker package also carries five agent profiles — `product-manager`,
+`tech-lead`, `backend-engineer`, `frontend-engineer`, `ade-worker-designer` —
+and the `kanban/*` skills they preload. `iii-directory` downloads them from the
+workers registry (`auto_download` is on by default) into `agents/` and
+`skills/kanban/`, and the console's agent picker lists them from then on. Pick
+Product Manager to turn an idea into tickets and Tech Lead to split and dispatch
+a feature; the engineers pick up the tickets assigned to them and move them to
+`in_review` when done.
 
 ## Credentials
 

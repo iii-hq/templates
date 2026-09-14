@@ -209,6 +209,26 @@ assert_contains "$LA_DIR/worker-compose.yaml" "worker: package://provider-openai
   iii compose build --file worker-compose.yaml
 )
 
+echo "Testing iii project init --template harness-kanban"
+(
+  cd "$TMP_DIR"
+  iii project init hk-test -t harness-kanban --skip-iii --template-dir "$TEMPLATE_DIR" </dev/null
+)
+
+HK_DIR="$TMP_DIR/hk-test"
+for expected in README.md worker-compose.yaml .env .gitignore; do
+  assert_file "$HK_DIR/$expected"
+done
+assert_contains "$HK_DIR/worker-compose.yaml" "worker: package://harness"
+assert_contains "$HK_DIR/worker-compose.yaml" "worker: package://kanban"
+assert_contains "$HK_DIR/worker-compose.yaml" "env_file: [./.env]"
+
+# The shipped file resolves every package, kanban included.
+(
+  cd "$HK_DIR"
+  iii compose build --file worker-compose.yaml
+)
+
 # `worker init` lives on the `iii-worker` binary, which the `iii` CLI installs
 # and manages. Override the path with III_WORKER_BIN.
 III_WORKER_BIN="${III_WORKER_BIN:-iii-worker}"

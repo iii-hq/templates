@@ -158,8 +158,8 @@ containers:
       - iii-directory
       - cron
       - ide
-  
-  browser:
+
+  browser: # Chromium sessions + one-shot fetches (browser::fetch) for verification
     worker: package://browser
     version: "latest"
 
