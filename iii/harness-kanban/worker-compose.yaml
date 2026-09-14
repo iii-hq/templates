@@ -158,7 +158,11 @@ containers:
       - iii-directory
       - cron
       - ide
-
-  browser: # Chromium sessions + one-shot fetches (browser::fetch) for verification
+  
+  browser:
     worker: package://browser
+    version: "latest"
+
+  kanban:
+    worker: package://kanban
     version: "latest"

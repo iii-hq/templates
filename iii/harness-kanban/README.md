@@ -55,6 +55,7 @@ compose serving
 ✓ context-manager ready (2.0s)
 ✓ harness ready (6.6s)
 ✓ ade ready (956ms)
+✓ kanban ready (956ms)
 up: 13 of 13 changed in 22.8s
 ```
 
@@ -78,44 +79,6 @@ that they are cached.
 | 3    | `provider-anthropic`, `provider-openai`, `provider-openai-codex`, `context-manager` | `harness` names both providers explicitly, so both are required even if you use one |
 | 4    | `harness`                                                             | The turn loop                                                                       |
 | 5    | `console`                                                             | The web UI                                                                          |
-| 6    | `browser`                                                             | Chromium sessions and one-shot HTTP fetches (`browser::fetch`) the profiles verify with |
-
-## Agent profiles: a team that coordinates through state
-
-`agents/` ships five profiles the console's agent picker lists (or
-`harness::send { options: { agent: "<id>" } }` runs). Each preloads its skills
-from `skills/harness/…`, and the harness freezes both into every session that
-runs as that profile.
-
-| Profile id | Role |
-| --- | --- |
-| `product-manager` | Interviews you, writes work items whose descriptions carry observable acceptance criteria, and gates `in_review` → `done` (any caveat goes back to `in_progress`). |
-| `tech-lead` | Splits one feature on the seam between backend, frontend and console UI, dispatches each item with `harness::spawn`, stays reachable on state wakes, verifies the seam in a browser session. |
-| `backend-engineer` | Builds workers, functions, triggers and configuration; verifies with a real call. |
-| `frontend-engineer` | Builds the browser app (Vite, React, TanStack, iii-browser-sdk); verifies in a real browser. |
-| `ade-worker-designer` | Builds the UI a worker injects into the console against `@iii-dev/console-ui`; verifies in the running console. |
-
-There is no board worker. The profiles coordinate through the `state` worker
-already in this compose file, and the protocol is the `harness/team/*` skills:
-
-- A work item is `state` scope `work`, key `<item-id>`: `{ id, title, status,
-  owner, reviewer, priority, parent, depends_on, description }`. `status` is
-  `todo` → `in_progress` → `in_review` → `done`; changes are `state::update`
-  merges, never `state::set`.
-- Messages are appended to scope `work:<item-id>`, key `to:<profile-id>`; a
-  role writes to other roles' keys and watches only its own.
-- Waiting is a `state` trigger wake (`engine::register_trigger` with no
-  `function_id`) on that key, armed before the write that invites the answer,
-  with an `expires_in_ms` deadline; it is re-armed on every wake and
-  unregistered when the item is `done`.
-- You can read or nudge any item from the console's state page
-  (`#/ext/state-manager`): scopes `work` and `work:<item-id>`.
-
-The profiles ship without a `model`, so each session takes the model of the
-send. To pin one, add `model: <provider>::<model>` (and optionally
-`reasoning_effort`) to a profile's frontmatter; `router::models::list` prints
-the catalog. Skill ids are prefixed `harness/` because `iii-directory` only
-lists skills whose namespace is a worker in this compose file.
 
 ## Credentials
 
