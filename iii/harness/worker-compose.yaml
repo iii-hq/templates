@@ -136,12 +136,12 @@ containers:
     worker: package://cron
     version: "latest"
 
-  console:
+  ade: # console
     worker: package://ade
     version: "latest"
 
-  shell:
-    worker: package://shell
+  ide: # shell
+    worker: package://ide
     version: "latest"
 
   harness:
@@ -157,7 +157,7 @@ containers:
       - context-manager
       - iii-directory
       - cron
-      - shell
+      - ide
 
   web:
     worker: package://web
