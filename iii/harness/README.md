@@ -45,7 +45,7 @@ compose serving
 ✓ state ready (1.4s)
 ✓ queue ready (1.2s)
 ✓ cron ready (1.2s)
-✓ shell ready (962ms)
+✓ ide ready (962ms)
 ✓ session-manager ready (1.2s)
 ✓ iii-directory ready (1.2s)
 ✓ llm-router ready (1.7s)
@@ -54,7 +54,7 @@ compose serving
 ✓ provider-openai-codex ready (2.1s)
 ✓ context-manager ready (2.0s)
 ✓ harness ready (6.6s)
-✓ console ready (956ms)
+✓ ade ready (956ms)
 up: 13 of 13 changed in 22.8s
 ```
 
