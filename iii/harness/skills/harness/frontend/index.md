@@ -11,7 +11,7 @@ description: >-
 These documents describe a standalone browser application (Vite + React,
 routed with TanStack Router, server state in TanStack Query, live engine data
 over `iii-browser-sdk`). They are not about UI injected into the ADE console;
-that is the `ade-worker-design` skill and the iii ADE Worker Designer's work.
+that is the `ade-worker-design` skill and the Frontend Engineer's work on an ADE worker.
 
 - `iii-browser-sdk` — make the app an iii worker: `registerWorker`,
   `registerFunction`, `trigger`, `registerTrigger`, state and channels. The

@@ -13,10 +13,10 @@ files:
   - .env
   - README.md
   - worker-compose.yaml
-  - agents/ade-worker-designer.md
+  - agents/ade-worker-builder.md
+  - agents/agent-profile-creator.md
   - agents/backend-engineer.md
   - agents/frontend-engineer.md
-  - agents/product-manager.md
   - agents/tech-lead.md
   - skills/harness/ade-worker-design/console-design.md
   - skills/harness/ade-worker-design/console-injectable-ui.md
@@ -33,13 +33,9 @@ files:
   - skills/harness/frontend/web-performance.md
   - skills/harness/iii-node/configuration.md
   - skills/harness/iii-node/index.md
-  - skills/harness/team/dispatch.md
-  - skills/harness/team/index.md
-  - skills/harness/team/planning.md
-  - skills/harness/team/review.md
-  - skills/harness/team/work-items.md
-  - skills/harness/team/worker-loop.md
+  - skills/harness/orchestration/index.md
+  - skills/harness/orchestration/report.md
 
 next_steps:
   - 'Open README.md for simple step by step instructions to configure and start the harness'
-  - 'Pick an agent profile (Product Manager, Tech Lead, engineers) in the console; the team workflow is documented in README.md'
+  - 'Pick an agent profile (ADE Worker Builder, Tech Lead, engineers, Agent Profile Creator) in the console; the hierarchy is documented in README.md'
