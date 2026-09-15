@@ -162,3 +162,7 @@ containers:
   browser: # Chromium sessions + one-shot fetches (browser::fetch) for verification
     worker: package://browser
     version: "latest"
+
+  kanban:
+    worker: package://kanban
+    version: "latest"

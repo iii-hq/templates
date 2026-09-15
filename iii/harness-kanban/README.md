@@ -1,7 +1,8 @@
-# harness + console: a base compose template
+# harness + console + kanban: a compose template
 
-The smallest compose project that gives you a working iii agent harness and the
-web console.
+The smallest compose project that gives you a working iii agent harness, the
+web console, and a kanban board whose five agent profiles plan, build and
+review work as tickets.
 
 ## Setup your harness authentication (API Key or Provider Login)
 
@@ -51,11 +52,12 @@ compose serving
 ✓ llm-router ready (1.7s)
 ✓ provider-anthropic ready (2.1s)
 ✓ provider-openai ready (2.1s)
-✓ provider-openai-codex ready (2.1s)
+✓ browser ready (2.1s)
 ✓ context-manager ready (2.0s)
 ✓ harness ready (6.6s)
 ✓ ade ready (956ms)
-up: 13 of 13 changed in 22.8s
+✓ kanban ready (956ms)
+up: 14 of 14 changed in 22.8s
 ```
 
 Once you see that output open the console at **http://127.0.0.1:3113**. It's all setup and ready for you
@@ -75,47 +77,32 @@ that they are cached.
 | ---- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | 1    | `state`, `queue`, `cron`, `shell`, `session-manager`, `iii-directory` | Direct `harness` dependencies with no dependencies of their own                     |
 | 2    | `llm-router`                                                          | Model routing. Needs `state`                                                        |
-| 3    | `provider-anthropic`, `provider-openai`, `provider-openai-codex`, `context-manager` | `harness` names both providers explicitly, so both are required even if you use one |
+| 3    | `provider-anthropic`, `provider-openai`, `context-manager`             | `harness` names both providers explicitly, so both are required even if you use one |
 | 4    | `harness`                                                             | The turn loop                                                                       |
-| 5    | `console`                                                             | The web UI                                                                          |
-| 6    | `browser`                                                             | Chromium sessions and one-shot HTTP fetches (`browser::fetch`) the profiles verify with |
+| 5    | `ade`                                                                 | The web console                                                                     |
+| 6    | `browser`                                                             | Chromium sessions and one-shot fetches (`browser::fetch`) the profiles verify with |
+| 7    | `kanban`                                                              | The board, its console pages, and the five agent profiles                           |
 
-## Agent profiles: a team that coordinates through state
+## Kanban board and agent profiles
 
-`agents/` ships five profiles the console's agent picker lists (or
-`harness::send { options: { agent: "<id>" } }` runs). Each preloads its skills
-from `skills/harness/…`, and the harness freezes both into every session that
-runs as that profile.
+`kanban` keeps tickets, threaded comments and assignments in
+`data/kanban/board.json` and injects two console pages: the board at
+`#/ext/kanban-board` and a ticket screen at `#/ext/kanban-ticket`. Tickets get
+human keys (`KAN-1`), and every mutation is a `kanban::*` function, so the board
+can also be driven from the CLI:
 
-| Profile id | Role |
-| --- | --- |
-| `product-manager` | Interviews you, writes work items whose descriptions carry observable acceptance criteria, and gates `in_review` → `done` (any caveat goes back to `in_progress`). |
-| `tech-lead` | Splits one feature on the seam between backend, frontend and console UI, dispatches each item with `harness::spawn`, stays reachable on state wakes, verifies the seam in a browser session. |
-| `backend-engineer` | Builds workers, functions, triggers and configuration; verifies with a real call. |
-| `frontend-engineer` | Builds the browser app (Vite, React, TanStack, iii-browser-sdk); verifies in a real browser. |
-| `ade-worker-designer` | Builds the UI a worker injects into the console against `@iii-dev/console-ui`; verifies in the running console. |
+```bash
+iii trigger kanban::ticket::create title="Search filters persist" priority=high
+```
 
-There is no board worker. The profiles coordinate through the `state` worker
-already in this compose file, and the protocol is the `harness/team/*` skills:
-
-- A work item is `state` scope `work`, key `<item-id>`: `{ id, title, status,
-  owner, reviewer, priority, parent, depends_on, description }`. `status` is
-  `todo` → `in_progress` → `in_review` → `done`; changes are `state::update`
-  merges, never `state::set`.
-- Messages are appended to scope `work:<item-id>`, key `to:<profile-id>`; a
-  role writes to other roles' keys and watches only its own.
-- Waiting is a `state` trigger wake (`engine::register_trigger` with no
-  `function_id`) on that key, armed before the write that invites the answer,
-  with an `expires_in_ms` deadline; it is re-armed on every wake and
-  unregistered when the item is `done`.
-- You can read or nudge any item from the console's state page
-  (`#/ext/state-manager`): scopes `work` and `work:<item-id>`.
-
-The profiles ship without a `model`, so each session takes the model of the
-send. To pin one, add `model: <provider>::<model>` (and optionally
-`reasoning_effort`) to a profile's frontmatter; `router::models::list` prints
-the catalog. Skill ids are prefixed `harness/` because `iii-directory` only
-lists skills whose namespace is a worker in this compose file.
+The worker package also carries five agent profiles — `product-manager`,
+`tech-lead`, `backend-engineer`, `frontend-engineer`, `ade-worker-designer` —
+and the `kanban/*` skills they preload. `iii-directory` downloads them from the
+workers registry (`auto_download` is on by default) into `agents/` and
+`skills/kanban/`, and the console's agent picker lists them from then on. Pick
+Product Manager to turn an idea into tickets and Tech Lead to split and dispatch
+a feature; the engineers pick up the tickets assigned to them and move them to
+`in_review` when done.
 
 ## Credentials
 

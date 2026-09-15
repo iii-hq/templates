@@ -8,6 +8,7 @@ templates:
   # - quickstart-ai-agents
   - starter
   - harness
+  - harness-kanban
   - linkly
   - linkly-agentic
 
@@ -29,6 +30,7 @@ language_files:
     - '.gitignore'
     - '.gitkeep'
     - '.dockerignore'
+    - '*.md'
     - 'README.md'
     - 'README*'
     - 'LICENSE'
