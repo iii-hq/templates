@@ -80,36 +80,47 @@ that they are cached.
 | 5    | `console`                                                             | The web UI                                                                          |
 | 6    | `browser`                                                             | Chromium sessions and one-shot HTTP fetches (`browser::fetch`) the profiles verify with |
 
-## Agent profiles: a team that coordinates through state
+## Agent profiles: a hierarchy that coordinates through spawn and state
 
 `agents/` ships five profiles the console's agent picker lists (or
-`harness::send { options: { agent: "<id>" } }` runs). Each preloads its skills
-from `skills/harness/…`, and the harness freezes both into every session that
-runs as that profile.
+`harness::send { options: { agent: "<id>" } }` runs). Each extends the
+harness's built-in `iii-minimal` identity and preloads its skills from
+`skills/harness/…`; the harness freezes both into every session that runs as
+that profile.
+
+```text
+iii-minimal
+├── ade-worker-builder        plans the spec with you, briefs a Tech Lead, accepts in the console
+│   └── tech-lead             writes the architecture, briefs the engineers, verifies the seam
+│       ├── backend-engineer  the Node worker: functions, trigger types, configuration, UI delivery
+│       └── frontend-engineer the UI the worker injects into the console
+└── agent-profile-creator     plans a new profile with you and writes it beside these
+```
 
 | Profile id | Role |
 | --- | --- |
-| `product-manager` | Interviews you, writes work items whose descriptions carry observable acceptance criteria, and gates `in_review` → `done` (any caveat goes back to `in_progress`). |
-| `tech-lead` | Splits one feature on the seam between backend, frontend and console UI, dispatches each item with `harness::spawn`, stays reachable on state wakes, verifies the seam in a browser session. |
-| `backend-engineer` | Builds workers, functions, triggers and configuration; verifies with a real call. |
-| `frontend-engineer` | Builds the browser app (Vite, React, TanStack, iii-browser-sdk); verifies in a real browser. |
-| `ade-worker-designer` | Builds the UI a worker injects into the console against `@iii-dev/console-ui`; verifies in the running console. |
+| `ade-worker-builder` | Interviews you until an ADE worker's spec is unambiguous (`specs/<worker>.md`), hands it to a Tech Lead, and accepts only after exercising every criterion in the running console. |
+| `tech-lead` | Turns the spec into an architecture (granular functions, reactive trigger types, one home per fact, the console surface), runs the Backend Engineer then the Frontend Engineer, and verifies the seam in a browser session. |
+| `backend-engineer` | Owns the package boilerplate (`package.json`, `scripts/dev.mjs`, `ui/build.mjs`, asset delivery, the `compose::add` declaration) that gives both halves hot reload under `pnpm dev`, builds the Node worker per the `iii-node` skill, and verifies every function with a real call. |
+| `frontend-engineer` | Builds the injected console UI against `@iii-dev/console-ui` and verifies it in the running console at every width and theme. |
+| `agent-profile-creator` | Plans a new profile with you, using the existing ones as the reference, and writes `agents/<id>.md`. |
 
-There is no board worker. The profiles coordinate through the `state` worker
-already in this compose file, and the protocol is the `harness/team/*` skills:
+There is no board and no message bus between agents. Orchestration is the
+`harness/orchestration` skill, two wires with one direction each:
 
-- A work item is `state` scope `work`, key `<item-id>`: `{ id, title, status,
-  owner, reviewer, priority, parent, depends_on, description }`. `status` is
-  `todo` → `in_progress` → `in_review` → `done`; changes are `state::update`
-  merges, never `state::set`.
-- Messages are appended to scope `work:<item-id>`, key `to:<profile-id>`; a
-  role writes to other roles' keys and watches only its own.
-- Waiting is a `state` trigger wake (`engine::register_trigger` with no
-  `function_id`) on that key, armed before the write that invites the answer,
-  with an `expires_in_ms` deadline; it is re-armed on every wake and
-  unregistered when the item is `done`.
-- You can read or nudge any item from the console's state page
-  (`#/ext/state-manager`): scopes `work` and `work:<item-id>`.
+- **Downstream is `harness::spawn`.** The `task` is the child's whole brief:
+  the spec or architecture file by path, the project root, what is out of
+  scope, the checks that mean done, and the state key for its result. A
+  child that must spawn children of its own (the Tech Lead) is spawned with
+  `options: { orchestrator: true }`.
+- **Upstream is `state`.** The child writes one result document
+  (`outcome`, `summary`, `evidence`, `files`, `questions`) to scope
+  `results`, key `<its session id>`, and stops. The parent armed a `state`
+  wake on that key before spawning, so the write starts its next turn. The
+  child never looks for a parent; feedback comes back as a new task in the
+  same session (`harness::spawn` with the same `session_id`).
+- Results are visible on the console's state page (`#/ext/state-manager`),
+  scope `results`.
 
 The profiles ship without a `model`, so each session takes the model of the
 send. To pin one, add `model: <provider>::<model>` (and optionally
