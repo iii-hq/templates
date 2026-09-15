@@ -45,6 +45,8 @@ jobs:
             || fromJSON(format('["{0}"]', inputs.channel))
           }}
     env:
+      # Covers the installer, CLI, smoke tests, and VHS subprocesses.
+      III_TELEMETRY_ENABLED: "false"
       III_TEMPLATE_DIR: ${{ github.workspace }}/iii
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

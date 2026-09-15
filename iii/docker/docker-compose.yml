@@ -21,6 +21,8 @@ services:
     environment:
       - RUST_LOG=info
       - III_EXECUTION_CONTEXT=docker
+      # Forward an operator's opt-out; customer projects keep the default.
+      - III_TELEMETRY_ENABLED=${III_TELEMETRY_ENABLED:-true}
     restart: unless-stopped
 
   # Uncomment if your workers need Redis.

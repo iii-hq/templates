@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Team validation must opt out before even the first CLI version check.
+export III_TELEMETRY_ENABLED=false
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TEMPLATE_DIR="${III_TEMPLATE_DIR:-"$ROOT_DIR/iii"}"
 
@@ -34,6 +37,41 @@ assert_contains() {
     sed -n '1,120p' "$path" >&2
     exit 1
   fi
+}
+
+# Render only: the true/unset cases must never start an engine or container.
+# Ignore local .env files so this checks the shipped defaults and shell opt-out.
+check_compose_telemetry() {
+  local compose_file="$1"
+  shift
+  local telemetry expected
+  for telemetry in unset "" true false 0; do
+    case "$telemetry" in
+      unset|"") expected=true ;;
+      *) expected="$telemetry" ;;
+    esac
+    (
+      if [[ "$telemetry" == unset ]]; then
+        unset III_TELEMETRY_ENABLED
+      else
+        export III_TELEMETRY_ENABLED="$telemetry"
+      fi
+      docker compose --env-file /dev/null -f "$compose_file" \
+        config --no-env-resolution --format json |
+        python3 -c '
+import json
+import sys
+
+config = json.load(sys.stdin)
+expected, *services = sys.argv[1:]
+for service in services:
+    actual = config["services"][service].get("environment", {}).get("III_TELEMETRY_ENABLED")
+    if actual != expected:
+        sys.exit(f"{service}: expected III_TELEMETRY_ENABLED={expected!r}, got {actual!r}")
+' "$expected" "$@"
+    )
+  done
+  echo "Compose telemetry defaults and opt-out passed: $compose_file"
 }
 
 # `iii worker` was removed in 0.23: worker lifecycle moved to Worker Compose and
@@ -105,6 +143,10 @@ assert_contains "$DOCKER_PROJECT_DIR/Dockerfile" "EXPOSE 49134 3111 3112 9464"
 assert_contains "$DOCKER_PROJECT_DIR/docker-compose.yml" "iii_data:/app/data"
 assert_contains "$DOCKER_PROJECT_DIR/docker-compose.yml" "iii_data:"
 assert_contains "$DOCKER_PROJECT_DIR/docker-compose.yml" "9464:9464"
+
+echo "Testing Docker Compose telemetry environment rendering"
+check_compose_telemetry "$DOCKER_PROJECT_DIR/docker-compose.yml" iii
+check_compose_telemetry "$TEMPLATE_DIR/quickstart-ai-agents/docker-compose.yaml" account-events ai-agent
 
 echo "Testing iii project init --template linkly"
 (

@@ -3,6 +3,8 @@
 #
 # Workers connect to iii via host.docker.internal. On Linux (Docker <20.10),
 # add: extra_hosts: ["host.docker.internal:host-gateway"]
+# To opt out of telemetry, export III_TELEMETRY_ENABLED=false before starting
+# the host engine and Compose. The worker containers receive it below.
 
 services:
   account-events:
@@ -11,6 +13,7 @@ services:
       dockerfile: Dockerfile
     environment:
       III_BRIDGE_URL: ws://host.docker.internal:49134
+      III_TELEMETRY_ENABLED: ${III_TELEMETRY_ENABLED:-true}
       LEGACY_WORKER_URL: http://legacy-worker:8080
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -22,6 +25,7 @@ services:
       dockerfile: Dockerfile
     environment:
       III_BRIDGE_URL: ws://host.docker.internal:49134
+      III_TELEMETRY_ENABLED: ${III_TELEMETRY_ENABLED:-true}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped

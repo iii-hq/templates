@@ -13,6 +13,8 @@ Set PlaybackSpeed 1.2
 Set WaitTimeout 180s
 
 Hide
+Type "export III_TELEMETRY_ENABLED=false"
+Enter
 Type "clear"
 Enter
 Show
