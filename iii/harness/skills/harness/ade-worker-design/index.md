@@ -19,9 +19,16 @@ and behaves, and which interaction pattern fits which kind of data. The
 worker's service half — package shape, functions, configuration, delivery,
 compose wiring — is the `iii-node` skill and belongs to the Backend Engineer.
 
-## The three references
+## Choose the reference for your role
 
-Read them in this order, fully rather than skimmed:
+Product planning uses `harness/ade-worker-design/planning`; architecture
+uses `harness/iii-node/architecture`. Those roles do not load the UI manuals
+below unless a specific unresolved decision requires a scoped reference check.
+
+For UI implementation, use the references below in this order of authority.
+Bodies already preloaded are already read; do not fetch them again. When
+looking up a detail, inspect the relevant section instead of rereading all
+three documents:
 
 - `console-injectable-ui` — the authoring contract: the wire contract and
   asset rules, the `setup(host)` slots (pages, panels, function-trigger and
@@ -50,6 +57,8 @@ Fetch any of them with `directory::skills::get { "id": "harness/ade-worker-desig
   `[data-iii-ui="<worker>"]`; an unscoped rule restyles the whole console.
 - Asset triggers go through the SDK Message path, never the durable
   `engine::register_trigger`, and never `console:assets`.
-- Done means the UI was seen in the running console at phone, narrow-split
-  and wide widths, in both themes, with the manifest free of warnings — not
-  that the build passed.
+- New surfaces must be seen in the running console at phone, narrow-split
+  and wide widths, in both themes, with the manifest free of warnings. On
+  corrections, recheck affected states and dependencies; reuse earlier
+  observations only while they still apply. A build alone is not evidence
+  that the screen works.

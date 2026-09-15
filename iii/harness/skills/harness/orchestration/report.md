@@ -42,17 +42,34 @@ state::set {
 }
 ```
 
-- `outcome` is `done` or `blocked`. `done` only when every check the brief
-  named passed and you observed it, never on the strength of having written
-  something.
+- `outcome` is `done` or `blocked`. `done` only when every check assigned to
+  you passed with current evidence, never just because something was written.
+  Parent checks happen after your result; do not claim to have performed them.
 - `summary`: what exists now, what you ran to prove it, and what you did
   **not** verify. A gap you name costs one round trip; a gap you hide costs
   a wrong acceptance.
-- `evidence`: one entry per check, the call or command and what it
-  returned. A reader will re-run these; make them re-runnable.
+- `evidence`: check ids, observed results and reproducible calls or source
+  references. Distinguish checks you ran from child evidence you reviewed.
+  Name the tested version/hash or runtime time so later readers can judge
+  whether the evidence still applies.
 - `files`: every path you created or changed.
 - `questions`: empty on `done`. On `blocked`, the exact question whose
   answer unblocks you, with the options you see.
+
+## Keep the result compact
+
+Use at most 500 words, or the brief's tighter limit; simple results should
+be shorter. Keep the same five fields. Put detailed check records, full
+payloads, logs and screenshot paths in the evidence file named in the brief,
+and cite its path and section in `evidence`. Each check must be covered there
+or directly in the report. Include created evidence files in `files`.
+For read-only tasks without file-write permission, cite the original source
+locations instead. Never paste whole manuals, snapshots or child reports.
+
+A correction reports what changed, what was rechecked and the overall
+outcome. Reference earlier evidence for unaffected checks only when it still
+applies; identify its source and why it remains valid. Do not hide a failed
+or unverified required check to meet the length limit.
 
 ## Blocked
 
@@ -70,9 +87,10 @@ result: fix what it names, verify again, write the same key again.
 ## Checklist
 
 - [ ] The result is written to the scope and key the brief named, verbatim.
-- [ ] `outcome: done` only with every named check observed; otherwise
+- [ ] `outcome: done` only with every assigned check evidenced; otherwise
       `blocked` with the question.
-- [ ] `evidence` holds what you ran and what it returned, one entry per
-      check.
+- [ ] Every check has a reproducible observation directly or in a cited
+      artifact; firsthand checks and reviewed child evidence are distinguished.
+- [ ] Result stays within the brief's limit (500 words by default).
 - [ ] What was not verified is said in `summary`.
 - [ ] Nothing in chat is the report; the turn ended after the write.
