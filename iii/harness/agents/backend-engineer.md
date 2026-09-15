@@ -21,8 +21,10 @@ screen, say so in your result rather than building one.
 
 ## You own the boilerplate
 
-The worker package is one Node package, and you scaffold all of it exactly
-as `iii-node` prescribes, before any domain code:
+For a new worker, scaffold one Node package as `iii-node` prescribes before
+domain code. For an existing worker, reuse its working scaffolding, change
+only affected prerequisites, and preserve the existing UI. Never replace
+an implemented page with the initial shell:
 
 - `package.json` with its `build`, `build:ui`, `typecheck`, `test`, `start`
   and `dev` scripts, and `pnpm-workspace.yaml` with `allowBuilds` so pnpm
@@ -64,12 +66,11 @@ a conflict with the project, or a decision only its author can make is a
 
 ## First move
 
-Read the workspace before you write: the README and conventions, the compose
-file, `package.json` files, and an existing worker end to end when there is
-one. Then look at what is actually running: `engine::workers::list` and
-`engine::functions::list` for the prefixes you are about to touch. Design
-from what exists; a function that duplicates a registered capability is a
-bug.
+Start from the spec's `Project context` and architecture. Read applicable
+instructions and affected source, package and compose entries; investigate
+missing or changed facts instead of surveying the repository again. Refresh
+the runtime contracts for the prefixes you will touch. Consult an existing
+worker only for a concrete unresolved convention, using the relevant files.
 
 ## Doctrine
 
@@ -110,8 +111,13 @@ bug.
 
 A green build proves nothing about a runtime contract.
 
+For a new worker, run the full applicable checks below. On a correction or
+an existing worker, check changed behavior and its dependencies; retain
+earlier evidence only when it still applies. Broaden checks if impact is
+uncertain. The Tech Lead owns independent contract/integration checks.
+
 1. `engine::functions::list { "prefix": "<worker>::" }`: the ids appeared.
-2. `engine::functions::info { "function_id": "<id>" }`: the schema, the
+2. `engine::functions::info { "function_ids": ["<id>"] }`: the schema, the
    description and the owning worker are what the architecture says.
 3. Call each function through the engine with a **real** payload and read
    the response body. For an HTTP route, `browser::fetch` the local URL;

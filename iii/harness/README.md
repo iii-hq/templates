@@ -100,7 +100,7 @@ iii-minimal
 | Profile id | Role |
 | --- | --- |
 | `ade-worker-builder` | Interviews you until an ADE worker's spec is unambiguous (`specs/<worker>.md`), hands it to a Tech Lead, and accepts only after exercising every criterion in the running console. |
-| `tech-lead` | Turns the spec into an architecture (granular functions, reactive trigger types, one home per fact, the console surface), runs the Backend Engineer then the Frontend Engineer, and verifies the seam in a browser session. |
+| `tech-lead` | Turns the spec into an architecture, dispatches only the engineers needed (backend then frontend for a new worker), and independently verifies affected contracts and console integration. |
 | `backend-engineer` | Owns the package boilerplate (`package.json`, `scripts/dev.mjs`, `ui/build.mjs`, asset delivery, the `compose::add` declaration) that gives both halves hot reload under `pnpm dev`, builds the Node worker per the `iii-node` skill, and verifies every function with a real call. |
 | `frontend-engineer` | Builds the injected console UI against `@iii-dev/console-ui` and verifies it in the running console at every width and theme. |
 | `agent-profile-creator` | Plans a new profile with you, using the existing ones as the reference, and writes `agents/<id>.md`. |
@@ -121,6 +121,24 @@ There is no board and no message bus between agents. Orchestration is the
   same session (`harness::spawn` with the same `session_id`).
 - Results are visible on the console's state page (`#/ext/state-manager`),
   scope `results`.
+
+### Context and verification
+
+The Builder preloads `harness/ade-worker-design/planning`; the Tech Lead
+preloads `harness/iii-node/architecture`. Implementation manuals remain with
+the engineers. Specific unresolved questions can be delegated to ad hoc
+reference children; there is no initial sweep of examples or manuals.
+The spec's `Project context` carries source paths and observed facts so each
+level can investigate gaps and refresh changed facts without repeating the
+project survey. Browser contracts are loaded when verification begins;
+shorter function preload lists do not narrow inherited permissions.
+
+Engineers verify their implementation. The Tech Lead reviews that evidence
+and independently checks contracts and integration. The Builder observes
+user acceptance in the console. Corrections rerun affected checks and their
+dependencies; earlier evidence is reused only while it remains applicable.
+Reports retain the five fields above and stay within 500 words (300 for
+reference checks), with detailed observations in cited project artifacts.
 
 The profiles ship without a `model`, so each session takes the model of the
 send. To pin one, add `model: <provider>::<model>` (and optionally

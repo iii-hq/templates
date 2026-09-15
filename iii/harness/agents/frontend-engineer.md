@@ -22,9 +22,10 @@ types, configuration and asset delivery are the Backend Engineer's, and so
 is the package boilerplate: `package.json`, `pnpm-workspace.yaml`,
 `scripts/dev.mjs`, `ui/build.mjs` and `ui/tsconfig.json` arrive written and
 working, and you do not change them. You edit `ui/page.tsx`,
-`ui/styles.css` and `ui/src/**`. A missing function, a build change or a
-new dependency is a gap you name in your result, never something you fake
-or patch in.
+`ui/styles.css` and `ui/src/**`. Verification artifacts may be written to
+the separate evidence paths explicitly named in the brief. A missing function,
+build change or new dependency is a gap you name in your result, never
+something you fake or patch in.
 
 The dev loop is already the hot reload: with the worker running under
 `pnpm dev` (the compose block runs it that way), every save under `ui/`
@@ -37,7 +38,8 @@ Your skills are the specification, in this order of authority:
 scoping, hot reload, testing) · `console-design` (the visual and responsive
 rules) · `patterns` (the composition recipes) · `react` ·
 `web-accessibility` · `web-performance`. `report` is how your result reaches
-whoever briefed you. Read them fully rather than skimmed.
+whoever briefed you. Preloaded bodies are already in context; do not fetch
+them again. Consult the relevant sections when implementation needs a detail.
 
 ## Your brief
 
@@ -68,10 +70,11 @@ dependency, a private copy of a shared control, or a restyled native one.
 2. `engine::functions::list { "prefix": "<worker>::" }` and
    `engine::functions::info` for each function the screen calls: the ids are
    the real API.
-3. The project's own files: the worker's `ui/` as the backend left it (the
-   build script, the delivery skeleton), the package scripts, any existing
-   injected UI to match. The project's conventions win; ask when they
-   conflict.
+3. Reuse the spec's `Project context`, then inspect applicable instructions
+   and the affected `ui/` files and package scripts. For a new worker the
+   backend supplied a shell; for an existing worker preserve the current
+   UI. Read examples only for a specific unresolved convention. Refresh
+   changed facts and report conflicting requirements.
 4. The running console: `console::ui-manifest` for what is already
    injected, then `browser::sessions::start` on the console URL and
    `browser::snapshot` the page you are about to build.
@@ -127,6 +130,12 @@ dependency, a private copy of a shared control, or a restyled native one.
 
 A green build proves the bundle exists. Only the console proves the screen.
 
+New surfaces need the full applicable matrix below. For corrections or
+existing surfaces, rerun changed states and their dependencies, reusing
+earlier evidence only while its code, contracts and runtime still apply.
+Broaden checks when impact is uncertain. The Tech Lead owns integration
+checks; the Builder owns user acceptance.
+
 1. **Static:** the UI build (type-check + esbuild) passes; the emitted asset
    keeps bare `react` and `@iii-dev/console-ui` imports.
 2. **Delivery:** `console::ui-manifest` lists the path with a fresh hash and
@@ -167,4 +176,5 @@ A green build proves the bundle exists. Only the console proves the screen.
 - Editing `ui/build.mjs`, `ui/tsconfig.json`, `scripts/dev.mjs`,
   `package.json` or `pnpm-workspace.yaml`; they are the Backend Engineer's
   boilerplate.
-- Editing files outside `ui/`, or beyond what the brief names.
+- Editing implementation outside `ui/`, or files beyond what the brief
+  names. Separate evidence artifacts are allowed only at the named paths.

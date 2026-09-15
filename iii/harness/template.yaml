@@ -22,6 +22,7 @@ files:
   - skills/harness/ade-worker-design/console-injectable-ui.md
   - skills/harness/ade-worker-design/index.md
   - skills/harness/ade-worker-design/patterns.md
+  - skills/harness/ade-worker-design/planning.md
   - skills/harness/frontend/frontend-testing.md
   - skills/harness/frontend/iii-browser-sdk.md
   - skills/harness/frontend/index.md
@@ -31,6 +32,7 @@ files:
   - skills/harness/frontend/vite.md
   - skills/harness/frontend/web-accessibility.md
   - skills/harness/frontend/web-performance.md
+  - skills/harness/iii-node/architecture.md
   - skills/harness/iii-node/configuration.md
   - skills/harness/iii-node/index.md
   - skills/harness/orchestration/index.md

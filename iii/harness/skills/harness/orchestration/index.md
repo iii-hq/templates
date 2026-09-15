@@ -32,10 +32,11 @@ the communication protocol is the same.
 - `engine::functions::info { "function_ids": ["harness::spawn", "engine::register_trigger"] }`
   once; `task`, `agent`, `session_id`, `display`, `options.orchestrator` and
   the return shape are what matter.
-- `directory::agents::get { "id": "<profile>", "raw": true }` for each
-  profile you dispatch into. Its `skills:` and `functions:` are what the
-  child knows; everything else goes in the brief. Skip this lookup for an
-  ad hoc child: give it an explicit `options.system_prompt` and a brief
+- Inspect a selected profile with `directory::agents::get` only when its
+  ownership, skills or functions are unknown or changed. A known dispatch
+  contract in your role or project plan is sufficient; do not reload child
+  profiles on every hand-off. For an ad hoc child, skip the profile lookup:
+  give it an explicit `options.system_prompt` and a brief
   that tells it to read `harness/orchestration/report` through
   `directory::skills::get`. `options.skills` only filters the skill index;
   it does not preload skill bodies.
@@ -91,7 +92,9 @@ Choose the child's `session_id`: a readable slug plus a short random suffix,
      its own work, and cannot spawn, send, or unregister anything.
    - Omit `options.functions` and the child inherits your policy. Pass
      `options.functions.allow` only to narrow it, and then list every id
-     the child's work needs, one per entry, no wildcards.
+     the child's work needs, one per entry, no wildcards. A profile's
+     `functions` list preloads contracts; it is not a permission policy.
+     Never turn a coordinator's shorter preload list into its child's allow list.
    - It returns `{ child_session_id, child_turn_id, reused }` at once. That
      means the child started, nothing about it finishing.
 
@@ -115,10 +118,16 @@ Project root: <absolute path>. Worker directory: <path>.
 Build: <what, in the child's own terms>.
 Out of scope: <what a reader would assume is included and is not>.
 
-Done means:
+Done means (child checks):
 1. <observable check a stranger can run: a function call with its payload,
    a command, a URL, a screen>
 2. ...
+
+Parent checks, performed after this result:
+1. <independent acceptance or integration check the dispatcher owns>
+
+Detailed evidence: <project file path; record check ids, inputs, observations
+and the tested version/hash or runtime time there; cite it in the report>.
 
 When finished, write your result with state::set to scope "results", key
 "issue-board-backend-7f3a", as the report skill describes, then stop. If you
@@ -128,16 +137,36 @@ are blocked, write outcome "blocked" with the question, then stop.
 Out of scope is the cheapest line in the brief: it is what stops a child
 inventing work.
 
+Use paths and sections for plans, project context and prior evidence; do not
+paste those documents into the task. A correction names the changed scope,
+failed check, expected/observed result and dependencies to recheck. Preserve
+the child's profile or ad hoc prompt/options when reusing its session.
+
+## Reference checks
+
+For a concrete unanswered question, dispatch an ad hoc read-only leaf with
+its own `options.system_prompt` and `system_prompt_strategy: "override"`.
+Name the question, project root, at most three source ids/paths and relevant
+sections, plus scope `results` and the session's result key. Tell it to read
+`harness/orchestration/report`, consult only those sources, and return at
+most 300 words with findings and source locations. No edits, user interview
+or further children. Allow the required reads and `state::set`. Use the same
+wake/spawn/state protocol. Do not fan out entire manuals or catalogs; reuse
+findings until the question or sources change.
+
 ## On the wake
 
 The event is `{ type: "state", event_type, scope, key, old_value, new_value }`;
 `new_value` is the child's result document: `outcome`, `summary`,
 `evidence`, `files`, `questions`.
 
-1. **Verify before you accept.** The result is a claim. For every check the
-   brief named, run it yourself: call the function with the child's
-   payload, `browser::fetch` the URL, open the screen, read the file. "Done,
-   works" is not evidence, and a check you cannot run is not met.
+1. **Verify before you accept.** Review evidence for every assigned child
+   check: inputs, observations, source location and the tested code/runtime.
+   Run the parent checks yourself. An explicit split must include independent
+   verification of the deliverable or its integration; it does not permit
+   accepting only a summary. When the brief has no verification split, run
+   its checks yourself. Missing, stale or contradictory evidence needs a
+   targeted reproduction or a correction; it cannot pass by omission.
 2. **Accept**: dispatch the next child, or, if you were spawned yourself,
    write your own result upstream.
 3. **Send back**: re-arm the wake on the same key (step 1 above), then
@@ -149,6 +178,11 @@ The event is `{ type: "state", event_type, scope, key, old_value, new_value }`;
 
 `state::get` the key before acting on a late or duplicated fire; the child
 may have written again since.
+
+After corrections, recheck changed behavior and dependent checks. Preserve
+earlier evidence only while its code, contracts and runtime still apply;
+record why it remains applicable and broaden checks when impact is unclear.
+Do not replay an engineer's full test matrix at every orchestration level.
 
 ## Fan-in
 
@@ -164,7 +198,7 @@ may have written again since.
 ## Traps
 
 - **The child says done and the feature does not work.** You accepted a
-  summary. Run the checks the brief named.
+  summary. Review the evidence and run the independent parent checks.
 - **Two children editing one file.** Parallel children have no merge
   protocol. If both would touch `package.json`, the build script or one
   shared module, dispatch them in sequence.
@@ -187,7 +221,8 @@ may have written again since.
 - [ ] The brief names the deliverable, the paths, the scope, the out of
       scope, the checks, and the result key.
 - [ ] `options.orchestrator: true` only on a child that spawns.
-- [ ] Every result verified by running its checks before it is accepted.
+- [ ] Child evidence reviewed and independent parent checks observed before
+      acceptance; unassigned verification splits default to checking the brief.
 - [ ] Feedback goes down as a spawn into the same `session_id`, after
       re-arming the wake.
 - [ ] Every child stopped (`harness::status`) before you call the fan-out

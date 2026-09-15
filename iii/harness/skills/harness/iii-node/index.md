@@ -706,23 +706,35 @@ A container that is already declared is left as it is by `compose::add`; if it i
 
 ## Implementation order
 
+This is the sequence for a new worker across both engineering roles. For an
+existing worker, apply only affected steps and prerequisites; preserve its
+working scaffolding and implemented UI. Use the spec's `Project context`
+instead of repeating discovery. Each engineer performs only its assigned side.
+
 1. Resolve all project identifiers and paths.
-2. Read this file and the three bundled references.
+2. Use this file for backend/delivery work; fetch only references needed by
+   the assigned change. Preloaded bodies need no second fetch. UI
+   implementation references belong to the Frontend Engineer.
 3. Inspect the destination project's existing package manager, SDK version, Compose shape, and coding conventions.
 4. Create the single-package folder structure.
 5. Write package and TypeScript configuration, then install dependencies.
 6. Implement and test backend domain behavior.
 7. Register functions with complete contracts and add configuration integration if needed.
-8. Build the injectable UI using shared Console components and scoped CSS.
+8. Leave a working UI shell for the Frontend Engineer, which builds the page, renderers and forms using shared Console components and scoped CSS after the backend/delivery contracts are verified.
 9. Add worker-side asset delivery and Message-path registrations.
 10. Add the coordinated `scripts/dev.mjs` loop.
 11. Add or update `iii.worker.yaml`.
 12. Declare the worker through `compose::add` under a `compose-operation` wake, then confirm with `compose::status` and `engine::workers::info`.
-13. Validate static builds, runtime registration, asset delivery, hot reload, and real rendering. Drive the real Console through the `browser` worker (`browser::sessions::start` on the console URL, then `browser::snapshot`, `browser::act`, `browser::evaluate`, `browser::screenshot`) so both light and dark themes, narrow and wide panes, and the chat renderer are checked with screenshots, not assumptions.
+13. Verify the assigned side: backend checks static builds, runtime registration, asset delivery and hot reload; frontend checks real rendering through the `browser` worker. The Tech Lead independently checks contracts and integration before the Builder performs user acceptance.
 
 ## Validation checklist
 
-Before declaring the worker complete:
+These checks cover the complete delivery. The Backend Engineer owns service,
+configuration, package and asset checks; the Frontend Engineer owns rendered
+UI, interaction and accessibility checks. A backend shell is not a finished
+screen. Report the evidence for your assigned checks and hand off the rest.
+For corrections, rerun affected checks and dependencies, retaining earlier
+evidence only while it remains applicable; broaden checks if impact is unclear.
 
 - No angle-bracket placeholders remain in generated project files.
 - No example project name or repository-specific absolute path leaked into identifiers, scripts, or documentation.
