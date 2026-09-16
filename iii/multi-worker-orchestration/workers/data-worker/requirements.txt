@@ -1,3 +1,0 @@
-iii-sdk==0.23.0
-iii-helpers==0.23.0
-pydantic>=2.0.0
