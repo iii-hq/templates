@@ -25,11 +25,9 @@ containers:
       - state
     # Every provider key resolves in the router's process, not in the provider
     # worker. When you uncomment a provider below, uncomment its key here too.
+    env_file: [./.env]
     environment:
       RUST_LOG: info
-      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
-      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
-      DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
 
   provider-anthropic:
     worker: package://provider-anthropic
