@@ -32,8 +32,9 @@ A detail view is never a modal and never a drawer: it is a screen.
 ## 1. Board (lanes)
 
 Structure: `PageShell` → `PageHeader` (title, `N records · <prefix>` description,
-one primary action such as **New ticket**) → `PageMain` → a slim toolbar
-(filter `Input`, optional count hint) → a horizontally scrolling row of lanes.
+one primary action such as **New ticket**) → `PageMain` → a `Toolbar`
+(a `SearchField` filter, the count in its `end` slot) → a horizontally
+scrolling row of lanes.
 
 - **Lane** = one surface step: `background: var(--color-surface)`, radius
   `var(--radius-md)`, `flex: 1 0 220px; min-width: 220px; max-width: 360px`,
@@ -158,8 +159,8 @@ tab, or reuses an open instance, and delivers `PageRenderProps.panelContext`
 
 - derive the record id from `panelContext.context` and re-run the effect on
   `panelContext.id` so repeated clicks re-navigate;
-- persist the last id in `localStorage` under `<worker>:ticket:<paneId ??
-  tabId>` so a reload keeps the pane meaningful;
+- persist the last id with `usePaneState` (`@iii-dev/console-ui/hooks`) under
+  `<worker>:ticket:<paneId ?? tabId>` so a reload keeps the pane meaningful;
 - render the “nothing selected” `EmptyState` when there is no id.
 
 When `host.panels` is absent (older console), fall back to rendering the
@@ -208,8 +209,9 @@ close the modal, then open the new record as its own pane (§3).
 ## 6. Chat card for agent calls
 
 Register one `FunctionTriggerRenderer` that claims the worker's record
-functions. Unwrap the harness envelope first (see console-injectable-ui.md,
-`host.functionTriggers`): the record lives at `output.details`.
+functions. Unwrap the harness envelope first with `unwrapEnvelope(message.output)` from
+`@iii-dev/console-ui/format` (`console-injectable-ui` › Slots): the record
+lives at `details`.
 
 - `metadata: { display: true }` so the card stays visible in collapsed call
   groups; `tryRenderDisplay` returns the compact card, `tryRender` the full one
@@ -242,8 +244,8 @@ the settings action; never render a Configure button or mount
 
 ## 8. Live updates
 
-- The worker owns a trigger type `<worker>:change` (see index.md → Live
-  updates) and fires an event for every mutation carrying the **whole record**
+- The worker owns a trigger type `<worker>:change` (`harness/iii-node/index`
+  › Live updates) and fires an event for every mutation carrying the **whole record**
   (`{ type, event, record_id, record, comment?, activity? }`) plus a
   `store.reloaded` event when the backing store changes. The type also supports
   trigger metadata — a `metadata` field in its config — and forwards it on every
@@ -251,7 +253,10 @@ the settings action; never render a Configure button or mount
 - The UI keeps **one binding per tab** shared by every mounted page: a module
   hub with a listener set that registers `host.iii.on(fn, …)` and the
   `registerTrigger` with `function_id: \`${fn}::${host.iii.browserId}\`` on
-  the first subscriber and tears both down on the last.
+  the first subscriber and tears both down on the last. A page that only
+  refetches on events can use `useWorkerLive` (`@iii-dev/console-ui/hooks`)
+  with its own `handlerId`; keep the hub when several mounted pages share one
+  binding and upsert from payloads.
 - Collections **upsert from the payload** (remove when `deleted_at` is set) and
   refetch only on `store.reloaded` or events without a payload. Record screens
   merge the record and append unseen comments/activity by id.

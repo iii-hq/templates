@@ -119,8 +119,8 @@ There is no board and no message bus between agents. Orchestration is the
   wake on that key before spawning, so the write starts its next turn. The
   child never looks for a parent; feedback comes back as a new task in the
   same session (`harness::spawn` with the same `session_id`).
-- Results are visible on the console's state page (`#/ext/state-manager`),
-  scope `results`.
+- Results are visible on the console's state page (`#/worker/state`, or the
+  State page in the workspace), scope `results`.
 
 ### Context and verification
 

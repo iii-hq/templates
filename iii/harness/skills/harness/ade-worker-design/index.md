@@ -33,11 +33,15 @@ three documents:
 - `console-injectable-ui` — the authoring contract: the wire contract and
   asset rules, the `setup(host)` slots (pages, panels, function-trigger and
   trigger-activity renderers, configuration forms, provider forms, chat
-  slots), `host.iii` for live data, build with exactly five externals,
-  scoping, hot reload, debugging, testing and the delivery checks.
+  slots, overlays, palette), `host.iii` for live data, the shared build
+  driver with its six externals and design lint, the bundling `/hooks` and
+  `/format` subpaths, `lucide-react` icons, scoping, hot reload, debugging,
+  behaviour across widths, the configuration-form grammar, testing (a page
+  alone at `#/worker/<scope>[/<page-id>]`) and the delivery checks.
 - `console-design` — the iii Schematic design system: surface ramp, tokens,
-  typography, radius, motion, icons, selection, responsive rules and the
-  component grammar every injected page must compose from.
+  typography, radius, motion, the one Numbers table, every shared component
+  with its do/don't, hooks and formatters, the UX patterns table and the
+  do/don't list every injected page must follow.
 - `patterns` — recipes for record-shaped UIs: a board with lanes and drag and
   drop, a record screen that opens as its own pane, activity timelines with
   threaded comments, creation dialogs, chat cards for agent calls, settings
@@ -51,14 +55,19 @@ Fetch any of them with `directory::skills::get { "id": "harness/ade-worker-desig
   calling its own worker's functions over `host.iii`, and configuration values
   live in the `configuration` worker (`harness/iii-node/configuration`).
 - Components, props, slots and host methods come from
-  `@iii-dev/console-ui`'s `index.d.ts`, never from memory. If it is not
-  declared there, it does not exist.
+  `@iii-dev/console-ui`'s `index.d.ts` (hooks from `hooks.d.mts`, formatters
+  from `format.d.mts`, icons from `lucide-react`), never from memory. If it
+  is not declared there, it does not exist.
 - Every rule in the worker stylesheet is scoped under
   `[data-iii-ui="<worker>"]`; an unscoped rule restyles the whole console.
+  The build driver refuses one and the manifest reports leftovers as
+  `warnings`.
 - Asset triggers go through the SDK Message path, never the durable
   `engine::register_trigger`, and never `console:assets`.
 - New surfaces must be seen in the running console at phone, narrow-split
-  and wide widths, in both themes, with the manifest free of warnings. On
+  and wide widths, in both themes, with the manifest free of warnings: a
+  page alone at `#/worker/<scope>[/<page-id>]` for screenshots and
+  drive-through, the full console for chat slots and the palette. On
   corrections, recheck affected states and dependencies; reuse earlier
   observations only while they still apply. A build alone is not evidence
   that the screen works.

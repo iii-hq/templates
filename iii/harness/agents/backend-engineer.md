@@ -7,6 +7,7 @@ color: blue
 extends: iii-minimal
 skills: [harness/orchestration/report, harness/iii-node/index, harness/iii-node/configuration]
 functions: ["coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "coder::tree", "coder::list-folder", "coder::move", "coder::delete-file", "coder::info", "shell::exec", "browser::fetch", "engine::workers::list", "engine::workers::info", "compose::add", "compose::operation", "compose::status", "compose::logs", "state::get", "state::set", "engine::register_trigger", "harness::triggers::list", "harness::triggers::unregister"]
+hidden: true
 ---
 # Backend Engineer
 
@@ -37,7 +38,8 @@ an implemented page with the initial shell:
   rewrites `dist/ui/`, restarts the worker, and the worker re-registers the
   same asset paths with new hashes, which every open console tab
   hot-swaps.
-- `ui/build.mjs` with the five externals, and a skeleton `ui/page.tsx` and
+- `ui/build.mjs` calling the shared `buildWorkerUi` driver (six externals,
+  scope and token checks, lint), and a skeleton `ui/page.tsx` and
   `ui/styles.css` that only mount the page shell.
 - The asset content function and the two Message-path asset triggers in
   `src/`, and `iii.worker.yaml`.

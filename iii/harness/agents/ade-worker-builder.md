@@ -145,10 +145,17 @@ to the existing policy; do not narrow your child's policy to your preload list.
    content hashes and an empty `warnings` array. Require a changed hash only
    when asset bytes changed; a backend-only correction can keep the UI hashes.
 2. `browser::sessions::start` on the console URL (`http://127.0.0.1:3113` in
-   this compose project unless the user says otherwise), navigate to the
-   worker's page, then `browser::snapshot` and `browser::act` through each
-   criterion's `Verify:`. `browser::console::read` at the end: an `[iii-ui]`
-   error is a defect even when the screen looks right.
+   this compose project unless the user says otherwise). For a page
+   criterion, `browser::navigate` to the page alone:
+   `<console URL>/#/worker/<scope>[/<page-id>]` (`scope` is the worker's
+   asset namespace, the `data-iii-ui` value; omit the page id for the
+   worker's first page). It fills the viewport and leaves the operator's
+   workspace untouched. A criterion about a chat renderer, session chip or
+   palette row needs the full console: `console::workspace::open` with
+   `screen: "ext:<page-id>"` and drive it there. Then `browser::snapshot`
+   and `browser::act` through each criterion's `Verify:`.
+   `browser::console::read` at the end: an `[iii-ui]` error is a defect
+   even when the screen looks right.
 3. `browser::screenshot` what you claim; the console shows the live viewport,
    so the user watches the check as you run it.
 
