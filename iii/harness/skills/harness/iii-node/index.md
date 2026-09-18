@@ -30,7 +30,7 @@ This file is the source of truth for the **single-package Node layout, npm depen
 The injectable UI reference may describe repository-internal `workspace:*` dependencies, local `file:` dependencies, a root workspace file, or a separate `<worker>/ui/package.json`. Those instructions do **not** apply to this portable Node scaffold. Use one package at the worker root and consume the public npm package:
 
 ```json
-"@iii-dev/console-ui": "0.1.0"
+"@iii-dev/console-ui": "0.2.0"
 ```
 
 Do not use `file:`, `link:`, or `workspace:*` for this dependency.
@@ -95,7 +95,7 @@ Keep backend and UI in one Node package:
       styles.css                # injectable scoped CSS
 ```
 
-This is intentionally **not** a second UI package. The root `package.json` owns TypeScript, React types, esbuild, and `@iii-dev/console-ui`. Backend TypeScript compiles to `dist/`; esbuild writes UI assets to `dist/ui/`.
+This is intentionally **not** a second UI package. The root `package.json` owns TypeScript, React types, esbuild, `lucide-react` and `@iii-dev/console-ui`. Backend TypeScript compiles to `dist/`; esbuild writes UI assets to `dist/ui/`.
 
 Keep domain logic, validation, persistence, and iii registrations under `src/`. Keep Console-only parsing, rendering, hooks, and scoped styles under `ui/`. The UI invokes backend functions through `host.iii`; it does not import backend implementation modules or access backend files directly.
 
@@ -126,17 +126,18 @@ Use this shape and adapt only versions the destination project deliberately cont
     "iii-sdk": "<project-approved-version>"
   },
   "devDependencies": {
-    "@iii-dev/console-ui": "0.1.0",
+    "@iii-dev/console-ui": "0.2.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.2.14",
     "esbuild": "^0.25.0",
+    "lucide-react": "^1.16.0",
     "tsx": "^4.19.0",
     "typescript": "^5.9.2"
   }
 }
 ```
 
-Pin `@iii-dev/console-ui` to exactly `0.1.0` unless the user explicitly requests another published version. Run `pnpm install` after writing or changing the package file. Verify the lockfile resolves it from npm and contains no `file:`, `link:`, or workspace resolution for that package.
+Pin `@iii-dev/console-ui` to exactly `0.2.0` unless the user explicitly requests another published version; 0.2.0 is the first release with the `/hooks` and `/format` subpaths, `build-worker-ui`, `lint-worker-ui` and `tsconfig.worker-ui.json`, and older releases lack them. `lucide-react` is installed only for its types: at runtime the Console's import map serves it, like React. Run `pnpm install` after writing or changing the package file. Verify the lockfile resolves it from npm and contains no `file:`, `link:`, or workspace resolution for that package.
 
 pnpm 10+ refuses to run dependency build scripts until they are approved, and pnpm 11 re-checks that before every `pnpm run` — so `pnpm test` and `pnpm build` fail with `ERR_PNPM_IGNORED_BUILDS` even though `pnpm install` “succeeded”. Approve esbuild declaratively instead of running the interactive `pnpm approve-builds`: create `pnpm-workspace.yaml` beside `package.json` with
 
@@ -171,20 +172,11 @@ Create a backend `tsconfig.json`:
 }
 ```
 
-Create `ui/tsconfig.json`:
+Create `ui/tsconfig.json`; the package's `tsconfig.worker-ui.json` already sets the target, DOM lib, bundler resolution, `react-jsx`, `strict` and `noEmit`, so do not restate them:
 
 ```json
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "jsx": "react-jsx",
-    "strict": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "types": ["react"]
-  },
+  "extends": "@iii-dev/console-ui/tsconfig.worker-ui.json",
   "include": ["./**/*.ts", "./**/*.tsx"]
 }
 ```
@@ -355,43 +347,25 @@ Emit from the store after each persisted mutation and include the **whole record
 
 ## Injectable UI builder
 
-Create `ui/build.mjs`:
+Create `ui/build.mjs`. It is the whole call to the shared driver; `pnpm build:ui` runs it from the package root and `scripts/dev.mjs` passes `--watch`:
 
 ```js
-import esbuild from 'esbuild'
+import { buildWorkerUi } from '@iii-dev/console-ui/build-worker-ui'
 
-const options = {
-  entryPoints: ['ui/page.tsx', 'ui/styles.css'],
-  bundle: true,
-  format: 'esm',
-  jsx: 'automatic',
-  outdir: 'dist/ui',
-  external: [
-    'react',
-    'react-dom',
-    'react-dom/client',
-    'react/jsx-runtime',
-    '@iii-dev/console-ui',
-  ],
-  logLevel: 'info',
-}
-
-if (process.argv.includes('--watch')) {
-  const context = await esbuild.context(options)
-  await context.watch()
-  console.log('[ui] watching TSX and CSS files')
-} else {
-  await esbuild.build(options)
-}
+await buildWorkerUi({
+  scope: '<worker-name>',     // the data-iii-ui value: the first asset path segment
+  root: import.meta.dirname,  // ui/ — page.tsx, styles.css and src/ resolve against it
+  outdir: '../dist/ui',       // relative to root
+})
 ```
 
-All five externals are required. Bundling React creates a second React instance and causes invalid hook calls. Bundling `@iii-dev/console-ui` bypasses the Console's runtime contract. Do not bundle an editor; use the Console's shared editor components.
+`buildWorkerUi` (typed in `build-worker-ui.d.mts`) bundles `page.tsx` and `styles.css` with esbuild, keeps the six specifiers the Console's import map serves external — `react`, `react-dom`, `react-dom/client`, `react/jsx-runtime`, `@iii-dev/console-ui`, `lucide-react` — matched exactly so that `@iii-dev/console-ui/hooks` and `/format` still bundle, then checks every asset against the 8 MiB cap, refuses an unscoped stylesheet (`assertScoped`), fails on an unknown design token (`checkTokens`) and, on a non-watch build, runs the design-rule lint (`lintWorkerUi`) over `ui/`. Watch builds are unminified; release builds are minified. A failed check exits 1, which `pnpm build:ui` and the dev loop surface. Do not hand-roll esbuild beside it: a missing `react` external is a second React instance and "Invalid hook call"; a missing `@iii-dev/console-ui` external throws at once with the fix. Do not bundle an editor; use the Console's shared editor components. The remaining options (`entryPoints`, `keyframePrefixes`, `allowUnscopedSelectors`, `strictTokens`, `lint`, `plugins`, `extraExternal`, `define`) and the lint rules are in the designer's `console-injectable-ui` › The build.
 
 ## Injectable UI entrypoint
 
-Structure `ui/page.tsx` as ordinary React that default-exports `setup(host)`. Read the package's public types before using components; never guess an export or prop. In this portable layout the types are at `node_modules/@iii-dev/console-ui/index.d.ts` (read it in full after `pnpm install`; `README.md` beside it documents `host.panels.open` and the chat integrations) — the `packages/console-ui/...` path some references mention does not exist here.
+Structure `ui/page.tsx` as ordinary React that default-exports `setup(host)`. Read the package's public types before using components; never guess an export or prop. In this portable layout the types are at `node_modules/@iii-dev/console-ui/` — `index.d.ts`, plus `hooks.d.mts` and `format.d.mts` for the two subpaths that bundle into the asset (read them in full after `pnpm install`; `README.md` beside them documents `host.panels.open` and the chat integrations) — the `packages/console-ui/...` path some references mention does not exist here.
 
-The package exports no icon components and injected bundles must not add an icon dependency: author the few 16 px glyphs the page needs as inline SVG components (Lucide path data, `viewBox="0 0 24 24"`, `width`/`height` 16, `stroke="currentColor"`, `strokeWidth` 2, `aria-hidden`), and pass component types (not elements) where a prop such as `EmptyState.icon` asks for one.
+Icons are `lucide-react`, an external the Console's import map serves, so an import adds no bundle bytes: `import { Boxes } from 'lucide-react'` and render it at its default 16 px. Never hand-write `<svg>` glyphs (the build lint flags them) and never add another icon dependency. Where a prop asks for an icon, pass a Lucide component or element exactly as its type in `index.d.ts` declares.
 
 ```tsx
 import {
@@ -401,6 +375,7 @@ import {
   type Host,
   type PageRenderProps,
 } from '@iii-dev/console-ui'
+import { Boxes } from 'lucide-react'
 
 function WorkerPage({
   host,
@@ -409,6 +384,7 @@ function WorkerPage({
   return (
     <PageShell className="<worker-name>-ui-shell">
       <PageHeader
+        icon={<Boxes />}
         title="<worker-title>"
         description="<worker-description>"
         onClose={onRequestClose}
@@ -738,20 +714,20 @@ evidence only while it remains applicable; broaden checks if impact is unclear.
 
 - No angle-bracket placeholders remain in generated project files.
 - No example project name or repository-specific absolute path leaked into identifiers, scripts, or documentation.
-- `pnpm install` succeeds and the lockfile resolves `@iii-dev/console-ui` from npm at `0.1.0`, not through `file:`, `link:`, or `workspace:`.
+- `pnpm install` succeeds and the lockfile resolves `@iii-dev/console-ui` from npm at `0.2.0`, not through `file:`, `link:`, or `workspace:`.
 - `pnpm typecheck`, `pnpm test`, and `pnpm build` pass.
 - `pnpm dev` builds all outputs before starting watchers and shuts down cleanly.
 - The worker appears in the engine with every intended function and trigger type.
 - A worker-provided trigger type forwards every subscription's metadata (`binding.metadata`, or the config's `metadata` field) on every `iii.trigger`, and its description names that field.
 - Every public function exposes accurate descriptions and request/response schemas.
 - Configuration registration, read, update, and reload behavior work without erasing existing or unknown values.
-- `dist/ui/page.js` and `dist/ui/styles.css` are non-empty and React remains external.
+- `dist/ui/page.js` and `dist/ui/styles.css` are non-empty; `react`, `@iii-dev/console-ui` and `lucide-react` stay bare imports (release builds are minified, so expect `from"react"`), and the build's scope, token and lint checks passed.
 - The UI content function serves both registered paths and rejects unknown ones.
 - Asset paths, CSS scope, worker name, function prefix, and configuration id are internally consistent.
 - The Console manifest (`GET http://127.0.0.1:<console port>/ui`, or `console::ui-manifest`) contains both assets, reports no CSS warnings, and changes hashes after a UI edit.
 - A real harness call to the worker (e.g. the agent fetching one record) renders through the worker's chat renderer — the result arrives as a `{ content, details }` envelope and must be unwrapped (see the designer's `console-injectable-ui`); confirm a `[data-iii-ui="<worker-name>"]` wrapper exists inside the chat DOM.
 - Live updates reach an open page without a reload: mutate through a function from outside the UI and watch the page change.
 - A record opens as its own pane in the same workspace tab through `host.panels.open`, and the collection page adapts when the tab splits (narrow mode).
-- The real Console renders the page in narrow and wide panes, light and dark themes, with keyboard navigation, visible focus, stable async states, and no browser-console errors.
+- The real Console renders the page (alone at `#/worker/<worker-name>[/<page-id>]` for screenshots, and inside the workspace) in narrow and wide panes, light and dark themes, with keyboard navigation, visible focus, stable async states, and no browser-console errors.
 - Reconnects and repeated UI edits do not accumulate duplicate functions, triggers, pages, renderers, or forms.
 - The worker was declared through `compose::add`, never by editing `worker-compose.yaml`; `compose::status` shows it `ready`, and its entry runs `pnpm dev` after the console container.

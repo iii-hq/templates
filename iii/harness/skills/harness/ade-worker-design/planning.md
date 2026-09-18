@@ -43,7 +43,9 @@ detail view is a screen. Add only the surfaces the requested flow needs.
 ## Acceptance
 
 Give each criterion a stable id and a reproducible `Verify:` action in the
-running console. Describe the expected persisted or visible result. Include
+running console: a page criterion may name the page alone
+(`#/worker/<scope>[/<page-id>]`, the worker's asset namespace and page id);
+chat renderers, session chips and palette rows need the full console. Describe the expected persisted or visible result. Include
 a failure or recovery path when it changes whether the feature is usable.
 For live data, mutate outside the page and observe the open page update.
 

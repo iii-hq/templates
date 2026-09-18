@@ -48,9 +48,11 @@ under a wake, never by editing `worker-compose.yaml` or restarting the stack.
 UI assets use SDK Message-path `console:script` and `console:style` triggers,
 not durable engine registrations. Both asset paths start with the worker
 name; every stylesheet selector is scoped under `[data-iii-ui="<worker>"]`.
-React and `@iii-dev/console-ui` remain external. Installed public types are
-the authority for host methods and components; portable workers use the
-public npm package rather than monorepo links.
+React, `@iii-dev/console-ui` and `lucide-react` remain external; `ui/build.mjs`
+is the shared `buildWorkerUi` driver, not hand-rolled esbuild. Installed public
+types are the authority for host methods and components; portable workers use
+the public npm package (`@iii-dev/console-ui@0.2.0` or later) rather than
+monorepo links.
 
 The Frontend Engineer owns `ui/page.tsx`, `ui/styles.css` and `ui/src/**`:
 pages, renderers and configuration forms against registered contracts.
