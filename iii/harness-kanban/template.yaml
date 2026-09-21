@@ -1,6 +1,6 @@
 name: Harness + Kanban
 description: A iii-powered harness plus a kanban board with agent profiles that plan, build and review work as tickets
-version: "0.23.0"
+version: "0.24.2"
 # min_iii_version: "0.22.0"
 
 treat_required_as_included: true
