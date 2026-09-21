@@ -1,7 +1,7 @@
 name: Linkly (agentic)
 description: Scaffold for the agentic path of the Linkly tutorial - build a link shortener with a coding agent
-version: "0.23.0"
-min_iii_version: "0.23.0"
+version: "0.24.1"
+min_iii_version: "0.24.1"
 
 treat_required_as_included: true
 requires:
