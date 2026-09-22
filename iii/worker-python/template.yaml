@@ -1,0 +1,26 @@
+name: Worker (Python)
+description: A minimal Python worker project — host development with a private venv, plus an optional VM check before publishing.
+version: "0.23.0"
+min_iii_version: "0.23.0"
+
+treat_required_as_included: true
+requires:
+  - python
+optional: []
+
+# Explicit list of files to copy (shared_files from root are added automatically)
+files:
+  - README.md
+  - worker-compose.yaml
+  - workers/hello-python/iii.worker.yaml
+  - workers/hello-python/pyproject.toml
+  - workers/hello-python/src/__init__.py
+  - workers/hello-python/src/main.py
+  - workers/hello-python/tests/test_main.py
+
+next_steps:
+  - 'In terminal 1 from the project root, start Compose: iii compose --up'
+  - 'Compose pre_run creates a private venv if needed and installs dependencies automatically'
+  - 'In terminal 2 from the project root, call: iii trigger hello-python::greet name=World'
+  - 'Edit workers/hello-python/src/ — the host worker reloads on save'
+  - 'Optional VM and publishing checks: see README.md'

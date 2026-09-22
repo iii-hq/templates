@@ -1,6 +1,8 @@
 # Root template manifest for iii - lists available templates by folder name
 templates:
   - bare
+  - worker-python
+  - worker-node
   - docker
   - worker-bare
   - quickstart

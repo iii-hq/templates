@@ -1,0 +1,18 @@
+iii: v1
+name: hello-python
+language: python
+deploy: bundle
+manifest: pyproject.toml
+license: Apache-2.0
+tags: [example, python]
+description: Minimal Python worker — hello-python::greet returns a greeting.
+
+# Host development is the default. For the optional VM check, uncomment this
+# block and remove the host scripts.run override from worker-compose.yaml.
+# runtime:
+#   base_image: docker.io/iiidev/python:latest
+
+scripts:
+  # Compose skips this in host mode. It is the portable VM/bundle install recipe.
+  install: "python -m pip install -e ."
+  start: "watchfiles 'python src/main.py'"

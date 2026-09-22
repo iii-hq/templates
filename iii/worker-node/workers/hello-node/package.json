@@ -1,0 +1,21 @@
+{
+  "name": "hello-node",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Minimal Node worker \u2014 hello-node::greet returns a greeting",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsx watch src/index.ts",
+    "test": "node --import tsx/esm --test tests/greet.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "iii-sdk": "^0.24.2",
+    "tsx": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.2",
+    "typescript": "^5.0.0"
+  },
+  "license": "Apache-2.0"
+}
