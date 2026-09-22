@@ -1,0 +1,18 @@
+iii: v1
+name: hello-node
+language: javascript
+deploy: bundle
+manifest: package.json
+license: Apache-2.0
+tags: [example, node]
+description: Minimal Node worker — hello-node::greet returns a greeting.
+
+# Host development is the default. For the optional VM check, uncomment this
+# block and remove the host scripts.run override from worker-compose.yaml.
+# runtime:
+#   base_image: docker.io/iiidev/node:latest
+
+scripts:
+  # Compose skips this in host mode. It is the portable VM/bundle install recipe.
+  install: "npm install"
+  start: "npm run start"

@@ -4,11 +4,6 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TEMPLATE_DIR="${III_TEMPLATE_DIR:-"$ROOT_DIR/iii"}"
 
-if ! command -v iii >/dev/null 2>&1; then
-  echo "error: iii is not installed or not on PATH" >&2
-  exit 127
-fi
-
 assert_file() {
   local path="$1"
   if [[ ! -f "$path" ]]; then
@@ -35,6 +30,102 @@ assert_contains() {
     exit 1
   fi
 }
+
+assert_not_contains() {
+  local path="$1"
+  local needle="$2"
+  if grep -Fq "$needle" "$path"; then
+    echo "error: unexpected '$needle' in $path" >&2
+    exit 1
+  fi
+}
+
+assert_no_active_base_image() {
+  local path="$1"
+  if grep -Eq '^[[:space:]]*base_image:' "$path"; then
+    echo "error: runtime.base_image must be commented out by default: $path" >&2
+    exit 1
+  fi
+}
+
+static_template_checks() {
+  local python="$TEMPLATE_DIR/worker-python"
+  local node="$TEMPLATE_DIR/worker-node"
+
+  for expected in \
+    README.md worker-compose.yaml \
+    workers/hello-python/iii.worker.yaml workers/hello-python/pyproject.toml \
+    workers/hello-python/src/__init__.py workers/hello-python/src/main.py \
+    workers/hello-python/tests/test_main.py; do
+    assert_file "$python/$expected"
+    assert_contains "$python/template.yaml" "  - $expected"
+  done
+  assert_file "$python/template.yaml"
+
+  for expected in \
+    README.md worker-compose.yaml \
+    workers/hello-node/iii.worker.yaml workers/hello-node/package.json \
+    workers/hello-node/tsconfig.json workers/hello-node/src/greet.ts \
+    workers/hello-node/src/index.ts workers/hello-node/tests/greet.test.ts; do
+    assert_file "$node/$expected"
+    assert_contains "$node/template.yaml" "  - $expected"
+  done
+  assert_file "$node/template.yaml"
+
+  assert_no_active_base_image "$python/workers/hello-python/iii.worker.yaml"
+  assert_no_active_base_image "$node/workers/hello-node/iii.worker.yaml"
+  assert_contains "$python/workers/hello-python/iii.worker.yaml" "#   base_image: docker.io/iiidev/python:latest"
+  assert_contains "$node/workers/hello-node/iii.worker.yaml" "#   base_image: docker.io/iiidev/node:latest"
+  assert_contains "$python/worker-compose.yaml" "run: \".venv/bin/watchfiles '.venv/bin/python src/main.py'\""
+  assert_contains "$node/worker-compose.yaml" "run: npm run start"
+  assert_contains "$python/worker-compose.yaml" '      pre_run: |'
+  assert_contains "$python/worker-compose.yaml" '        set -e'
+  assert_contains "$python/worker-compose.yaml" '        if [ ! -x .venv/bin/python ]; then'
+  assert_contains "$python/worker-compose.yaml" '          python3 -m venv .venv'
+  assert_contains "$python/worker-compose.yaml" '        .venv/bin/python -m pip install -e .'
+  assert_contains "$python/worker-compose.yaml" '      pre_run_timeout: 5m'
+  assert_contains "$node/worker-compose.yaml" '      pre_run: npm install'
+  assert_contains "$node/worker-compose.yaml" '      pre_run_timeout: 5m'
+  assert_contains "$python/README.md" '## Automatic host setup'
+  assert_contains "$node/README.md" '## Automatic host setup'
+  assert_contains "$node/README.md" 'local `node_modules`'
+  assert_contains "$python/README.md" 'remove or comment the complete `scripts:` block'
+  assert_contains "$node/README.md" 'remove or comment the complete `scripts:` block'
+  assert_not_contains "$python/template.yaml" "the VM reloads"
+  assert_contains "$python/template.yaml" 'Compose pre_run creates a private venv'
+  assert_contains "$node/template.yaml" 'Compose pre_run installs dependencies'
+  assert_not_contains "$python/template.yaml" 'Create the private venv:'
+  assert_not_contains "$node/template.yaml" 'cd workers/hello-node && npm install'
+  assert_contains "$node/template.yaml" "In terminal 1 from the project root"
+  assert_contains "$node/template.yaml" "In terminal 2 from the project root"
+  assert_contains "$python/README.md" "In terminal 2, also from the generated project root"
+  assert_contains "$node/README.md" "In terminal 2, also from the generated project root"
+  assert_contains "$python/README.md" "isolation: libkrun"
+  assert_contains "$node/README.md" "isolation: libkrun"
+  assert_not_contains "$python/README.md" "starting in a VM"
+  assert_not_contains "$node/README.md" "starting in a VM"
+  assert_not_contains "$node/template.yaml" "the VM reloads"
+
+  if find "$python" "$node" -type d \( -name .venv -o -name venv -o -name node_modules -o -name __pycache__ -o -name dist \) -print -quit | grep -q .; then
+    echo "error: generated dependency or build directory found in new templates" >&2
+    exit 1
+  fi
+  if find "$python" "$node" -type f \( -name '*.pyc' -o -name '*.pyo' \) -print -quit | grep -q .; then
+    echo "error: Python bytecode found in new templates" >&2
+    exit 1
+  fi
+}
+
+static_template_checks
+if [[ "${1:-}" == "--static-only" ]]; then
+  echo "static template checks passed"
+  exit 0
+fi
+
+if ! command -v iii >/dev/null 2>&1; then
+  echo "error: iii is not installed or not on PATH" >&2
+  exit 127
+fi
 
 # `iii worker` was removed in 0.23: worker lifecycle moved to Worker Compose and
 # the worker-bare scaffolder is no longer reachable from the CLI. Older channels
@@ -228,6 +319,40 @@ assert_contains "$HK_DIR/worker-compose.yaml" "env_file: [./.env]"
   cd "$HK_DIR"
   iii compose build --file worker-compose.yaml
 )
+
+echo "Testing iii project init --template worker-python"
+(
+  cd "$TMP_DIR"
+  iii project init worker-python-test -t worker-python --skip-iii --template-dir "$TEMPLATE_DIR"
+)
+
+WORKER_PYTHON_DIR="$TMP_DIR/worker-python-test"
+assert_file "$WORKER_PYTHON_DIR/.iii/project.ini"
+assert_file "$WORKER_PYTHON_DIR/worker-compose.yaml"
+assert_file "$WORKER_PYTHON_DIR/workers/hello-python/iii.worker.yaml"
+assert_file "$WORKER_PYTHON_DIR/workers/hello-python/pyproject.toml"
+assert_file "$WORKER_PYTHON_DIR/workers/hello-python/src/main.py"
+assert_file "$WORKER_PYTHON_DIR/workers/hello-python/tests/test_main.py"
+assert_absent "$WORKER_PYTHON_DIR/config.yaml"
+assert_contains "$WORKER_PYTHON_DIR/worker-compose.yaml" "path://./workers/hello-python"
+
+echo "Testing iii project init --template worker-node"
+(
+  cd "$TMP_DIR"
+  iii project init worker-node-test -t worker-node --skip-iii --template-dir "$TEMPLATE_DIR"
+)
+
+WORKER_NODE_DIR="$TMP_DIR/worker-node-test"
+assert_file "$WORKER_NODE_DIR/.iii/project.ini"
+assert_file "$WORKER_NODE_DIR/worker-compose.yaml"
+assert_file "$WORKER_NODE_DIR/workers/hello-node/iii.worker.yaml"
+assert_file "$WORKER_NODE_DIR/workers/hello-node/package.json"
+assert_file "$WORKER_NODE_DIR/workers/hello-node/tsconfig.json"
+assert_file "$WORKER_NODE_DIR/workers/hello-node/src/greet.ts"
+assert_file "$WORKER_NODE_DIR/workers/hello-node/src/index.ts"
+assert_file "$WORKER_NODE_DIR/workers/hello-node/tests/greet.test.ts"
+assert_absent "$WORKER_NODE_DIR/config.yaml"
+assert_contains "$WORKER_NODE_DIR/worker-compose.yaml" "path://./workers/hello-node"
 
 # `worker init` lives on the `iii-worker` binary, which the `iii` CLI installs
 # and manages. Override the path with III_WORKER_BIN.

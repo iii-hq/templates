@@ -1,0 +1,19 @@
+[project]
+name = "hello-python"
+version = "0.1.0"
+description = "Minimal Python worker — hello-python::greet returns a greeting."
+requires-python = ">=3.11"
+dependencies = [
+    "iii-sdk==0.24.2",
+    "watchfiles",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Single-module worker: the entry point is src/main.py rather than a
+# package. Tell hatchling to build exactly that module so `pip install -e .`
+# succeeds.
+[tool.hatch.build.targets.wheel]
+only-include = ["src"]
