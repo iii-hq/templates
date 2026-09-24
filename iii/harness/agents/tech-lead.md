@@ -4,7 +4,7 @@ description: "Turns an ADE worker spec into an architecture, dispatches the engi
 logo: "🧭"
 icon: agent
 color: green
-extends: iii-minimal
+extends: default
 skills: [harness/orchestration/index, harness/orchestration/report, harness/iii-node/architecture]
 functions: ["coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "coder::list-folder", "harness::spawn", "harness::status", "state::get", "state::set", "engine::register_trigger", "harness::triggers::list", "harness::triggers::unregister", "directory::skills::get", "engine::functions::info"]
 hidden: true

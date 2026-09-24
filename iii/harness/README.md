@@ -1,109 +1,206 @@
-# harness + console: a base compose template
+# Build with agents in the ADE
 
-The smallest compose project that gives you a working iii agent harness and the
-web console.
+This template starts the iii engine, AI agents, and the ADE: the workspace
+where you chat with agents and use the tools they build. Start with a small
+tool inside the ADE, create a reusable agent, or use Default for general work
+in your project.
 
-## Setup your harness authentication (API Key or Provider Login)
+## What you can do
 
-Export the key in the shell you start the compose daemon from:
+When you start a new conversation in the ADE, choose one of these:
 
-If you need to provide an API key you can either set one in `.env` or
-your environment. Either works.
+| Choice | Use it to |
+| --- | --- |
+| **Create a tool in the ADE** | Create a tool that runs inside the ADE, with its own screens and forms, powered by a worker. Only for tools inside the ADE: not for standalone websites, apps or backend-only services. |
+| **Create a custom agent** | Create a reusable agent with instructions and skills for a specific task. Once saved, it becomes a choice here too. |
+| **Default** | Ask general questions and get help with development tasks in your project. |
+
+You do not need to create a custom agent before using the ADE. You also never
+choose the specialists that do the technical work: **Create a tool in the
+ADE** coordinates them for you.
+
+> **Default** is the built-in general agent. `iii-directory` versions that
+> predate it list the same agent as `iii-minimal`.
+
+## Get started
+
+You need:
+
+- The iii CLI: `curl -fsSL https://install.iii.dev/iii/main/install.sh | sh`
+- A project created from this template: `iii project init <name> -t harness`
+- An API key for one of the AI providers below
+- To create tools in the ADE: Node.js 22 or later and pnpm 10 or later. The
+  tools are Node.js workers that are built in your project folder.
+
+Run every command below from the project folder.
+
+### 1. Configure one AI provider
+
+This project enables three model providers: Anthropic, OpenAI and DeepSeek.
+You need a key for only one of them. Open `.env` and paste the key after the
+matching name, for example:
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...
-export OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
 ```
-## Start the compose worker and bring the iii engine up in one command
 
-In a new terminal from the project directory run:
+Leave the other lines empty. `.env` is listed in `.gitignore`, so the key
+stays out of git.
+
+Put the key in `.env`, not in a shell `export`. The model router reads its
+keys from `.env`, and a line there, even an empty one, takes precedence over
+a variable exported in your shell.
+
+To use another provider, or one that signs in without an API key, see
+[Other providers](#other-providers).
+
+### 2. Start the project
 
 ```bash
 iii compose --up
 ```
 
-## Start the harness via worker-compose.yaml
+This starts the engine and every worker listed in `worker-compose.yaml`, and
+keeps running in the foreground: leave this terminal open. The first run
+downloads the workers, so it takes longer than later runs. Compose prints a
+`ready` line for each worker and then an `up: … changed` summary.
 
-Compose can also be controlled like any other iii worker, for example here's what you
-would run if you started `iii compose` without the `--up flag`:
-
-```bash
-iii trigger compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000
-```
-
-## Use the harness
-
-Once the harnesses is started you should see output from the `iii compose` daemon like:
+If you edit `.env` while the project is running, restart the model router so
+it reads the change:
 
 ```bash
-$ iii compose --namespace default
-compose serving
-  engine: ws://127.0.0.1:49134
-  namespace: default
-  start a project: iii trigger compose::up --namespace default file=./worker-compose.yaml
-[compose] project /Users/tony/iii/projects/testing/compose/harness/worker-compose.yaml loaded into default
-✓ state ready (1.4s)
-✓ queue ready (1.2s)
-✓ cron ready (1.2s)
-✓ ide ready (962ms)
-✓ session-manager ready (1.2s)
-✓ iii-directory ready (1.2s)
-✓ llm-router ready (1.7s)
-✓ provider-anthropic ready (2.1s)
-✓ provider-openai ready (2.1s)
-✓ provider-openai-codex ready (2.1s)
-✓ context-manager ready (2.0s)
-✓ harness ready (6.6s)
-✓ ade ready (956ms)
-up: 13 of 13 changed in 22.8s
+iii trigger compose::restart worker=llm-router
 ```
 
-Once you see that output open the console at **http://127.0.0.1:3113**. It's all setup and ready for you
-to start developing iii applications with agentic assistance.
+### 3. Open the ADE
 
-## About this project
+Open **http://127.0.0.1:3113**, the ADE's default address.
 
-The `worker-compose.yaml` file in this project specifies how to start the entire
-system that supports the harness.
+If nothing answers there, the ADE may be using another port: after its first
+start it keeps the port in its configuration entry. Compose names that entry
+`<namespace>-<container>`, so it is `default-ade` in this project. In a
+second terminal, from the project folder, run:
 
-The first `compose::up` downloads workers into `~/.iii/compose/packages`. After
-that they are cached.
+```bash
+iii trigger configuration::get id=default-ade
+```
 
-### What is in it, and why
+Then open `http://127.0.0.1:<http_port>`, using the `http_port` value it
+prints. The ADE also logs the address it listens on:
 
-| Tier | Containers                                                            | Why                                                                                 |
-| ---- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| 1    | `state`, `queue`, `cron`, `shell`, `session-manager`, `iii-directory` | Direct `harness` dependencies with no dependencies of their own                     |
-| 2    | `llm-router`                                                          | Model routing. Needs `state`                                                        |
-| 3    | `provider-anthropic`, `provider-openai`, `provider-openai-codex`, `context-manager` | `harness` names both providers explicitly, so both are required even if you use one |
-| 4    | `harness`                                                             | The turn loop                                                                       |
-| 5    | `console`                                                             | The web UI                                                                          |
-| 6    | `browser`                                                             | Chromium sessions and one-shot HTTP fetches (`browser::fetch`) the profiles verify with |
+```bash
+iii compose logs ade --tail 1000 | grep "console http listening"
+```
 
-## Agent profiles: a hierarchy that coordinates through spawn and state
+### 4. Check the project folder
 
-`agents/` ships five profiles the console's agent picker lists (or
-`harness::send { options: { agent: "<id>" } }` runs). Each extends the
-harness's built-in `iii-minimal` identity and preloads its skills from
-`skills/harness/…`; the harness freezes both into every session that runs as
-that profile.
+The folder name next to the message box is the conversation's working
+directory: where the agent reads and creates files. New conversations start
+in the project folder, the one that contains `worker-compose.yaml`. Hover
+over the folder name to see its full path; select it to choose another
+folder before you send.
+
+The working directory is where agents start, not a sandbox: it does not stop
+an agent from running commands or changing files elsewhere on your machine.
+
+### 5. Try your first tool
+
+Select **Create a tool in the ADE** and send this message:
 
 ```text
-iii-minimal
-├── ade-worker-builder        plans the spec with you, briefs a Tech Lead, accepts in the console
-│   └── tech-lead             writes the architecture, briefs the engineers, verifies the seam
-│       ├── backend-engineer  the Node worker: functions, trigger types, configuration, UI delivery
-│       └── frontend-engineer the UI the worker injects into the console
-└── agent-profile-creator     plans a new profile with you and writes it beside these
+Create a small task list inside the ADE. I want to add a task with a title, mark it as done, and keep my tasks after refreshing the page. Use this project's existing capabilities where possible. Do not connect to external services.
 ```
 
-| Profile id | Role |
+### 6. Know what happens next
+
+1. **Clarify.** The agent may ask one or two short questions. A clear request
+   like this one needs few or none.
+2. **Confirm the plan.** It shows a short plan: what the tool does, where it
+   appears in the ADE, what is kept after a refresh, what is out of scope,
+   and the checks it will run. It saves the details to
+   `specs/<tool-name>.md`. Nothing is built until you confirm. If the tool
+   needs something the project does not already have, the plan says so and
+   asks you first.
+3. **Build.** After you confirm, it coordinates the build. The tool's worker
+   is created inside your project folder and added to `worker-compose.yaml`.
+4. **Verify.** It checks each point of the plan in the running ADE, in a
+   browser session you can watch.
+5. **Open the result.** It finishes with a link to the new page, the result
+   of each check, and a short list of the files it created.
+
+For this example, expect a plan for a single page inside the ADE where you
+can add a task with a non-empty title, mark it as done, and still see your
+tasks and their status after refreshing the page. It should keep the tasks
+with a capability this project already runs, such as the `state` worker, and
+need no external services or extra accounts.
+
+## Other paths
+
+- **Create a custom agent.** Describe what the agent should help with and
+  what it should avoid doing, for example: "Create an agent that reviews my
+  workers and suggests useful tests." It shows a short summary and the full
+  profile file before saving anything, then writes `agents/<id>.md`. The new
+  agent appears in the new-conversation gallery without a restart.
+- **Default.** Use it for everything else: questions about iii or this
+  project, code changes, debugging, or work outside the ADE such as a
+  standalone app.
+
+## Troubleshooting
+
+| Problem | What to do |
 | --- | --- |
-| `ade-worker-builder` | Interviews you until an ADE worker's spec is unambiguous (`specs/<worker>.md`), hands it to a Tech Lead, and accepts only after exercising every criterion in the running console. |
-| `tech-lead` | Turns the spec into an architecture, dispatches only the engineers needed (backend then frontend for a new worker), and independently verifies affected contracts and console integration. |
-| `backend-engineer` | Owns the package boilerplate (`package.json`, `scripts/dev.mjs`, `ui/build.mjs`, asset delivery, the `compose::add` declaration) that gives both halves hot reload under `pnpm dev`, builds the Node worker per the `iii-node` skill, and verifies every function with a real call. |
-| `frontend-engineer` | Builds the injected console UI against `@iii-dev/console-ui` and verifies it in the running console at every width and theme. |
-| `agent-profile-creator` | Plans a new profile with you, using the existing ones as the reference, and writes `agents/<id>.md`. |
+| The model picker shows no models, or the ADE asks you to configure a provider | Check that one key in `.env` is filled in, then run `iii trigger compose::restart worker=llm-router`. `iii trigger router::provider::list` shows which providers report `configured: true`. |
+| A key exported in your shell is ignored | Put it in `.env` instead (step 1). |
+| The selected model fails or is unavailable | Choose another model in the model picker next to the message box. `iii trigger router::models::list` lists the models your configured providers offer. |
+| The agent works in the wrong folder | Select the folder name next to the message box and choose your project folder before sending (step 4). |
+| http://127.0.0.1:3113 does not open | Keep `iii compose --up` running and find the ADE's actual address (step 3). |
+| Building a tool fails while installing packages | Check that Node.js 22+ and pnpm 10+ are installed and on your `PATH`. |
+
+## Advanced reference
+
+You do not need anything below to use the ADE.
+
+### Agents in this template
+
+`agents/` ships five profiles. Two are the choices described above. Three are
+internal specialists marked `hidden: true`: the tool builder starts them for
+you, and they do not appear in the gallery. **Default** and the other
+built-in profiles come from the `iii-directory` worker, not from this folder.
+
+Every profile here extends `iii-minimal` and preloads its skills from
+`skills/harness/…`; the harness freezes both into every session that runs as
+that profile. `iii-directory` versions with the built-in `default` profile
+show it as **Default** and keep `iii-minimal` as a hidden alias of it;
+earlier versions list `iii-minimal` itself. Extending `iii-minimal` resolves
+on both. Display names can change; the profile id (the file name) is what
+`extends`, saved sessions and `harness::send { options: { agent: "<id>" } }`
+use.
+
+The two gallery profiles also set `composer_placeholder`: the example request
+the ADE shows in the empty message box while that profile is selected. It is
+never sent, never added to the prompt and not inherited through `extends`
+(at most 200 characters of plain text). `iii-directory` versions without the
+field ignore it.
+
+```text
+default                           built-in, shown as Default
+└── iii-minimal                   built-in hidden alias of default
+    ├── ade-worker-builder        Create a tool in the ADE: plans the tool with you, briefs a Tech Lead, accepts it in the ADE
+    │   └── tech-lead             hidden: writes the architecture, briefs the engineers, verifies the seam
+    │       ├── backend-engineer  hidden: the Node worker: functions, trigger types, configuration, UI delivery
+    │       └── frontend-engineer hidden: the UI the worker injects into the ADE
+    └── agent-profile-creator     Create a custom agent: plans a new profile with you and writes it beside these
+```
+
+| Profile id | Shown as | Role |
+| --- | --- | --- |
+| `ade-worker-builder` | Create a tool in the ADE | Builds tools inside the ADE only. Plans the tool with you until its spec is unambiguous (`specs/<worker>.md`), hands it to a Tech Lead, and accepts it only after exercising every criterion in the running ADE. |
+| `agent-profile-creator` | Create a custom agent | Plans a new profile with you, using the existing ones as the reference, and writes `agents/<id>.md`. |
+| `tech-lead` | hidden | Turns the spec into an architecture, dispatches only the engineers needed (backend then frontend for a new worker), and independently verifies affected contracts and ADE integration. |
+| `backend-engineer` | hidden | Owns the package boilerplate (`package.json`, `scripts/dev.mjs`, `ui/build.mjs`, asset delivery, the `compose::add` declaration) that gives both halves hot reload under `pnpm dev`, builds the Node worker per the `iii-node` skill, and verifies every function with a real call. |
+| `frontend-engineer` | hidden | Builds the injected ADE UI against `@iii-dev/console-ui` and verifies it in the running ADE at every width and theme. |
+
+### Orchestration
 
 There is no board and no message bus between agents. Orchestration is the
 `harness/orchestration` skill, two wires with one direction each:
@@ -119,12 +216,12 @@ There is no board and no message bus between agents. Orchestration is the
   wake on that key before spawning, so the write starts its next turn. The
   child never looks for a parent; feedback comes back as a new task in the
   same session (`harness::spawn` with the same `session_id`).
-- Results are visible on the console's state page (`#/worker/state`, or the
+- Results are visible on the ADE's state page (`#/worker/state`, or the
   State page in the workspace), scope `results`.
 
 ### Context and verification
 
-The Builder preloads `harness/ade-worker-design/planning`; the Tech Lead
+The tool builder preloads `harness/ade-worker-design/planning`; the Tech Lead
 preloads `harness/iii-node/architecture`. Implementation manuals remain with
 the engineers. Specific unresolved questions can be delegated to ad hoc
 reference children; there is no initial sweep of examples or manuals.
@@ -134,39 +231,76 @@ project survey. Browser contracts are loaded when verification begins;
 shorter function preload lists do not narrow inherited permissions.
 
 Engineers verify their implementation. The Tech Lead reviews that evidence
-and independently checks contracts and integration. The Builder observes
-user acceptance in the console. Corrections rerun affected checks and their
-dependencies; earlier evidence is reused only while it remains applicable.
-Reports retain the five fields above and stay within 500 words (300 for
-reference checks), with detailed observations in cited project artifacts.
+and independently checks contracts and integration. The tool builder
+observes user acceptance in the ADE. Corrections rerun affected checks and
+their dependencies; earlier evidence is reused only while it remains
+applicable. Reports retain the five fields above and stay within 500 words
+(300 for reference checks), with detailed observations in cited project
+artifacts.
 
-The profiles ship without a `model`, so each session takes the model of the
-send. To pin one, add `model: <provider>::<model>` (and optionally
-`reasoning_effort`) to a profile's frontmatter; `router::models::list` prints
-the catalog. Skill ids are prefixed `harness/` because `iii-directory` only
-lists skills whose namespace is a worker in this compose file.
+### Models and skills
 
-## Credentials
+The profiles ship without a `model`, so each session uses the model selected
+when the message is sent. To pin one, add `model: <provider>::<model>` (and
+optionally `reasoning_effort`) to a profile's frontmatter;
+`iii trigger router::models::list` prints the catalog. Skill ids are prefixed
+`harness/` because `iii-directory` only lists skills whose namespace is a
+worker in this compose file.
 
-`worker-compose.yaml` has a ready-to-uncomment container block for every
-provider below, plus a matching environment variable. Adding one
-is: uncomment the worker, set its environment variable, start compose.
+### What runs in this project
+
+`worker-compose.yaml` declares these containers. The first start downloads
+them into `~/.iii/compose/packages`; later starts use that cache.
+
+| Container | Why it is here |
+| --- | --- |
+| `state`, `queue`, `cron`, `session-manager`, `iii-directory` | Services the harness depends on: storage, queues, schedules, conversation history, and the directory of agents, skills and functions |
+| `llm-router` | Routes model calls and resolves provider credentials; reads `.env` |
+| `provider-anthropic`, `provider-openai` | Model providers. The harness waits for both, so both run even if you use only one key |
+| `provider-deepseek` | Model provider enabled by default; its key is optional |
+| `context-manager` | Summarizes long conversations (`/compact`) |
+| `harness` | The agent turn loop |
+| `ade` | The ADE web UI and its `/ws` connection to the engine |
+| `ide` | Files and commands for agents and the ADE |
+| `browser` | Chromium sessions and page fetches that agents use to verify their work |
+
+Container names are not always function namespaces: `ade` registers
+`console::*`, `ide` registers `shell::*` and `coder::*`, `llm-router`
+registers `router::*`, and `iii-directory` registers `directory::*`.
+
+### Other providers
+
+`worker-compose.yaml` has a ready-to-uncomment block for each provider below.
+To add one:
+
+1. Uncomment its block in `worker-compose.yaml`.
+2. For an API-key provider, uncomment its line in `.env` and paste the key.
+3. Stop `iii compose --up` and run it again, so compose re-reads
+   `worker-compose.yaml`. Add the container to the `harness` `start_after`
+   list if the harness should wait for it.
 
 | Provider              | Environment variable |
 | --------------------- | -------------------- |
-| `provider-anthropic`  | `ANTHROPIC_API_KEY`  |
-| `provider-openai`     | `OPENAI_API_KEY`     |
-| `provider-deepseek`   | `DEEPSEEK_API_KEY`   |
 | `provider-kimi`       | `MOONSHOT_API_KEY`   |
 | `provider-xai`        | `XAI_API_KEY`        |
 | `provider-zai`        | `ZAI_API_KEY`        |
 | `provider-openrouter` | `OPENROUTER_API_KEY` |
 | `provider-llamacpp`   | `LLAMACPP_API_KEY`   |
 
-Three providers authenticate without an API Key. These are experimental.
+Three experimental providers authenticate without an API key. They are also
+commented out in `worker-compose.yaml`.
 
-| Provider                  | How it authenticates                                                                                                                                                                                      |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `provider-claude-code`    | Reads `~/.claude/.credentials.json`, written by the Claude Code CLI when you sign in there                                                                                                                |
-| `provider-openai-codex`   | Reads `~/.codex/auth.json`, written by the Codex CLI when you sign in there                                                                                                                               |
+| Provider                  | How it authenticates |
+| ------------------------- | -------------------- |
+| `provider-claude-code`    | Reads `~/.claude/.credentials.json`, written by the Claude Code CLI when you sign in there |
+| `provider-openai-codex`   | Reads `~/.codex/auth.json`, written by the Codex CLI when you sign in there |
 | `provider-github-copilot` | A GitHub device flow. Call `iii trigger provider::github-copilot::login::start`, enter the `user_code` it returns at the verification URL, then call `iii trigger provider::github-copilot::login::poll`. |
+
+### Starting compose without `--up`
+
+Compose can also be controlled like any other iii worker. Start the daemon
+with `iii compose`, then bring the project up with:
+
+```bash
+iii trigger compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000
+```

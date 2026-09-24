@@ -229,6 +229,92 @@ assert_contains "$HK_DIR/worker-compose.yaml" "env_file: [./.env]"
   iii compose build --file worker-compose.yaml
 )
 
+echo "Testing iii project init --template harness"
+(
+  cd "$TMP_DIR"
+  iii project init harness-test -t harness --skip-iii --template-dir "$TEMPLATE_DIR" </dev/null
+) | tee "$TMP_DIR/harness-init.log"
+
+HARNESS_DIR="$TMP_DIR/harness-test"
+
+# Every path the template lists under `files:` is copied.
+python3 - "$TEMPLATE_DIR/harness/template.yaml" >"$TMP_DIR/harness-files.txt" <<'PYEOF'
+import sys
+
+in_files = False
+with open(sys.argv[1]) as handle:
+    for line in handle:
+        if line.startswith("files:"):
+            in_files = True
+            continue
+        if not in_files:
+            continue
+        body = line.strip()
+        if body.startswith("- "):
+            print(body[2:].split(" #")[0].strip())
+        elif body and not body.startswith("#"):
+            break
+PYEOF
+if [[ ! -s "$TMP_DIR/harness-files.txt" ]]; then
+  echo "error: harness/template.yaml lists no files" >&2
+  exit 1
+fi
+while IFS= read -r listed; do
+  assert_file "$HARNESS_DIR/$listed"
+done <"$TMP_DIR/harness-files.txt"
+assert_file "$HARNESS_DIR/.gitignore"
+
+# The two gallery profiles keep their ids (the file names) and show what they
+# are for; the specialists they coordinate stay out of the gallery.
+assert_contains "$HARNESS_DIR/agents/ade-worker-builder.md" "name: Create a tool in the ADE"
+assert_contains "$HARNESS_DIR/agents/agent-profile-creator.md" "name: Create a custom agent"
+for profile in tech-lead backend-engineer frontend-engineer; do
+  assert_contains "$HARNESS_DIR/agents/$profile.md" "hidden: true"
+done
+
+# Each gallery profile carries its own composer example (it is not inherited),
+# within iii-directory's 200-character limit after whitespace collapses.
+for profile in ade-worker-builder agent-profile-creator; do
+  python3 - "$HARNESS_DIR/agents/$profile.md" <<'PYEOF'
+import re
+import sys
+
+path = sys.argv[1]
+front = open(path).read().split("---\n", 2)[1]
+match = re.search(r'^composer_placeholder: "(.*)"$', front, re.M)
+if not match:
+    sys.exit(f"FAIL: {path} has no composer_placeholder")
+value = " ".join(match.group(1).split())
+if not value or len(value) > 200:
+    sys.exit(f"FAIL: {path} composer_placeholder must be 1-200 characters")
+PYEOF
+done
+
+# Provider keys are read from .env, which ships without values and stays out
+# of git.
+assert_contains "$HARNESS_DIR/worker-compose.yaml" "env_file: [./.env]"
+if grep -Eq '^[A-Za-z_][A-Za-z0-9_]*=.+' "$HARNESS_DIR/.env"; then
+  echo "FAIL: harness .env ships a credential value" >&2
+  exit 1
+fi
+if ! grep -qx '.env' "$HARNESS_DIR/.gitignore"; then
+  echo "FAIL: harness .gitignore does not ignore .env" >&2
+  exit 1
+fi
+
+# The printed next steps lead to the gallery choice, not to hidden profiles.
+assert_contains "$TMP_DIR/harness-init.log" "Create a tool in the ADE"
+if grep -Eq 'Tech Lead|engineers' "$TMP_DIR/harness-init.log"; then
+  echo "FAIL: harness next steps name hidden profiles" >&2
+  exit 1
+fi
+
+# The shipped file resolves every package.
+(
+  cd "$HARNESS_DIR"
+  iii compose build --file worker-compose.yaml
+)
+
 # `worker init` lives on the `iii-worker` binary, which the `iii` CLI installs
 # and manages. Override the path with III_WORKER_BIN.
 III_WORKER_BIN="${III_WORKER_BIN:-iii-worker}"

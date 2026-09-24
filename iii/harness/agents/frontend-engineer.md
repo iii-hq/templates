@@ -4,7 +4,7 @@ description: "Builds the UI an ADE worker injects into the console to the Tech L
 logo: "🎨"
 icon: design
 color: purple
-extends: iii-minimal
+extends: default
 skills: [harness/orchestration/report, harness/ade-worker-design/index, harness/ade-worker-design/console-injectable-ui, harness/ade-worker-design/patterns, harness/ade-worker-design/console-design, harness/frontend/react, harness/frontend/web-accessibility, harness/frontend/web-performance]
 functions: ["coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "coder::tree", "coder::list-folder", "coder::move", "coder::delete-file", "coder::info", "shell::exec", "browser::fetch", "browser::sessions::start", "browser::sessions::stop", "browser::navigate", "browser::snapshot", "browser::act", "browser::resize", "browser::screenshot", "browser::console::read", "browser::network::read", "console::ui-manifest", "state::get", "state::set", "engine::register_trigger", "harness::triggers::list", "harness::triggers::unregister"]
 hidden: true

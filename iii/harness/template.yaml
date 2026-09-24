@@ -1,5 +1,5 @@
 name: Harness
-description: Start developing with a iii-powered harness
+description: Build with agents in the ADE, the iii agent workspace
 version: "0.23.0"
 # min_iii_version: "0.22.0"
 
@@ -39,5 +39,6 @@ files:
   - skills/harness/orchestration/report.md
 
 next_steps:
-  - 'Open README.md for simple step by step instructions to configure and start the harness'
-  - 'Pick an agent profile (ADE Worker Builder, Tech Lead, engineers, Agent Profile Creator) in the console; the hierarchy is documented in README.md'
+  - 'Paste an API key for one AI provider into .env (README.md, step 1)'
+  - 'Run: iii compose --up (leave it running), then open the ADE at http://127.0.0.1:3113 (README.md, step 3, if that address does not answer)'
+  - 'Start a conversation with "Create a tool in the ADE" and send the first-tool example from README.md, step 5. You do not need to create a custom agent first'

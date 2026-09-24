@@ -24,7 +24,8 @@ containers:
     start_after:
       - state
     # Every provider key resolves in the router's process, not in the provider
-    # worker. When you uncomment a provider below, uncomment its key here too.
+    # worker, and is read from ./.env. When you uncomment a provider below,
+    # uncomment its key in ./.env too.
     env_file: [./.env]
     environment:
       RUST_LOG: info
@@ -45,18 +46,20 @@ containers:
     environment:
       RUST_LOG: info
 
-  # Additional providers. Uncomment a block, uncomment its key in ./.env, and
-  # restart the compose daemon so it re-reads this file. llm-router reads every
-  # provider key from that file through its `env_file`, so a key exported in
-  # the shell does not reach it. Add the container to the `harness`
-  # start_after list below if the harness should wait for it.
-
+  # Enabled by default; its key in ./.env is optional.
   provider-deepseek:            # DEEPSEEK_API_KEY
     worker: package://provider-deepseek
     version: "latest"
     start_after:
       - llm-router
       - state
+
+  # Additional providers. Uncomment a block, uncomment its key in ./.env, and
+  # restart the compose daemon so it re-reads this file. llm-router reads every
+  # provider key from ./.env through its `env_file`, and a line there, even an
+  # empty one, takes precedence over a key exported in the shell. Add the
+  # container to the `harness` start_after list below if the harness should
+  # wait for it.
 
   #  provider-kimi:                # MOONSHOT_API_KEY, not KIMI_API_KEY
   #    worker: package://provider-kimi
@@ -138,11 +141,11 @@ containers:
     worker: package://cron
     version: "latest"
 
-  ade: # console
+  ade: # the ADE web UI (registers console::*)
     worker: package://ade
     version: "latest"
 
-  ide: # shell
+  ide: # files and commands for agents and the ADE (registers shell::* and coder::*)
     worker: package://ide
     version: "latest"
 

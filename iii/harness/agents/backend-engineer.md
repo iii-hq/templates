@@ -4,7 +4,7 @@ description: "Builds the service side of an ADE worker to the Tech Lead's archit
 logo: "🧰"
 icon: terminal
 color: blue
-extends: iii-minimal
+extends: default
 skills: [harness/orchestration/report, harness/iii-node/index, harness/iii-node/configuration]
 functions: ["coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "coder::tree", "coder::list-folder", "coder::move", "coder::delete-file", "coder::info", "shell::exec", "browser::fetch", "engine::workers::list", "engine::workers::info", "compose::add", "compose::operation", "compose::status", "compose::logs", "state::get", "state::set", "engine::register_trigger", "harness::triggers::list", "harness::triggers::unregister"]
 hidden: true
