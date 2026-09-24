@@ -163,11 +163,11 @@ You do not need anything below to use the ADE.
 
 ### Agents in this template
 
-`agents/` ships five profiles. Two are the choices described above. Three are
-internal specialists marked `hidden: true` that do not appear in the
-gallery; the tool builder no longer starts them, because it holds their
-roles itself, one phase at a time. **Default** and the other built-in
-profiles come from the `iii-directory` worker, not from this folder.
+`agents/` ships two profiles, the two choices described above. The tool
+builder holds the architect, backend and frontend roles itself, one phase
+at a time, so no hidden specialist profiles are needed. **Default** and the
+other built-in profiles come from the `iii-directory` worker, not from this
+folder.
 
 Every profile here extends `iii-minimal` and preloads its skills from
 `skills/harness/…`; the harness freezes both into every session that runs as
@@ -188,32 +188,26 @@ field ignore it.
 default                           built-in, shown as Default
 └── iii-minimal                   built-in hidden alias of default
     ├── ade-worker-builder        Create a tool in the ADE: plans, builds and verifies the tool with you in one conversation
-    ├── agent-profile-creator     Create a custom agent: plans a new profile with you and writes it beside these
-    └── tech-lead                 hidden: architecture and seam for an orchestrated, split build
-        ├── backend-engineer      hidden: the Node worker: functions, trigger types, configuration, UI delivery
-        └── frontend-engineer     hidden: the UI the worker injects into the ADE
+    └── agent-profile-creator     Create a custom agent: plans a new profile with you and writes it beside these
 ```
 
 | Profile id | Shown as | Role |
 | --- | --- | --- |
 | `ade-worker-builder` | Create a tool in the ADE | Builds tools inside the ADE only, alone and in phases: plans the tool with you until its spec is unambiguous (`specs/<worker>.md`), writes the architecture, builds the Node worker and its injected UI, and accepts it only after exercising every criterion in the running ADE. Loads each phase's playbook (`skills/harness/ade-solo/…`) only when it enters that phase. |
 | `agent-profile-creator` | Create a custom agent | Plans a new profile with you, using the existing ones as the reference, and writes `agents/<id>.md`. |
-| `tech-lead` | hidden | Not started by the tool builder. Turns a spec into an architecture, dispatches only the engineers needed (backend then frontend for a new worker), and independently verifies affected contracts and ADE integration. |
-| `backend-engineer` | hidden | Not started by the tool builder. Owns the package boilerplate (`package.json`, `scripts/dev.mjs`, `ui/build.mjs`, asset delivery, the `compose::add` declaration), builds the Node worker per the `iii-node` skill, and verifies every function with a real call. |
-| `frontend-engineer` | hidden | Not started by the tool builder. Builds the injected ADE UI against `@iii-dev/console-ui` and verifies it in the running ADE at every width and theme. |
 
 ### Orchestration
 
 The tool builder does not orchestrate: it crosses its phases itself.
-`agent-profile-creator` uses orchestration for reference checks, and the
-hidden specialists use it among themselves. There is no board and no
-message bus between agents: orchestration is the `harness/orchestration`
+`agent-profile-creator` uses orchestration for reference checks, and so can
+any profile you create that dispatches other agents. There is no board and
+no message bus between agents: orchestration is the `harness/orchestration`
 skill, two wires with one direction each:
 
 - **Downstream is `harness::spawn`.** The `task` is the child's whole brief:
   the spec or architecture file by path, the project root, what is out of
   scope, the checks that mean done, and the state key for its result. A
-  child that must spawn children of its own (the Tech Lead) is spawned with
+  child that must spawn children of its own is spawned with
   `options: { orchestrator: true }`.
 - **Upstream is `state`.** The child writes one result document
   (`outcome`, `summary`, `evidence`, `files`, `questions`) to scope

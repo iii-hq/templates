@@ -15,9 +15,6 @@ files:
   - worker-compose.yaml
   - agents/ade-worker-builder.md
   - agents/agent-profile-creator.md
-  - agents/backend-engineer.md
-  - agents/frontend-engineer.md
-  - agents/tech-lead.md
   - skills/harness/ade-solo/accept.md
   - skills/harness/ade-solo/architect.md
   - skills/harness/ade-solo/backend.md

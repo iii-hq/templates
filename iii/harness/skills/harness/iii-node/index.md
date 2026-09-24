@@ -16,7 +16,7 @@ Use this skill to create or restructure a Node.js/TypeScript iii worker, especia
 Read the relevant references before implementing:
 
 - [`configuration.md`](./configuration.md) — bundled beside this file: schema-validated configuration registration, reads, updates, and reactive triggers.
-- The UI half lives in the `ade-worker-design` skill (`directory::skills::get { "id": "harness/ade-worker-design/<name>" }`) and belongs to the Frontend Engineer profile:
+- The UI half lives in the `ade-worker-design` skill (`directory::skills::get { "id": "harness/ade-worker-design/<name>" }`) and belongs to the Frontend Engineer role:
   - `console-injectable-ui` — the complete injectable UI contract, host APIs, asset registration, hot reload, responsiveness, and validation requirements.
   - `console-design` — the Console visual system, component grammar, tokens, typography, spacing, and interaction rules.
   - `patterns` — concrete recipes for record-shaped UIs: boards with lanes and drag-and-drop, a record screen that opens as its own pane, activity timelines with threaded comments, creation modals, chat cards for agent calls, settings forms, and live updates.
