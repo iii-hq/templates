@@ -24,8 +24,10 @@ user what the project or the engine can answer.
 
 Record reusable findings in `Project context`: source paths and sections,
 existing capabilities, where the skill files live, the ADE URL and how you
-found it, versions or hashes, and when runtime facts were checked. On later
-turns investigate only gaps or changed facts.
+found it (the `http_port` of `configuration::get { "id": "default-ade" }`,
+or the ADE entry `configuration::list` shows; never a guessed port or a
+socket scan), versions or hashes, and when runtime facts were checked. On
+later turns investigate only gaps or changed facts.
 
 ## The conversation
 
@@ -76,6 +78,14 @@ reason and needs agreement before it is added.
 **Stop for confirmation.** Nothing is built before the user confirms. For a
 delta on an existing tool, confirm whenever user-visible behaviour changes;
 a defect that restores an existing criterion needs no new confirmation.
+
+The only exception is a non-interactive run: the request itself says no
+person will answer (an automated or harness-driven run, or a task another
+agent spawned) and it fully specifies the tool. Write the spec, set
+`Plan: assumed-confirmed (non-interactive)`, mark your decisions
+`Assumed:` in `Notes`, and go on through every later phase, Accept
+included. A request being detailed does not make it non-interactive: a
+person in chat still confirms.
 
 ## The spec
 
@@ -130,8 +140,10 @@ loading, empty, error, success, overflow>
 - Assumed: <anything decided without confirmation>
 ```
 
-A status is `pending`, `done <when>`, `skipped (<reason>)` or
-`failed: <criterion or check>`.
+A status is `pending`, `done <when> · <playbook id>`, `skipped (<reason>)`
+or `failed: <criterion or check>`; the Plan line may also be
+`assumed-confirmed (non-interactive)`. `done` is valid only after that
+phase's playbook was fetched in this session and its gate checks ran.
 
 - **Criteria are observable or they are not criteria.** Numbered, each with
   a `Verify:` line. "The board updates correctly" is not a criterion; "an
@@ -143,5 +155,5 @@ A status is `pending`, `done <when>`, `skipped (<reason>)` or
 - **Edit the file in the same turn a decision changes**, say in prose what
   changed, and stop for confirmation again.
 
-On confirmation set `Plan: done <when>` and `Next:` to the first phase the
-class runs, then fetch that phase's playbook.
+On confirmation set `Plan: done <when> · harness/ade-solo/plan` and `Next:`
+to the first phase the class runs, then fetch that phase's playbook.

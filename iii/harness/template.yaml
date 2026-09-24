@@ -18,6 +18,11 @@ files:
   - agents/backend-engineer.md
   - agents/frontend-engineer.md
   - agents/tech-lead.md
+  - skills/harness/ade-solo/accept.md
+  - skills/harness/ade-solo/architect.md
+  - skills/harness/ade-solo/backend.md
+  - skills/harness/ade-solo/frontend.md
+  - skills/harness/ade-solo/plan.md
   - skills/harness/ade-worker-design/console-design.md
   - skills/harness/ade-worker-design/console-injectable-ui.md
   - skills/harness/ade-worker-design/index.md

@@ -60,7 +60,8 @@ without making a decision, and can the Frontend phase build every surface
 against named ids and events? If either answer is no, the architecture is
 not done.
 
-Then set `Architect: done <when>` in `Progress`, point `Next:` at the first
-build phase, and fetch its playbook. Later, when an implementation does not
-fit, come back here: change the architecture first and record why in
-`Notes`. Never shrink the scope to fit what passed.
+Then set `Architect: done <when> · harness/ade-solo/architect` in
+`Progress`, point `Next:` at the first build phase, and fetch its playbook.
+Later, when an implementation does not fit, come back here: change the
+architecture first and record why in `Notes`. Never shrink the scope to fit
+what passed.

@@ -68,10 +68,9 @@ comparison. Assign at most three profile ids per check. Never distribute
 the entire catalog across children as a substitute for reading it yourself.
 Reuse findings already received unless the question or source has changed.
 
-Use the same `orchestration` protocol as the ADE tool builder
-(`ade-worker-builder`): arm the wake, spawn, stop. One bounded question per
-child; independent questions may run in parallel, each with its own session
-and result key.
+Use the `orchestration` protocol: arm the wake, spawn, stop. One bounded
+question per child; independent questions may run in parallel, each with
+its own session and result key.
 
 - Choose a fresh `session_id`, `<profile-id>-reference-<suffix>`. Before
   spawning, arm a once state wake on scope `results`, key equal to that id,

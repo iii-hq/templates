@@ -214,6 +214,7 @@ A Compose project usually runs its workers in a project namespace (`III_NAMESPAC
 - `iii.registerTrigger` for an engine-provided type (`configuration`) and for another project worker's type (`console:script`) both resolve without a `trigger_namespace`; do not set one.
 - A trigger type the worker registers itself lands in the worker's namespace; console tabs and the harness bind to it without extra configuration.
 - The harness and the console reach the worker's functions by bare id; never prefix ids with a namespace.
+- A worker process you start yourself for checks (`node src/index.mjs`, `nohup …`) does not inherit `III_NAMESPACE` and lands in `default`, where the harness and the console cannot reach it: its functions answer `function_not_found`. Prefer the copy Compose runs. When you must start one, set `III_NAMESPACE=<project namespace>` (the namespace the project's workers show in `engine::functions::list` results), never run it beside the Compose copy, and stop it before ending the turn.
 
 Every public function must provide:
 
@@ -221,6 +222,8 @@ Every public function must provide:
 - a concise description;
 - `request_format` and `response_format` JSON Schemas;
 - a handler whose input/output actually matches those schemas.
+
+The engine adds `_`-prefixed fields such as `_caller_worker_id` to every payload it delivers. Handler-side validation that rejects unknown fields must ignore keys that start with `_`; otherwise every real call fails with `Unexpected field(s): _caller_worker_id`.
 
 A small helper can keep registrations consistent:
 

@@ -57,9 +57,16 @@ checks. Reference their detailed evidence without replaying all their tests.
 
 This reference is sufficient for ordinary planning. Do not load the full
 design manuals as preparation. If an unresolved choice would change the
-spec, use one bounded reference check through `harness/orchestration/index`:
-name the question and relevant source ids or file sections, and request a
-short answer with citations. `harness/ade-worker-design/patterns` answers
-interaction questions; `harness/ade-worker-design/console-injectable-ui`
-answers host-capability questions. Consult `console-design` in that same
-skill namespace only for a specific visual constraint. Reuse prior findings.
+spec, read only the section that answers it yourself: list the manual's
+headings, then read that window. `harness/ade-worker-design/patterns`
+answers interaction questions;
+`harness/ade-worker-design/console-injectable-ui` answers host-capability
+questions. Consult `console-design` in that same skill namespace only for a
+specific visual constraint. Record the answer and its source in
+`Project context`, and reuse prior findings.
+
+Only a profile that dispatches children (it preloads
+`harness/orchestration/index` and may call `harness::spawn`) may delegate
+the question instead, as one bounded reference check: name the question and
+the relevant source ids or file sections, and request a short answer with
+citations. A profile that spawns no one never tries to.

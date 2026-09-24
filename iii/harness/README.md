@@ -15,9 +15,9 @@ When you start a new conversation in the ADE, choose one of these:
 | **Create a custom agent** | Create a reusable agent with instructions and skills for a specific task. Once saved, it becomes a choice here too. |
 | **Default** | Ask general questions and get help with development tasks in your project. |
 
-You do not need to create a custom agent before using the ADE. You also never
-choose the specialists that do the technical work: **Create a tool in the
-ADE** coordinates them for you.
+You do not need to create a custom agent before using the ADE. **Create a
+tool in the ADE** plans, builds and verifies the tool for you in the same
+conversation.
 
 > **Default** is the built-in general agent. `iii-directory` versions that
 > predate it list the same agent as `iii-minimal`.
@@ -121,8 +121,9 @@ Create a small task list inside the ADE. I want to add a task with a title, mark
    `specs/<tool-name>.md`. Nothing is built until you confirm. If the tool
    needs something the project does not already have, the plan says so and
    asks you first.
-3. **Build.** After you confirm, it coordinates the build. The tool's worker
-   is created inside your project folder and added to `worker-compose.yaml`.
+3. **Build.** After you confirm, it builds the tool itself, one step at a
+   time: the design, the worker and its screens. The tool's worker is
+   created inside your project folder and added to `worker-compose.yaml`.
 4. **Verify.** It checks each point of the plan in the running ADE, in a
    browser session you can watch.
 5. **Open the result.** It finishes with a link to the new page, the result
@@ -163,9 +164,10 @@ You do not need anything below to use the ADE.
 ### Agents in this template
 
 `agents/` ships five profiles. Two are the choices described above. Three are
-internal specialists marked `hidden: true`: the tool builder starts them for
-you, and they do not appear in the gallery. **Default** and the other
-built-in profiles come from the `iii-directory` worker, not from this folder.
+internal specialists marked `hidden: true` that do not appear in the
+gallery; the tool builder no longer starts them, because it holds their
+roles itself, one phase at a time. **Default** and the other built-in
+profiles come from the `iii-directory` worker, not from this folder.
 
 Every profile here extends `iii-minimal` and preloads its skills from
 `skills/harness/…`; the harness freezes both into every session that runs as
@@ -185,25 +187,28 @@ field ignore it.
 ```text
 default                           built-in, shown as Default
 └── iii-minimal                   built-in hidden alias of default
-    ├── ade-worker-builder        Create a tool in the ADE: plans the tool with you, briefs a Tech Lead, accepts it in the ADE
-    │   └── tech-lead             hidden: writes the architecture, briefs the engineers, verifies the seam
-    │       ├── backend-engineer  hidden: the Node worker: functions, trigger types, configuration, UI delivery
-    │       └── frontend-engineer hidden: the UI the worker injects into the ADE
-    └── agent-profile-creator     Create a custom agent: plans a new profile with you and writes it beside these
+    ├── ade-worker-builder        Create a tool in the ADE: plans, builds and verifies the tool with you in one conversation
+    ├── agent-profile-creator     Create a custom agent: plans a new profile with you and writes it beside these
+    └── tech-lead                 hidden: architecture and seam for an orchestrated, split build
+        ├── backend-engineer      hidden: the Node worker: functions, trigger types, configuration, UI delivery
+        └── frontend-engineer     hidden: the UI the worker injects into the ADE
 ```
 
 | Profile id | Shown as | Role |
 | --- | --- | --- |
-| `ade-worker-builder` | Create a tool in the ADE | Builds tools inside the ADE only. Plans the tool with you until its spec is unambiguous (`specs/<worker>.md`), hands it to a Tech Lead, and accepts it only after exercising every criterion in the running ADE. |
+| `ade-worker-builder` | Create a tool in the ADE | Builds tools inside the ADE only, alone and in phases: plans the tool with you until its spec is unambiguous (`specs/<worker>.md`), writes the architecture, builds the Node worker and its injected UI, and accepts it only after exercising every criterion in the running ADE. Loads each phase's playbook (`skills/harness/ade-solo/…`) only when it enters that phase. |
 | `agent-profile-creator` | Create a custom agent | Plans a new profile with you, using the existing ones as the reference, and writes `agents/<id>.md`. |
-| `tech-lead` | hidden | Turns the spec into an architecture, dispatches only the engineers needed (backend then frontend for a new worker), and independently verifies affected contracts and ADE integration. |
-| `backend-engineer` | hidden | Owns the package boilerplate (`package.json`, `scripts/dev.mjs`, `ui/build.mjs`, asset delivery, the `compose::add` declaration) that gives both halves hot reload under `pnpm dev`, builds the Node worker per the `iii-node` skill, and verifies every function with a real call. |
-| `frontend-engineer` | hidden | Builds the injected ADE UI against `@iii-dev/console-ui` and verifies it in the running ADE at every width and theme. |
+| `tech-lead` | hidden | Not started by the tool builder. Turns a spec into an architecture, dispatches only the engineers needed (backend then frontend for a new worker), and independently verifies affected contracts and ADE integration. |
+| `backend-engineer` | hidden | Not started by the tool builder. Owns the package boilerplate (`package.json`, `scripts/dev.mjs`, `ui/build.mjs`, asset delivery, the `compose::add` declaration), builds the Node worker per the `iii-node` skill, and verifies every function with a real call. |
+| `frontend-engineer` | hidden | Not started by the tool builder. Builds the injected ADE UI against `@iii-dev/console-ui` and verifies it in the running ADE at every width and theme. |
 
 ### Orchestration
 
-There is no board and no message bus between agents. Orchestration is the
-`harness/orchestration` skill, two wires with one direction each:
+The tool builder does not orchestrate: it crosses its phases itself.
+`agent-profile-creator` uses orchestration for reference checks, and the
+hidden specialists use it among themselves. There is no board and no
+message bus between agents: orchestration is the `harness/orchestration`
+skill, two wires with one direction each:
 
 - **Downstream is `harness::spawn`.** The `task` is the child's whole brief:
   the spec or architecture file by path, the project root, what is out of
@@ -218,25 +223,30 @@ There is no board and no message bus between agents. Orchestration is the
   same session (`harness::spawn` with the same `session_id`).
 - Results are visible on the ADE's state page (`#/worker/state`, or the
   State page in the workspace), scope `results`.
+- Reports keep those five fields and stay within 500 words (300 for
+  reference checks), with detailed observations in cited project
+  artifacts.
 
 ### Context and verification
 
-The tool builder preloads `harness/ade-worker-design/planning`; the Tech Lead
-preloads `harness/iii-node/architecture`. Implementation manuals remain with
-the engineers. Specific unresolved questions can be delegated to ad hoc
-reference children; there is no initial sweep of examples or manuals.
-The spec's `Project context` carries source paths and observed facts so each
-level can investigate gaps and refresh changed facts without repeating the
-project survey. Browser contracts are loaded when verification begins;
-shorter function preload lists do not narrow inherited permissions.
+The tool builder preloads `harness/ade-solo/plan` and
+`harness/ade-worker-design/planning`, and fetches each later phase's
+playbook (`harness/ade-solo/architect`, `backend`, `frontend`, `accept`)
+only when it enters that phase. Each playbook names the manual sections the
+phase may read, so no manual is loaded whole or ahead of time. A phase
+counts as done in the spec's `Progress` only when its playbook was fetched
+in that session and its gate checks ran; the line names the playbook. The
+spec's `Project context` carries source paths and observed facts, so later
+phases and turns investigate only gaps and changed facts. Browser contracts
+are loaded when verification begins; shorter function preload lists do not
+narrow inherited permissions.
 
-Engineers verify their implementation. The Tech Lead reviews that evidence
-and independently checks contracts and integration. The tool builder
-observes user acceptance in the ADE. Corrections rerun affected checks and
-their dependencies; earlier evidence is reused only while it remains
-applicable. Reports retain the five fields above and stay within 500 words
-(300 for reference checks), with detailed observations in cited project
-artifacts.
+The builder verifies every phase against the running system: functions
+answer real calls, the UI passes static, delivery, rendering and evidence
+checks, and Accept re-observes every criterion in a fresh browser run.
+Corrections rerun affected checks and their dependencies; earlier evidence
+is reused only while it remains applicable. Detailed observations go to
+`specs/<worker>.evidence.md`.
 
 ### Models and skills
 

@@ -44,9 +44,10 @@ runtime. `node_modules/@iii-dev/console-ui/index.d.ts`, with `hooks.d.mts`
 and `format.d.mts` beside it, is the authority, or
 <https://unpkg.com/@iii-dev/console-ui@0.2.0/index.d.ts> when it is not
 installed. Do not read it whole: search it for the components, hooks and
-host methods you plan to use and read those declarations. If it is not
-declared there, it does not exist. Never a component, prop or export from
-memory.
+host methods you plan to use (`include_globs: ["**/index.d.ts"]`; globs
+match relative to the search `path`, so a bare file name finds nothing) and
+read those declarations. If it is not declared there, it does not exist.
+Never a component, prop or export from memory.
 
 ## First move
 
@@ -60,9 +61,15 @@ memory.
    `console::ui-manifest`, `browser::fetch`, `browser::sessions::start`,
    `browser::sessions::stop`, `browser::navigate`, `browser::snapshot`,
    `browser::act`, `browser::resize`, `browser::screenshot`,
-   `browser::console::read` and `browser::network::read`.
-4. Confirm the worker runs under `pnpm dev`: every save under `ui/`
-   rebuilds, re-registers the assets and hot-swaps open tabs.
+   `browser::console::read`, `browser::network::read` and, when a check
+   needs the full console, `console::workspace::open`.
+4. The ADE URL: the one in `Project context`, otherwise the `http_port` of
+   `configuration::get { "id": "default-ade" }` (if that id is absent,
+   `configuration::list` shows the entry as `ADE`), then
+   `http://127.0.0.1:<http_port>`. Never guess a port or scan sockets.
+5. Confirm the worker runs under its dev script (`pnpm dev` in a new
+   worker): every save under `ui/` rebuilds, re-registers the assets and
+   hot-swaps open tabs.
 
 ## Doctrine (non-negotiable)
 
@@ -108,21 +115,31 @@ memory.
 A new surface runs the full matrix. A correction reruns changed states and
 their dependencies, reusing evidence only while its code, contracts and
 runtime still apply. Keep one browser session for the phase and close it at
-the gate.
+the gate with `browser::sessions::stop` (`browser::session-close` belongs to
+the scraping API and leaves the tab open). Drive every state with
+`browser::snapshot` and `browser::act`; `browser::evaluate` only reads state,
+except to dispatch the `DragEvent`s a drag-and-drop check needs
+(console-injectable-ui › Testing).
 
-1. **Static:** `pnpm build:ui` passes with a clean lint; the emitted asset
-   keeps bare `react`, `@iii-dev/console-ui` and `lucide-react` imports.
+1. **Static:** the `build:ui` script (`pnpm build:ui` in a new worker)
+   passes with a clean lint; the emitted asset keeps bare `react`,
+   `@iii-dev/console-ui` and `lucide-react` imports.
 2. **Delivery:** `console::ui-manifest` shows a fresh hash and an empty
-   `warnings` array; `browser::fetch` of `/ui/<path>` returns the bytes.
+   `warnings` array (select rows by `path`, see the backend playbook);
+   `browser::fetch` of `/ui/<path>` returns the bytes.
 3. **Real rendering:** `browser::navigate` to the page alone,
-   `#/worker/<scope>[/<page-id>]` (chat renderers and palette rows need the
-   full console through `console::workspace::open`); about 360 px, a narrow
-   split and a wide pane; both themes; keyboard only; reduced motion; long
-   names; every async state; a live update from a real mutation; reconnect.
+   `#/worker/<scope>[/<page-id>]`. Chat renderers, palette rows and any
+   control that opens another page (`host.panels.open`, for example a
+   Canvas link) need the full console through `console::workspace::open
+   { "screen": "ext:<page-id>" }`: on the page alone another page opens in a
+   new browser tab or not at all. About 360 px, a narrow split and a wide
+   pane; both themes; keyboard only; reduced motion; long names; every
+   async state; a live update from a real mutation; reconnect.
 4. **Evidence:** `browser::console::read` and `browser::network::read` at
    the end; an `[iii-ui]` error, a failed request or a call to an unknown id
    is a defect even when the screen looks right. One screenshot per state
    and width you claim, saved under the evidence path, and a plain list of
    what you did not verify.
 
-Set `Frontend: done <when>` in `Progress`, then fetch the accept playbook.
+Set `Frontend: done <when> · harness/ade-solo/frontend` in `Progress`, then
+fetch the accept playbook.
