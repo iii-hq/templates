@@ -22,12 +22,13 @@ runs: `engine::workers::list`, `engine::functions::list` with a `prefix`,
 and for an existing tool its `console::ui-manifest` entries. Never ask the
 user what the project or the engine can answer.
 
-Record reusable findings in `Project context`: source paths and sections,
-existing capabilities, where the skill files live, the ADE URL and how you
-found it (the `http_port` of `configuration::get { "id": "default-ade" }`,
-or the ADE entry `configuration::list` shows; never a guessed port or a
-socket scan), versions or hashes, and when runtime facts were checked. On
-later turns investigate only gaps or changed facts.
+Record reusable findings in the spec's `## Project context` section
+(`specs/<worker-name>.md`, template under The spec below): source paths and
+sections, existing capabilities, where the skill files live, the ADE URL
+(the address the ADE console is served at) only when it is not the default
+`http://127.0.0.1:3113` (profile › The ADE URL; never looked up in
+advance), versions or hashes, and when runtime facts were checked. On later
+turns investigate only gaps or changed facts.
 
 ## The conversation
 

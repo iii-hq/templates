@@ -1,6 +1,6 @@
 ---
 name: Create a tool in the ADE
-description: "Use only to create tools inside the ADE: one agent plans the tool with you, builds the worker and its screens, and verifies them in the running ADE, loading each step's knowledge only when the work needs it."
+description: "Use to create tools inside the ADE: one agent plans the tool with you, builds the worker and its screens, and verifies them in the running ADE, loading each step's knowledge only when the work needs it."
 composer_placeholder: "Example: Create a small board inside the ADE to track bugs by status and move them between columns."
 logo: "🛠️"
 icon: code
@@ -48,7 +48,7 @@ once, and most demands need only part of them.
   phase's material to be ready, and never skip a phase's playbook to save
   context: it holds the checks the gate depends on.
 - **Sections, not manuals.** A skill with id `<id>` lives in the project at
-  `skills/<id>.md` (confirm once, record it in `Project context`). For a
+  `skills/<id>.md` (confirm once, record it in the spec's `Project context`). For a
   manual over about 8 KB, list its headings with
   `coder::search { "path": "skills/harness", "query": "^#{2,3} ", "regex": true, "include_globs": ["**/<file>.md"], "search_paths": false }`
   and read only the sections you need with
@@ -77,6 +77,19 @@ once, and most demands need only part of them.
   detailed evidence into `specs/<worker-name>.evidence.md`. After a
   compaction or on a new turn, resume from `Progress`, not from
   recollection; re-read a file only when its facts are missing or changed.
+
+## The ADE URL
+
+The address the ADE console is served at: `http://127.0.0.1:3113`, unless
+the user or `Project context` names another. Navigate to it as is: no
+lookup first (no `configuration::get`, no socket scan). Only when nothing
+answers there, run once
+`shell::exec { "command": "sh", "args": ["-c", "iii compose logs ade --tail 1000 | grep 'console http listening'"] }`,
+use the address it prints and record it in `Project context`; if it prints
+nothing, ask the user (in a non-interactive run, record the blocker). Never
+list configuration entries to find it (`configuration::list`, directly or
+through `fp::pipe`): the answer holds every entry in the stack, floods the
+context and trips secret-exposure alerts.
 
 ## First move: triage
 
@@ -120,7 +133,8 @@ someone else.
    the four verification layers pass for the affected states, with
    evidence saved.
 5. **Accept**, Builder hat again: `harness/ade-solo/accept`. Gate: every
-   criterion has a current verdict observed in the running ADE.
+   criterion has a current verdict observed in the running ADE, reused from
+   a build phase while it still applies or observed in Accept.
 
 Crossing a gate means updating `Progress`: the phase, its verdict, the
 playbook id, the evidence path and the next step. A `<Phase>: done` line is
@@ -152,8 +166,12 @@ Merging the roles removes the hand-offs, not the discipline.
   not fit, change `## Architecture` first and say why, then the code.
 - As an engineer, verify with real calls and the real console, never with a
   typecheck or a green build alone.
-- In Accept, re-observe every criterion now, in the running ADE. What you
-  saw during the build phases is not evidence.
+- Observe each criterion once, in the running ADE, by running its
+  `Verify:` as written; a build, a typecheck or your own summary is never
+  an observation. Whenever a build-phase check does exactly that, add
+  `C<n>: met · <phase> · <when> · <page.js hash> · <evidence>` to the
+  evidence file. Accept reuses a line while it still applies and observes
+  only what is missing or changed.
 
 ## Refuse
 
@@ -162,6 +180,8 @@ Merging the roles removes the hand-offs, not the discipline.
 - Recording a phase as done without fetching its playbook, or ending a
   build before Accept.
 - Accepting on a green build or on your own earlier summary.
+- `console::workspace::open` for a check the page alone can do: it changes
+  the screen the operator is looking at.
 - Editing `worker-compose.yaml` by hand. A new worker is declared through
   `compose::add`; when the workspace already declares it, keep that entry
   (backend playbook).
@@ -180,7 +200,9 @@ The spec reads as the plan the user agreed to, with a current
 criterion carries a verdict backed by something you observed in the ADE;
 your interactive browser tabs are closed with `browser::sessions::stop`
 (`browser::session-close` only closes scraping sessions and leaves the tab
-open); any worker process you started yourself for checks is stopped; no
+open); every screen you opened in the operator's workspace is closed with
+`console::workspace::close`; any worker process you started yourself for
+checks is stopped; no
 wake of yours is left armed (`harness::triggers::list`); and the final
 message gives the link to the tool, one verdict per criterion and the files
 created or changed.

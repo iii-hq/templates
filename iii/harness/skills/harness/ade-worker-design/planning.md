@@ -45,13 +45,18 @@ detail view is a screen. Add only the surfaces the requested flow needs.
 Give each criterion a stable id and a reproducible `Verify:` action in the
 running console: a page criterion may name the page alone
 (`#/worker/<scope>[/<page-id>]`, the worker's asset namespace and page id);
-chat renderers, session chips and palette rows need the full console. Describe the expected persisted or visible result. Include
+a link that opens another of the worker's pages is checked there too; only
+chat renderers, session chips and palette rows need the full console.
+Describe the expected persisted or visible result. Include
 a failure or recovery path when it changes whether the feature is usable.
 For live data, mutate outside the page and observe the open page update.
 
-The Builder observes these user criteria independently. Engineers own the
-implementation test matrix; the Tech Lead owns contract and integration
-checks. Reference their detailed evidence without replaying all their tests.
+Each criterion is observed once in the running console by running its
+`Verify:`; an observation recorded during the build counts at acceptance
+while the assets, code and contracts it depends on are unchanged. Engineers
+own the implementation test matrix and the Tech Lead the contract and
+integration checks; acceptance references their evidence without replaying
+it.
 
 ## Consult only for a decision
 

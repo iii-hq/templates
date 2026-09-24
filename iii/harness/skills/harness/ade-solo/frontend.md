@@ -59,14 +59,13 @@ Never a component, prop or export from memory.
    backend shell.
 3. Fetch in one batch the contracts you do not already hold among
    `console::ui-manifest`, `browser::fetch`, `browser::sessions::start`,
-   `browser::sessions::stop`, `browser::navigate`, `browser::snapshot`,
-   `browser::act`, `browser::resize`, `browser::screenshot`,
-   `browser::console::read`, `browser::network::read` and, when a check
-   needs the full console, `console::workspace::open`.
-4. The ADE URL: the one in `Project context`, otherwise the `http_port` of
-   `configuration::get { "id": "default-ade" }` (if that id is absent,
-   `configuration::list` shows the entry as `ADE`), then
-   `http://127.0.0.1:<http_port>`. Never guess a port or scan sockets.
+   `browser::sessions::stop`, `browser::sessions::list`,
+   `browser::navigate`, `browser::snapshot`, `browser::act`,
+   `browser::resize`, `browser::screenshot`, `browser::console::read`,
+   `browser::network::read` and, only when a check needs the full console,
+   `console::workspace::open` and `console::workspace::close`.
+4. The ADE URL: profile › The ADE URL (`http://127.0.0.1:3113` unless
+   `Project context` names another). Navigate to it; no lookup first.
 5. Confirm the worker runs under its dev script (`pnpm dev` in a new
    worker): every save under `ui/` rebuilds, re-registers the assets and
    hot-swaps open tabs.
@@ -128,18 +127,26 @@ except to dispatch the `DragEvent`s a drag-and-drop check needs
    `warnings` array (select rows by `path`, see the backend playbook);
    `browser::fetch` of `/ui/<path>` returns the bytes.
 3. **Real rendering:** `browser::navigate` to the page alone,
-   `#/worker/<scope>[/<page-id>]`. Chat renderers, palette rows and any
-   control that opens another page (`host.panels.open`, for example a
-   Canvas link) need the full console through `console::workspace::open
-   { "screen": "ext:<page-id>" }`: on the page alone another page opens in a
-   new browser tab or not at all. About 360 px, a narrow split and a wide
-   pane; both themes; keyboard only; reduced motion; long names; every
-   async state; a live update from a real mutation; reconnect.
+   `#/worker/<scope>[/<page-id>]`. A control that opens another of the
+   worker's pages (`host.panels.open`, for example a Canvas link) is
+   checked there too: click it, confirm with `browser::sessions::list` that
+   a tab opened at `#/worker/<scope>/<page-id>?context=…`, then navigate to
+   that URL and see the target render the context. Only chat renderers,
+   session chips and palette rows need the full console,
+   `console::workspace::open { "screen": "ext:<page-id>" }`: it is the
+   workspace the operator is looking at, so close each screen you opened
+   with `console::workspace::close` when its check ends. About 360 px, a
+   narrow split and a wide pane; both themes; keyboard only; reduced
+   motion; long names; every async state; a live update from a real
+   mutation; reconnect.
 4. **Evidence:** `browser::console::read` and `browser::network::read` at
    the end; an `[iii-ui]` error, a failed request or a call to an unknown id
    is a defect even when the screen looks right. One screenshot per state
    and width you claim, saved under the evidence path, and a plain list of
-   what you did not verify.
+   what you did not verify. When a state you drove ran an acceptance
+   criterion's `Verify:` exactly as written, add its `C<n>` line with the
+   current `page.js` hash (profile › The hats keep the separations): Accept
+   reuses it instead of observing it again.
 
 Set `Frontend: done <when> · harness/ade-solo/frontend` in `Progress`, then
 fetch the accept playbook.

@@ -1,4 +1,4 @@
-# Build with agents in the ADE
+# Build with agents in the ADE (Agentic Development Environment)
 
 This template starts the iii engine, AI agents, and the ADE: the workspace
 where you chat with agents and use the tools they build. Start with a small
@@ -237,10 +237,12 @@ narrow inherited permissions.
 
 The builder verifies every phase against the running system: functions
 answer real calls, the UI passes static, delivery, rendering and evidence
-checks, and Accept re-observes every criterion in a fresh browser run.
-Corrections rerun affected checks and their dependencies; earlier evidence
-is reused only while it remains applicable. Detailed observations go to
-`specs/<worker>.evidence.md`.
+checks, and each acceptance criterion is observed once in the running ADE.
+Accept reuses the observations the build phases recorded against the
+current assets and observes only what is missing or changed, in one short
+browser run. Corrections rerun affected checks and their dependencies;
+earlier evidence is reused only while it remains applicable. Detailed
+observations go to `specs/<worker>.evidence.md`.
 
 ### Models and skills
 

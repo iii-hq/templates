@@ -143,6 +143,8 @@ ends.
 8. Unit tests for pure logic, an integration test against the real engine.
    A test that mocks the thing under test proves nothing.
 
-Write the trimmed calls and responses to the evidence file, set
+Write the trimmed calls and responses to the evidence file. When a check
+ran a criterion's `Verify:` exactly as written (a function call a
+service-only criterion names), add its `C<n>` line too. Set
 `Backend: done <when> · harness/ade-solo/backend` in `Progress`, and fetch
 the next phase's playbook.
