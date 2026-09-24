@@ -74,7 +74,7 @@ Choose the child's `session_id`: a readable slug plus a short random suffix,
 
    ```json
    harness::spawn {
-     "agent": "backend-engineer",
+     "agent": "<profile-id>",
      "session_id": "issue-board-backend-7f3a",
      "display": { "name": "Backend · issue-board", "icon": "terminal", "color": "blue" },
      "task": "<the brief, below>"

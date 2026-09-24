@@ -16,7 +16,7 @@ Use this skill to create or restructure a Node.js/TypeScript iii worker, especia
 Read the relevant references before implementing:
 
 - [`configuration.md`](./configuration.md) — bundled beside this file: schema-validated configuration registration, reads, updates, and reactive triggers.
-- The UI half lives in the `ade-worker-design` skill (`directory::skills::get { "id": "harness/ade-worker-design/<name>" }`) and belongs to the Frontend Engineer profile:
+- The UI half lives in the `ade-worker-design` skill (`directory::skills::get { "id": "harness/ade-worker-design/<name>" }`) and belongs to the Frontend Engineer role:
   - `console-injectable-ui` — the complete injectable UI contract, host APIs, asset registration, hot reload, responsiveness, and validation requirements.
   - `console-design` — the Console visual system, component grammar, tokens, typography, spacing, and interaction rules.
   - `patterns` — concrete recipes for record-shaped UIs: boards with lanes and drag-and-drop, a record screen that opens as its own pane, activity timelines with threaded comments, creation modals, chat cards for agent calls, settings forms, and live updates.
@@ -214,6 +214,7 @@ A Compose project usually runs its workers in a project namespace (`III_NAMESPAC
 - `iii.registerTrigger` for an engine-provided type (`configuration`) and for another project worker's type (`console:script`) both resolve without a `trigger_namespace`; do not set one.
 - A trigger type the worker registers itself lands in the worker's namespace; console tabs and the harness bind to it without extra configuration.
 - The harness and the console reach the worker's functions by bare id; never prefix ids with a namespace.
+- A worker process you start yourself for checks (`node src/index.mjs`, `nohup …`) does not inherit `III_NAMESPACE` and lands in `default`, where the harness and the console cannot reach it: its functions answer `function_not_found`. Prefer the copy Compose runs. When you must start one, set `III_NAMESPACE=<project namespace>` (the namespace the project's workers show in `engine::functions::list` results), never run it beside the Compose copy, and stop it before ending the turn.
 
 Every public function must provide:
 
@@ -221,6 +222,8 @@ Every public function must provide:
 - a concise description;
 - `request_format` and `response_format` JSON Schemas;
 - a handler whose input/output actually matches those schemas.
+
+The engine adds `_`-prefixed fields such as `_caller_worker_id` to every payload it delivers. Handler-side validation that rejects unknown fields must ignore keys that start with `_`; otherwise every real call fails with `Unexpected field(s): _caller_worker_id`.
 
 A small helper can keep registrations consistent:
 
