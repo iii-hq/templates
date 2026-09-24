@@ -47,9 +47,9 @@ ANTHROPIC_API_KEY=sk-ant-...
 Leave the other lines empty. `.env` is listed in `.gitignore`, so the key
 stays out of git.
 
-Put the key in `.env`, not in a shell `export`. The model router reads its
-keys from `.env`, and a line there, even an empty one, takes precedence over
-a variable exported in your shell.
+Put the key in `.env`, not in a shell `export`. `worker-compose.yaml` passes
+`.env` to the model router and does not pass variables exported in your
+shell, so an exported key does not reach it.
 
 To use another provider, or one that signs in without an API key, see
 [Other providers](#other-providers).
@@ -64,6 +64,13 @@ This starts the engine and every worker listed in `worker-compose.yaml`, and
 keeps running in the foreground: leave this terminal open. The first run
 downloads the workers, so it takes longer than later runs. Compose prints a
 `ready` line for each worker and then an `up: … changed` summary.
+
+Compose can also be controlled like any other iii worker. Start the daemon
+with `iii compose`, then bring the project up with:
+
+```bash
+iii trigger compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000
+```
 
 If you edit `.env` while the project is running, restart the model router so
 it reads the change:
@@ -281,7 +288,7 @@ To add one:
 
 1. Uncomment its block in `worker-compose.yaml`.
 2. For an API-key provider, uncomment its line in `.env` and paste the key.
-3. Stop `iii compose --up` and run it again, so compose re-reads
+3. Run `iii trigger compose::restart` so compose re-reads
    `worker-compose.yaml`. Add the container to the `harness` `start_after`
    list if the harness should wait for it.
 
@@ -301,12 +308,3 @@ commented out in `worker-compose.yaml`.
 | `provider-claude-code`    | Reads `~/.claude/.credentials.json`, written by the Claude Code CLI when you sign in there |
 | `provider-openai-codex`   | Reads `~/.codex/auth.json`, written by the Codex CLI when you sign in there |
 | `provider-github-copilot` | A GitHub device flow. Call `iii trigger provider::github-copilot::login::start`, enter the `user_code` it returns at the verification URL, then call `iii trigger provider::github-copilot::login::poll`. |
-
-### Starting compose without `--up`
-
-Compose can also be controlled like any other iii worker. Start the daemon
-with `iii compose`, then bring the project up with:
-
-```bash
-iii trigger compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000
-```

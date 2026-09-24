@@ -55,11 +55,10 @@ containers:
       - state
 
   # Additional providers. Uncomment a block, uncomment its key in ./.env, and
-  # restart the compose daemon so it re-reads this file. llm-router reads every
-  # provider key from ./.env through its `env_file`, and a line there, even an
-  # empty one, takes precedence over a key exported in the shell. Add the
-  # container to the `harness` start_after list below if the harness should
-  # wait for it.
+  # run `iii trigger compose::restart` so compose re-reads this file.
+  # llm-router reads every provider key from ./.env through its `env_file`; a
+  # key exported in the shell does not reach it. Add the container to the
+  # `harness` start_after list below if the harness should wait for it.
 
   #  provider-kimi:                # MOONSHOT_API_KEY, not KIMI_API_KEY
   #    worker: package://provider-kimi
