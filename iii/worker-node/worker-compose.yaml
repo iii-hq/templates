@@ -1,0 +1,28 @@
+# Project workers for the iii engine.
+# Docs: https://iii.dev/docs/next/using-iii/compose
+#
+# pre_run installs local dependencies automatically. Start with:
+#
+#   iii compose --up
+#
+namespace: default
+startup_timeout: 360s
+
+engine:
+  url: ws://127.0.0.1:49134
+
+containers:
+  # Host development is the default. Hooks run from the worker directory.
+  # pre_run installs into local node_modules before each start.
+  # Remove the entire scripts block for the optional VM flow (see README.md).
+  hello-node:
+    worker: path://./workers/hello-node
+    scripts:
+      pre_run: npm install
+      pre_run_timeout: 5m
+      run: npm run start
+
+  # Web UI on http://127.0.0.1:3113 — workers, functions, config, traces.
+  # console:
+  #   worker: package://console
+  #   version: "1.9.17"

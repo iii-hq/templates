@@ -1,0 +1,33 @@
+# Project workers for the iii engine.
+# Docs: https://iii.dev/docs/next/using-iii/compose
+#
+# pre_run prepares a private venv automatically. Start with:
+#
+#   iii compose --up
+#
+namespace: default
+startup_timeout: 360s
+
+engine:
+  url: ws://127.0.0.1:49134
+
+containers:
+  # Host development is the default. Hooks run from the worker directory.
+  # pre_run reuses a private venv and installs dependencies before each start.
+  # Remove the entire scripts block for the optional VM flow (see README.md).
+  hello-python:
+    worker: path://./workers/hello-python
+    scripts:
+      pre_run: |
+        set -e
+        if [ ! -x .venv/bin/python ]; then
+          python3 -m venv .venv
+        fi
+        .venv/bin/python -m pip install -e .
+      pre_run_timeout: 5m
+      run: ".venv/bin/watchfiles '.venv/bin/python src/main.py'"
+
+  # Web UI on http://127.0.0.1:3113 — workers, functions, config, traces.
+  # console:
+  #   worker: package://console
+  #   version: "1.9.17"
