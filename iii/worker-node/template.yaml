@@ -12,6 +12,7 @@ optional: []
 files:
   - README.md
   - worker-compose.yaml
+  - workers/hello-node/README.md
   - workers/hello-node/iii.worker.yaml
   - workers/hello-node/package.json
   - workers/hello-node/tsconfig.json
