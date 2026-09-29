@@ -45,21 +45,33 @@ detail view is a screen. Add only the surfaces the requested flow needs.
 Give each criterion a stable id and a reproducible `Verify:` action in the
 running console: a page criterion may name the page alone
 (`#/worker/<scope>[/<page-id>]`, the worker's asset namespace and page id);
-chat renderers, session chips and palette rows need the full console. Describe the expected persisted or visible result. Include
+a link that opens another of the worker's pages is checked there too; only
+chat renderers, session chips and palette rows need the full console.
+Describe the expected persisted or visible result. Include
 a failure or recovery path when it changes whether the feature is usable.
 For live data, mutate outside the page and observe the open page update.
 
-The Builder observes these user criteria independently. Engineers own the
-implementation test matrix; the Tech Lead owns contract and integration
-checks. Reference their detailed evidence without replaying all their tests.
+Each criterion is observed once in the running console by running its
+`Verify:`; an observation recorded during the build counts at acceptance
+while the assets, code and contracts it depends on are unchanged. Engineers
+own the implementation test matrix and the Tech Lead the contract and
+integration checks; acceptance references their evidence without replaying
+it.
 
 ## Consult only for a decision
 
 This reference is sufficient for ordinary planning. Do not load the full
 design manuals as preparation. If an unresolved choice would change the
-spec, use one bounded reference check through `harness/orchestration/index`:
-name the question and relevant source ids or file sections, and request a
-short answer with citations. `harness/ade-worker-design/patterns` answers
-interaction questions; `harness/ade-worker-design/console-injectable-ui`
-answers host-capability questions. Consult `console-design` in that same
-skill namespace only for a specific visual constraint. Reuse prior findings.
+spec, read only the section that answers it yourself: list the manual's
+headings, then read that window. `harness/ade-worker-design/patterns`
+answers interaction questions;
+`harness/ade-worker-design/console-injectable-ui` answers host-capability
+questions. Consult `console-design` in that same skill namespace only for a
+specific visual constraint. Record the answer and its source in
+`Project context`, and reuse prior findings.
+
+Only a profile that dispatches children (it preloads
+`harness/orchestration/index` and may call `harness::spawn`) may delegate
+the question instead, as one bounded reference check: name the question and
+the relevant source ids or file sections, and request a short answer with
+citations. A profile that spawns no one never tries to.

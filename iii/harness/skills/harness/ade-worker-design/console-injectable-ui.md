@@ -727,7 +727,7 @@ project's own command before you build.
 | A dragged card vanishes and never comes back | the list removed the card while dragging and `dragend` never fired; keep it mounted (dimmed) and clear state from document-level `dragend`/`drop` |
 | Detail opened inside the board instead of a new pane | use `host.panels.open({ pageId })` with a separately registered page rather than local selection state |
 
-Inspect `console::ui-manifest` (or `GET <console-host>:3113/ui`),
+Inspect `console::ui-manifest` (or `GET <ADE URL>/ui`),
 `/ui/<path>`, registered triggers, and `[iii-ui]` browser logs in that order.
 The manifest is authoritative; its `warnings` must be empty.
 
