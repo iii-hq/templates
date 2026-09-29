@@ -430,6 +430,12 @@ assert_file "$WORKER_PYTHON_DIR/workers/hello-python/tests/test_main.py"
 assert_absent "$WORKER_PYTHON_DIR/config.yaml"
 assert_contains "$WORKER_PYTHON_DIR/worker-compose.yaml" "path://./workers/hello-python"
 
+# The unit tests import only the pure helper, so no venv or iii-sdk is needed.
+(
+  cd "$WORKER_PYTHON_DIR/workers/hello-python"
+  PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python3 -m unittest discover -s tests -p 'test_*.py'
+)
+
 echo "Testing iii project init --template worker-node"
 (
   cd "$TMP_DIR"
@@ -447,6 +453,14 @@ assert_file "$WORKER_NODE_DIR/workers/hello-node/src/index.ts"
 assert_file "$WORKER_NODE_DIR/workers/hello-node/tests/greet.test.ts"
 assert_absent "$WORKER_NODE_DIR/config.yaml"
 assert_contains "$WORKER_NODE_DIR/worker-compose.yaml" "path://./workers/hello-node"
+
+# The worker must compile against the pinned iii-sdk and its unit tests must pass.
+(
+  cd "$WORKER_NODE_DIR/workers/hello-node"
+  npm install --no-audit --no-fund
+  npm run build
+  npm test
+)
 
 # `worker init` lives on the `iii-worker` binary, which the `iii` CLI installs
 # and manages. Override the path with III_WORKER_BIN.
