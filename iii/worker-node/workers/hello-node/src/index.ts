@@ -1,12 +1,13 @@
 import { registerWorker } from 'iii-sdk';
+import type { RegisterFunctionFormat } from 'iii-sdk/protocol';
 import { buildGreeting } from './greet.js';
 
-const GREET_REQUEST = {
+const GREET_REQUEST: RegisterFunctionFormat = {
   type: 'object',
   properties: { name: { type: 'string', description: 'Who to greet' } },
   required: ['name'],
 };
-const GREET_RESPONSE = {
+const GREET_RESPONSE: RegisterFunctionFormat = {
   type: 'object',
   properties: { message: { type: 'string' } },
   required: ['message'],

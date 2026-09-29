@@ -47,6 +47,16 @@ Expected response:
 
 Edit files under `workers/hello-node/src/`. `tsx watch` restarts the host worker after each save.
 
+## Build
+
+Compose runs the worker from TypeScript source with `tsx`, so no build step is needed for development. To compile to JavaScript, for example to check the output before publishing, run this from the project root:
+
+```sh
+(cd workers/hello-node && npm install && npm run build)
+```
+
+`tsc` writes the compiled files to `workers/hello-node/dist/`. That directory is ignored by git.
+
 ## Tests and type checking
 
 After the first successful Compose setup, run this from the project root:
