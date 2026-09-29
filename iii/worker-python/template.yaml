@@ -12,6 +12,7 @@ optional: []
 files:
   - README.md
   - worker-compose.yaml
+  - workers/hello-python/README.md
   - workers/hello-python/iii.worker.yaml
   - workers/hello-python/pyproject.toml
   - workers/hello-python/src/__init__.py
