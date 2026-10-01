@@ -1,0 +1,17 @@
+iii: v1
+name: my-worker
+language: javascript
+deploy: bundle
+manifest: package.json
+license: Apache-2.0
+tags: [example, node, console-ui]
+description: Example worker — my-worker::hello, configuration, a my-worker:hello trigger type, and one page in the ADE and over HTTP.
+
+# Host development is the default: worker-compose.yaml runs `pnpm dev`.
+# runtime:
+#   base_image: docker.io/iiidev/node:latest
+
+scripts:
+  # Compose skips these in host mode. They are the portable bundle recipe.
+  install: "pnpm install && pnpm build"
+  start: "pnpm start"

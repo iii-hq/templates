@@ -1,0 +1,4 @@
+# pnpm 10+ skips dependency build scripts until they are approved, and
+# pnpm 11 refuses `pnpm run` while any is pending. esbuild needs its own.
+allowBuilds:
+  esbuild: true
