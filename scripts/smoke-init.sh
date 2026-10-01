@@ -105,6 +105,8 @@ static_template_checks() {
   assert_not_contains "$python/README.md" "starting in a VM"
   assert_not_contains "$node/README.md" "starting in a VM"
   assert_not_contains "$node/template.yaml" "the VM reloads"
+  assert_contains "$python/template.yaml" '  dir: workers/hello-python'
+  assert_contains "$node/template.yaml" '  dir: workers/hello-node'
 
   if find "$python" "$node" -type d \( -name .venv -o -name venv -o -name node_modules -o -name __pycache__ -o -name dist \) -print -quit | grep -q .; then
     echo "error: generated dependency or build directory found in new templates" >&2
@@ -114,6 +116,11 @@ static_template_checks() {
     echo "error: Python bytecode found in new templates" >&2
     exit 1
   fi
+
+  # Every worker: block (what coder::scaffold-worker copies) points at real
+  # files and a real compose container.
+  python3 "$ROOT_DIR/scripts/check_worker_templates.py" --root "$TEMPLATE_DIR"
+  PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s "$ROOT_DIR/scripts/tests"
 }
 
 static_template_checks
