@@ -10,11 +10,14 @@ description: >-
 
 # Frontend (Frontend Engineer hat)
 
-You build what lives in `ui/page.tsx`, `ui/styles.css` and `ui/src/**`,
-against functions the worker already registers. In this phase you do not
-change functions, trigger types, the configuration schema, asset delivery or
-the package and build files. A gap there sends you back to the Backend
-phase, and to `## Architecture` first when a contract changes.
+You build what lives in `ui/App.tsx`, `ui/page.tsx`, `ui/styles.css`,
+`ui/src/**` and `web/tokens.css`, against functions the worker already
+registers. In a scaffolded worker `ui/App.tsx` is the screen: the ADE shows
+it, and so does `http://127.0.0.1:3111/<worker>`. In this phase you do not
+change functions, trigger types, the configuration schema, asset delivery,
+the HTTP allowlists in `src/web.ts` or the package and build files. A gap
+there sends you back to the Backend phase, and to `## Architecture` first
+when a contract changes.
 
 ## Knowledge for this phase
 
@@ -27,6 +30,7 @@ rules and every number, about 27 KB) › `harness/ade-worker-design/patterns`
 | Need | Read |
 | --- | --- |
 | Any page | console-injectable-ui: How it works; Project layout; Authoring workflow; Archetypes; 1. The script asset (with Slots); 2. The style asset |
+| A scaffolded worker's screen (`ui/App.tsx`) | `harness/iii-node/index`: Dual-mode screen |
 | Phone and narrow panes | console-injectable-ui: Behaviour across widths, only the subsections in play |
 | Shared components, tokens | console-design: Numbers; the Shared components subsections for components you use; Do / Don't |
 | The chosen archetype | patterns: that archetype's section, plus 8. Live updates |
@@ -81,7 +85,14 @@ Never a component, prop or export from memory.
 - **One 6 px radius.** Sans for human-facing text in natural case; mono only
   for ids, paths, values, payloads, code and tabular data. `lucide-react`
   icons at 16 px, never inline `<svg>`.
-- **Shared primitives first.** `PageShell` + `PageHeader` wrap every page;
+- **App stays portable.** A scaffolded worker's `ui/App.tsx` also runs
+  standalone, where the console runtime does not exist. It reaches the
+  backend only through its `client` prop and imports nothing from
+  `@iii-dev/console-ui` except with `import type`: a runtime import still
+  builds, then leaves the standalone page blank.
+- **Shared primitives first, in ADE-only surfaces** (the pages, renderers
+  and forms `page.tsx` registers, which App never imports).
+  `PageShell` + `PageHeader` wrap every such page;
   `PageSidebar` owns collapse, resize and narrow mode; `ConfirmDialog`,
   never `window.confirm`. Configuration forms are `SettingsSection` →
   `SettingsList` → `SettingsField`/`SettingsRow`, `SettingsDeck` for
@@ -120,15 +131,19 @@ the scraping API and leaves the tab open). Drive every state with
 except to dispatch the `DragEvent`s a drag-and-drop check needs
 (console-injectable-ui › Testing).
 
-1. **Static:** the `build:ui` script (`pnpm build:ui` in a new worker)
-   passes with a clean lint; the emitted asset keeps bare `react`,
-   `@iii-dev/console-ui` and `lucide-react` imports.
+1. **Static:** `pnpm typecheck` and `pnpm build` pass with a clean lint
+   (an older worker without them: its own UI build script, such as
+   `pnpm build:ui`); the emitted asset keeps bare `react`,
+   `@iii-dev/console-ui` and `lucide-react` imports, and `ui/App.tsx`
+   imports nothing from `@iii-dev/console-ui` at runtime.
 2. **Delivery:** `console::ui-manifest` shows a fresh hash and an empty
    `warnings` array (select rows by `path`, see the backend playbook);
    `browser::fetch` of `/ui/<path>` returns the bytes.
 3. **Real rendering:** `browser::navigate` to the page alone,
-   `#/worker/<scope>[/<page-id>]`. A control that opens another of the
-   worker's pages (`host.panels.open`, for example a Canvas link) is
+   `#/worker/<scope>[/<page-id>]`. A scaffolded worker's standalone page,
+   `http://127.0.0.1:3111/<worker>`, renders the same screen and its calls
+   succeed. A control that opens another of the worker's pages
+   (`host.panels.open`, for example a Canvas link) is
    checked there too: click it, confirm with `browser::sessions::list` that
    a tab opened at `#/worker/<scope>/<page-id>?context=…`, then navigate to
    that URL and see the target render the context. Only chat renderers,
