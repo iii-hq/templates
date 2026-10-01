@@ -3,6 +3,7 @@ templates:
   - bare
   - worker-python
   - worker-node
+  - worker-node-ade
   - docker
   - worker-bare
   - quickstart

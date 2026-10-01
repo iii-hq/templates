@@ -1,0 +1,60 @@
+name: Worker with ADE page (Node)
+description: A Node/TypeScript worker with settings, its own trigger type and one page shown in the ADE and over HTTP.
+version: "0.24.2"
+min_iii_version: "0.24.2"
+
+treat_required_as_included: true
+requires:
+  - typescript
+optional: []
+
+# The root language_files would drop these: the dev and build scripts, the
+# page's HTML and CSS, and pnpm's build approvals.
+language_files:
+  common:
+    - '*.mjs'
+    - '*.css'
+    - '*.html'
+    - 'pnpm-workspace.yaml'
+
+# Scaffoldable by the IDE (coder::scaffold-worker): copies the files: entries
+# under `dir`, replacing `name` in paths and contents; `compose` is the
+# container key in worker-compose.yaml; `requires` lists the containers the
+# worker needs. `iii project init` ignores this block.
+worker:
+  dir: workers/my-worker
+  name: my-worker
+  compose: my-worker
+  requires: [http]
+
+# Explicit list of files to copy (shared_files from root are added automatically)
+files:
+  - README.md
+  - worker-compose.yaml
+  - workers/my-worker/README.md
+  - workers/my-worker/iii.worker.yaml
+  - workers/my-worker/package.json
+  - workers/my-worker/pnpm-workspace.yaml
+  - workers/my-worker/tsconfig.json
+  - workers/my-worker/scripts/dev.mjs
+  - workers/my-worker/src/hello.ts
+  - workers/my-worker/src/index.ts
+  - workers/my-worker/src/web.ts
+  - workers/my-worker/test/hello.test.ts
+  - workers/my-worker/test/web.test.ts
+  - workers/my-worker/ui/App.tsx
+  - workers/my-worker/ui/build.mjs
+  - workers/my-worker/ui/client.ts
+  - workers/my-worker/ui/page.tsx
+  - workers/my-worker/ui/styles.css
+  - workers/my-worker/ui/tsconfig.json
+  - workers/my-worker/web/index.html
+  - workers/my-worker/web/main.tsx
+  - workers/my-worker/web/tokens.css
+
+next_steps:
+  - 'In terminal 1 from the project root, start Compose: iii compose --up'
+  - 'Compose pre_run runs pnpm install; pnpm dev builds the page and restarts the worker on save'
+  - 'In terminal 2 from the project root, call: iii trigger my-worker::hello name=World'
+  - 'Open http://127.0.0.1:3111/my-worker, or the my-worker page in the ADE'
+  - 'Port 3111 has no auth: never expose it through a public proxy or tunnel'
