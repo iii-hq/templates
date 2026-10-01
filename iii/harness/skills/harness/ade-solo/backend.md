@@ -15,14 +15,14 @@ goes back to the Architecture section first, with the reason in `Notes`.
 
 ## Knowledge for this phase
 
-`harness/iii-node/index` (about 37 KB) is the scaffold authority and
+`harness/iii-node/index` (about 39 KB) is the scaffold authority and
 outranks anything you remember about iii. List its headings, then read the
 sections the work needs, each when you reach the step it shapes:
 
 | Work | Read |
 | --- | --- |
-| New worker | Choose project identifiers once; Canonical project shape; Root `package.json`; TypeScript configuration; Node SDK rules; Injectable UI builder; Injectable UI entrypoint; Worker-side asset delivery; Development loop; Worker manifest; Declare the worker with `compose::add`; Validation checklist |
-| Workspace already ships the worker's package and compose entry | Node SDK rules (with Namespaces); Worker-side asset delivery; skip the scaffold, TypeScript, pnpm and `compose::add` sections |
+| New worker | Choose project identifiers once; Scaffold a new worker; Project shape; Node SDK rules; Dual-mode screen; Declare the worker with `compose::add`; Validation checklist |
+| Workspace already ships the worker's package and compose entry | Node SDK rules (with Namespaces); Worker-side asset delivery; Dual-mode screen when it has `ui/App.tsx`; skip the Scaffold a new worker, Project shape and `compose::add` sections |
 | New or changed function | Node SDK rules (Namespaces when crossing one or when you start the worker yourself) |
 | Own trigger type, live updates | Live updates (own trigger type) |
 | Operator settings | Configuration, plus `harness/iii-node/configuration` whole (about 6 KB) |
@@ -38,9 +38,10 @@ Start from `Project context` and `## Architecture`. Read only affected
 source, package and compose entries. Reuse first: search the registered
 functions and `directory::registry::workers::list` before writing a new
 worker. When you first need them, fetch in one batch the contracts you do
-not already hold among `compose::add`, `compose::operation`,
-`compose::status`, `compose::logs`, `engine::register_trigger`,
-`engine::workers::info`, `console::ui-manifest` and `browser::fetch`.
+not already hold among `coder::scaffold-worker`, `compose::add`,
+`compose::operation`, `compose::status`, `compose::logs`,
+`engine::register_trigger`, `engine::workers::info`, `console::ui-manifest`
+and `browser::fetch`.
 
 ## Boilerplate
 
@@ -49,20 +50,25 @@ First decide which of the two shapes the workspace is in, and record it in
 
 ### A new worker
 
-Scaffold one Node package exactly as `iii-node` prescribes before domain
-code: `package.json` with `build`, `build:ui`, `typecheck`, `test`, `start`
-and `dev`; `pnpm-workspace.yaml` with `allowBuilds`; `tsconfig.json` and
-`ui/tsconfig.json`; `scripts/dev.mjs`; `ui/build.mjs` calling
-`buildWorkerUi`; the asset content function and the two Message-path asset
-triggers; `iii.worker.yaml`. Write only a minimal `ui/page.tsx` and
-`ui/styles.css` shell, enough to prove build and delivery; the real screen
+Scaffold it, never hand-write it (`iii-node` › Scaffold a new worker). One
+call writes the whole package into `workers/<worker-name>`:
+
+`coder::scaffold-worker { "template": "worker-node-ade", "name": "<worker-name>" }`
+
+It holds the backend with configuration and its own trigger type, the asset
+content function and its two Message-path triggers, the dual-mode screen
+and its HTTP API, tests, `iii.worker.yaml` and the dev loop. Its
+`ui/App.tsx` is the shell that proves build and delivery; the real screen
 belongs to the Frontend phase.
 
-Declare the worker through `compose::add` (a container object with
-`scripts: { run: "pnpm dev" }` and `start_after` the console container)
-under a `compose-operation` wake, exactly as the manual's section says.
-Never edit `worker-compose.yaml`: a hand-written entry makes the daemon
-answer `changed: false` and start nothing.
+Declare the returned `compose` object through `compose::add`, with
+`start_after` the console container and every `requires` container that
+`compose::status` does not list, under a `compose-operation` wake, exactly
+as the manual's section says. The `requires` containers (`http`) come with
+the template and need no separate agreement. Never edit
+`worker-compose.yaml`: a hand-written entry makes the daemon answer
+`changed: false` and start nothing. Before domain code, a real
+`<worker-name>::hello` call answers.
 
 ### A workspace that already ships a scaffold
 

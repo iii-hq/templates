@@ -1,15 +1,16 @@
 ---
 name: iii-node
 description: >-
-  Build and maintain portable TypeScript/Node.js iii workers using a
-  single-package backend plus injectable Console UI structure, configuration
-  integration, coordinated development watchers, and declaration through
-  `compose::add`.
+  Scaffold portable TypeScript/Node.js iii workers from the `worker-node-ade`
+  template with `coder::scaffold-worker`, declare them through `compose::add`,
+  and maintain them: a single-package backend, one screen shown in the iii
+  Console and over HTTP, configuration integration, and coordinated
+  development watchers.
 ---
 
 # iii-node
 
-Use this skill to create or restructure a Node.js/TypeScript iii worker, especially when the worker ships an injectable UI into the iii Console. This skill is self-contained and may be copied into a different project; do not assume any example worker, monorepo, sibling package, or repository-specific path exists.
+Use this skill to create or restructure a Node.js/TypeScript iii worker, especially when the worker ships an injectable UI into the iii Console. A new worker is scaffolded from the `worker-node-ade` template, never written by hand (Scaffold a new worker); the rest of this file holds the conventions that still apply when you edit it. This skill is self-contained and may be copied into a different project; do not assume any example worker, monorepo, sibling package, or repository-specific path exists.
 
 ## Required references
 
@@ -25,7 +26,7 @@ This file still owns the worker-side half of an injectable UI — the build scri
 
 ### Precedence for this Node scaffold
 
-This file is the source of truth for the **single-package Node layout, npm dependency, build outputs, worker-side UI delivery, development process, and Compose block**. Use the references above as the source of truth for the **current host API, UI components, accessibility, responsive behavior, configuration semantics, and visual design**.
+This file and the `worker-node-ade` template it scaffolds are the source of truth for the **single-package Node layout, npm dependency, build outputs, worker-side UI delivery, the standalone page and its HTTP API, development process, and Compose declaration**. Use the references above as the source of truth for the **current host API, UI components, accessibility, responsive behavior, configuration semantics, and visual design**.
 
 The injectable UI reference may describe repository-internal `workspace:*` dependencies, local `file:` dependencies, a root workspace file, or a separate `<worker>/ui/package.json`. Those instructions do **not** apply to this portable Node scaffold. Use one package at the worker root and consume the public npm package:
 
@@ -35,11 +36,11 @@ The injectable UI reference may describe repository-internal `workspace:*` depen
 
 Do not use `file:`, `link:`, or `workspace:*` for this dependency.
 
-Any repository path mentioned by a reference—such as `packages/console-ui`, `console/`, `database/`, `state/`, `iii-directory/`, or `app/`—is an optional upstream example, not a required destination-project file. If such a path is absent, do not search for it, recreate its surrounding monorepo, or block implementation on it. Use the self-contained templates in this file, the installed `@iii-dev/console-ui` public types, and the runtime contracts available in the destination project.
+Any repository path mentioned by a reference—such as `packages/console-ui`, `console/`, `database/`, `state/`, `iii-directory/`, or `app/`—is an optional upstream example, not a required destination-project file. If such a path is absent, do not search for it, recreate its surrounding monorepo, or block implementation on it. Use the scaffolded worker, the installed `@iii-dev/console-ui` public types, and the runtime contracts available in the destination project.
 
 ## Choose project identifiers once
 
-Before creating files, resolve these placeholders and use them consistently:
+Before scaffolding, resolve these placeholders and use them consistently:
 
 | Placeholder | Meaning | Example form |
 |---|---|---|
@@ -51,137 +52,78 @@ Before creating files, resolve these placeholders and use them consistently:
 | `<page-id>` | Globally distinct Console extension page id | `issue-board-manager` |
 | `<env-prefix>` | Upper-snake-case environment prefix derived from the worker name | `ISSUE_BOARD` |
 
-Do not copy an example name into generated code. Replace every angle-bracket placeholder. Keep `<worker-name>` consistent across:
+`<worker-name>` must match `^[a-z][a-z0-9]*(-[a-z0-9]+)*$` and be 1–63 characters long: lowercase letters and digits in hyphen-separated parts, starting with a letter. `coder::scaffold-worker` refuses any other name. It replaces the template's `my-worker` token with `<worker-name>` in every path and text file, so these already agree after scaffolding; keep them consistent when you edit:
 
 - `registerWorker({ workerName })`;
 - function ids such as `<worker-name>::resource::action`;
 - UI content function id `<worker-name>::ui-content`;
 - injectable asset paths `<worker-name>/page.js` and `<worker-name>/styles.css`;
 - CSS scope `[data-iii-ui="<worker-name>"]`;
+- the HTTP prefix `/<worker-name>` and the function prefix `hostClient` adds;
 - configuration id unless the domain requires a separate stable form family;
-- `iii.worker.yaml` name;
-- the `worker-compose.yaml` container key when practical.
+- `package.json` and `iii.worker.yaml` name;
+- the `worker-compose.yaml` container key, which is the last segment of the worker's directory; the scaffold makes that segment `<worker-name>`.
 
-Use lowercase `[a-z0-9._-]` path segments for injectable assets. Never derive identifiers from a display title at runtime.
+Do not copy an example name into generated code, and replace every angle-bracket placeholder you copy from this file. Use lowercase `[a-z0-9._-]` path segments for injectable assets. Never derive identifiers from a display title at runtime.
 
-## Canonical project shape
+## Scaffold a new worker
 
-Keep backend and UI in one Node package:
+Never hand-write a new worker's package. The `ide` worker copies the `worker-node-ade` template from `iii-hq/templates`, which holds everything this file describes (Project shape).
+
+1. `coder::list-templates {}` lists the templates it can scaffold. Confirm `worker-node-ade` is among them. When `source.warning` is set, the list came from a stale cache: call it once more with `{ "refresh": true }` before you conclude a template is missing. Read `compose::status` too: when it already lists a container named `<worker-name>`, pick another name now, because `compose::add` would repoint that container to the new folder.
+2. Scaffold the package:
+
+   ```json
+   coder::scaffold-worker { "template": "worker-node-ade", "name": "<worker-name>" }
+   ```
+
+   It lands in `workers/<worker-name>`, relative to the session root; pass `directory` only when the architecture names another folder, and end it with `/<worker-name>`. The result is `{ directory, files, compose, requires, next_steps }`: `directory` and every `files[].path` are absolute, `compose` is the container object for step 3, and `requires` lists the containers the worker needs (`http`). `next_steps` are written for people; follow this section instead, and never restart the project to start the worker.
+
+   The call writes every file or none. It refuses an invalid name, an unknown template, a folder whose last segment is not the name, a folder outside the session's writable roots, and a folder that exists and is not empty. Never delete a folder to retry: when it already holds this worker, edit it in place; otherwise choose another parent folder or name and say why. When the templates are unavailable (no cache and no network), report it and stop.
+3. Declare it: `compose::add` with the returned `compose`, `start_after` the console container, and every `requires` container that `compose::status` does not list (Declare the worker with `compose::add`).
+
+If `engine::functions::info` reports `coder::scaffold-worker` as not available, the project's `ide` worker predates it: tell the user it needs an update and stop. Do not hand-write the package instead.
+
+## Project shape
+
+The scaffold writes one Node package; the backend, the ADE assets and the standalone page share it:
 
 ```text
 <worker-directory>/
-  package.json
-  pnpm-lock.yaml
+  package.json          # pnpm: iii-sdk, @iii-dev/console-ui, react, lucide-react, esbuild, tsx, typescript
+  pnpm-workspace.yaml   # allowBuilds: esbuild
   tsconfig.json
   iii.worker.yaml
-  scripts/
-    dev.mjs
+  scripts/dev.mjs       # Development loop
   src/
-    index.ts
-    ...domain modules
-  test/
-    ...Node tests
+    index.ts            # registerWorker, functions, configuration, trigger type, ADE assets, HTTP triggers
+    hello.ts            # domain logic of the example function
+    web.ts              # HTTP handlers and their allowlists
   ui/
-    build.mjs
+    App.tsx             # THE screen, in the ADE and standalone
+    client.ts           # hostClient(host), httpClient(base)
+    page.tsx            # ADE entry: setup(host)
+    styles.css          # scoped, tokens only
+    build.mjs           # ADE assets + standalone bundle
     tsconfig.json
-    page.tsx
-    styles.css
-    ...renderers, parsers, hooks, and widgets
-  dist/                         # generated; do not hand-edit
-    index.js                    # compiled backend
-    ...compiled backend modules
-    ui/
-      page.js                   # injectable ESM bundle
-      styles.css                # injectable scoped CSS
+  web/
+    main.tsx            # standalone entry
+    index.html
+    tokens.css          # tokens for the standalone page, light and dark
+  test/                 # hello.test.ts, web.test.ts (allowlists, 404s)
+  dist/                 # generated; do not hand-edit
+    ui/                 # page.js, styles.css: the ADE assets
+    web/                # index.html, app.js, styles.css: the standalone page
 ```
 
-This is intentionally **not** a second UI package. The root `package.json` owns TypeScript, React types, esbuild, `lucide-react` and `@iii-dev/console-ui`. Backend TypeScript compiles to `dist/`; esbuild writes UI assets to `dist/ui/`.
+Keep domain logic, validation, persistence, and iii registrations under `src/`; the screen and the ADE-only surfaces under `ui/`; only the standalone entry under `web/`. The UI reaches the backend only through its `client` (Dual-mode screen); it never imports backend modules or reads backend files.
 
-Keep domain logic, validation, persistence, and iii registrations under `src/`. Keep Console-only parsing, rendering, hooks, and scoped styles under `ui/`. The UI invokes backend functions through `host.iii`; it does not import backend implementation modules or access backend files directly.
+When you edit the package:
 
-## Root `package.json`
-
-Use this shape and adapt only versions the destination project deliberately controls:
-
-```json
-{
-  "name": "<worker-name>",
-  "version": "0.1.0",
-  "private": true,
-  "description": "<worker-description>",
-  "type": "module",
-  "engines": {
-    "node": ">=22"
-  },
-  "packageManager": "pnpm@10.18.2",
-  "scripts": {
-    "build": "tsc -p tsconfig.json && pnpm run build:ui",
-    "build:ui": "tsc -p ui/tsconfig.json --noEmit && node ui/build.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p ui/tsconfig.json --noEmit",
-    "test": "tsx --test test/*.test.ts",
-    "start": "node dist/index.js",
-    "dev": "node scripts/dev.mjs"
-  },
-  "dependencies": {
-    "iii-sdk": "<project-approved-version>"
-  },
-  "devDependencies": {
-    "@iii-dev/console-ui": "0.2.0",
-    "@types/node": "^22.10.0",
-    "@types/react": "^19.2.14",
-    "esbuild": "^0.25.0",
-    "lucide-react": "^1.16.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.9.2"
-  }
-}
-```
-
-Pin `@iii-dev/console-ui` to exactly `0.2.0` unless the user explicitly requests another published version; 0.2.0 is the first release with the `/hooks` and `/format` subpaths, `build-worker-ui`, `lint-worker-ui` and `tsconfig.worker-ui.json`, and older releases lack them. `lucide-react` is installed only for its types: at runtime the Console's import map serves it, like React. Run `pnpm install` after writing or changing the package file. Verify the lockfile resolves it from npm and contains no `file:`, `link:`, or workspace resolution for that package.
-
-pnpm 10+ refuses to run dependency build scripts until they are approved, and pnpm 11 re-checks that before every `pnpm run` — so `pnpm test` and `pnpm build` fail with `ERR_PNPM_IGNORED_BUILDS` even though `pnpm install` “succeeded”. Approve esbuild declaratively instead of running the interactive `pnpm approve-builds`: create `pnpm-workspace.yaml` beside `package.json` with
-
-```yaml
-allowBuilds:
-  esbuild: true
-```
-
-(add whatever else the install reports as ignored, with `false` for packages that do not need scripts) and run `pnpm install` again.
-
-Do not guess the `iii-sdk` version. Preserve the destination project's compatible version when one exists; otherwise select a published version intentionally and validate it against the current SDK reference.
-
-## TypeScript configuration
-
-Create a backend `tsconfig.json`:
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2023",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "outDir": "dist",
-    "rootDir": "src",
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "types": ["node"]
-  },
-  "include": ["src/**/*.ts"]
-}
-```
-
-Create `ui/tsconfig.json`; the package's `tsconfig.worker-ui.json` already sets the target, DOM lib, bundler resolution, `react-jsx`, `strict` and `noEmit`, so do not restate them:
-
-```json
-{
-  "extends": "@iii-dev/console-ui/tsconfig.worker-ui.json",
-  "include": ["./**/*.ts", "./**/*.tsx"]
-}
-```
-
-Use explicit `.js` extensions in relative imports written in backend TypeScript when required by `NodeNext`, even though the source file itself ends in `.ts`.
+- Keep the scaffolded `iii-sdk` version; never guess another. Change it only to a published version you validated against the current SDK reference.
+- Add a dependency with `pnpm add <package>` in the worker directory. pnpm 10+ runs no dependency build script until it is approved, and pnpm 11 re-checks before every `pnpm run`, so `pnpm test` and `pnpm build` fail with `ERR_PNPM_IGNORED_BUILDS` after an install that “succeeded”. Approve it under `allowBuilds` in `pnpm-workspace.yaml` (`false` for packages that need no script), never with the interactive `pnpm approve-builds`, and install again.
+- `ui/tsconfig.json` extends `@iii-dev/console-ui/tsconfig.worker-ui.json`, which already sets the target, DOM lib, bundler resolution, `react-jsx`, `strict` and `noEmit`; do not restate them.
+- Use explicit `.js` extensions in relative backend imports when `NodeNext` requires them, even though the source file ends in `.ts`.
 
 ## Node SDK rules
 
@@ -270,6 +212,8 @@ Follow [`configuration.md`](./configuration.md). For a configurable worker:
 7. In the UI, register a purpose-built form with `host.configForms.register(...)`; never fall back to a raw JSON textarea.
 8. Set `configurationId` on the page registration so the Console exposes the standard settings action.
 
+The `worker-*-ade` templates take the shorter path: one `configuration::ensure` call (its `initial_value` is used only when nothing is stored), then `configuration::get`, and no form. Their greeting is changed with `configuration::set`. Move to steps 2–3 and 7–8 when you add a settings form.
+
 A worker-to-worker call still routes through iii:
 
 ```ts
@@ -348,73 +292,45 @@ Emit from the store after each persisted mutation and include the **whole record
 
 **Every trigger type the worker provides must carry trigger metadata.** A registration's `metadata` arrives at the provider as `binding.metadata` (`TriggerConfig.metadata`) and must come back out on every `iii.trigger` as `metadata`; the bound handler receives it as its **second argument**, a channel separate from the payload, and a fan-out that omits it silently drops it. Because the top-level `metadata` slot also carries the harness's own control fields (`{ payload, event_into }`) for call-to-function bindings, also accept a `metadata` field inside the trigger's config, name it in the trigger type's `description`, and forward whichever the subscriber set (config first). Never merge metadata into the payload.
 
+## Dual-mode screen
+
+The worker shows one screen in two places: inside the ADE, and standalone at `http://127.0.0.1:3111/<worker-name>`, served by the `http` worker the template requires.
+
+- `ui/App.tsx` is the screen. It takes one prop, `client: { call<T>(fn: string, payload: unknown): Promise<T> }`, and reaches the backend only through `client.call('<fn>', payload)` with the function's bare name (`hello`, not `<worker-name>::hello`).
+- `ui/client.ts` holds both clients: `hostClient(host)` calls `host.iii.trigger('<worker-name>::' + fn, payload)` (positional: `trigger(functionId, payload?, options?)`, as `index.d.ts` declares); `httpClient(base)` POSTs the payload as JSON to `base + '/' + fn`.
+- `ui/page.tsx` renders `<App client={hostClient(host)} />` inside the ADE (Injectable UI entrypoint). `web/main.tsx` mounts `<div data-iii-ui="<worker-name>"><App client={httpClient('/<worker-name>/api')} /></div>` with `createRoot`, so the scoped styles apply in both places.
+- App uses React, `lucide-react` icons and its own scoped CSS. It imports nothing from `@iii-dev/console-ui` at runtime: no `PageShell`, `Button` or other component, no `/hooks` or `/format` helper; `import type` is fine. Those exist only inside the ADE, which refuses cross-origin loads of its runtime (`CORP: same-origin`, `frame-ancestors 'none'`).
+- Surfaces that exist only in the ADE — configuration forms, function and trigger renderers, panels, chat cards — live in other `ui/` modules that `page.tsx` registers and App never imports. They follow the `ade-worker-design` manuals and may use `@iii-dev/console-ui` components.
+- `ui/styles.css` uses only design tokens (`var(--color-*)` and the rest). The ADE supplies them; `web/tokens.css` defines the same tokens, light and dark through `prefers-color-scheme`, for the standalone page. When App starts using a token, add it to `web/tokens.css` too.
+
+`src/web.ts` serves the standalone page through three HTTP triggers, each behind an allowlist:
+
+| Route | Serves |
+|---|---|
+| `GET /<worker-name>` | `dist/web/index.html` |
+| `GET /<worker-name>/:file` | only `app.js` and `styles.css` from `dist/web/`; `:file` can be `..`, hence the allowlist |
+| `POST /<worker-name>/api/:fn` | only the functions the page calls (template: `hello`): the request `body` is the payload, the answer is `{ status_code, headers: { "content-type": "application/json" }, body }`; any other `:fn` answers 404 |
+
+- When App calls a new function, add it to the API allowlist in `src/web.ts` and to `test/web.test.ts`; a call outside the allowlist works in the ADE and answers 404 standalone. Never replace the allowlist with a pass-through.
+- Return text bodies (HTML, JS, CSS) as strings with an explicit `content-type`. Ship no binary assets (fonts, images) in the standalone page.
+- Port 3111 has no authentication: everything on the allowlists is open to anything that can reach it. Never expose it through a public proxy or tunnel.
+
 ## Injectable UI builder
 
-Create `ui/build.mjs`. It is the whole call to the shared driver; `pnpm build:ui` runs it from the package root and `scripts/dev.mjs` passes `--watch`:
+`ui/build.mjs` runs two builds; `pnpm build` and the dev loop run it from the package root.
 
-```js
-import { buildWorkerUi } from '@iii-dev/console-ui/build-worker-ui'
-
-await buildWorkerUi({
-  scope: '<worker-name>',     // the data-iii-ui value: the first asset path segment
-  root: import.meta.dirname,  // ui/ — page.tsx, styles.css and src/ resolve against it
-  outdir: '../dist/ui',       // relative to root
-})
-```
-
-`buildWorkerUi` (typed in `build-worker-ui.d.mts`) bundles `page.tsx` and `styles.css` with esbuild, keeps the six specifiers the Console's import map serves external — `react`, `react-dom`, `react-dom/client`, `react/jsx-runtime`, `@iii-dev/console-ui`, `lucide-react` — matched exactly so that `@iii-dev/console-ui/hooks` and `/format` still bundle, then checks every asset against the 8 MiB cap, refuses an unscoped stylesheet (`assertScoped`), fails on an unknown design token (`checkTokens`) and, on a non-watch build, runs the design-rule lint (`lintWorkerUi`) over `ui/`. Watch builds are unminified; release builds are minified. A failed check exits 1, which `pnpm build:ui` and the dev loop surface. Do not hand-roll esbuild beside it: a missing `react` external is a second React instance and "Invalid hook call"; a missing `@iii-dev/console-ui` external throws at once with the fix. Do not bundle an editor; use the Console's shared editor components. The remaining options (`entryPoints`, `keyframePrefixes`, `allowUnscopedSelectors`, `strictTokens`, `lint`, `plugins`, `extraExternal`, `define`) and the lint rules are in the designer's `console-injectable-ui` › The build.
+1. **ADE assets.** `buildWorkerUi` from `@iii-dev/console-ui/build-worker-ui`, called with `scope: '<worker-name>'` (the `data-iii-ui` value, the first asset path segment), `root: import.meta.dirname` (`ui/`) and `outdir: '../dist/ui'`, writes `dist/ui/page.js` and `dist/ui/styles.css`. It (typed in `build-worker-ui.d.mts`) bundles `page.tsx` and `styles.css` with esbuild, keeps the six specifiers the Console's import map serves external — `react`, `react-dom`, `react-dom/client`, `react/jsx-runtime`, `@iii-dev/console-ui`, `lucide-react` — matched exactly so that `@iii-dev/console-ui/hooks` and `/format` still bundle, then checks every asset against the 8 MiB cap, refuses an unscoped stylesheet (`assertScoped`), fails on an unknown design token (`checkTokens`) and, on a non-watch build, runs the design-rule lint (`lintWorkerUi`) over `ui/`. Watch builds are unminified; release builds are minified. A failed check exits 1, which `pnpm build` and the dev loop surface. Never route the ADE assets through hand-rolled esbuild: a missing `react` external is a second React instance and "Invalid hook call"; a missing `@iii-dev/console-ui` external throws at once with the fix. Do not bundle an editor; use the Console's shared editor components in ADE-only surfaces. The remaining options (`entryPoints`, `keyframePrefixes`, `allowUnscopedSelectors`, `strictTokens`, `lint`, `plugins`, `extraExternal`, `define`) and the lint rules are in the designer's `console-injectable-ui` › The build.
+2. **Standalone page.** esbuild bundles `web/main.tsx`, with React, `lucide-react` and App inside it, into `dist/web/app.js`; joins `web/tokens.css` and `ui/styles.css` into `dist/web/styles.css`; and copies `web/index.html`. It is the only hand-rolled esbuild in the package, and bundling React is its point. `web/` sits outside `ui/`, so the literal colours in `tokens.css` stay out of the strict lint.
 
 ## Injectable UI entrypoint
 
-Structure `ui/page.tsx` as ordinary React that default-exports `setup(host)`. Read the package's public types before using components; never guess an export or prop. In this portable layout the types are at `node_modules/@iii-dev/console-ui/` — `index.d.ts`, plus `hooks.d.mts` and `format.d.mts` for the two subpaths that bundle into the asset (read them in full after `pnpm install`; `README.md` beside them documents `host.panels.open` and the chat integrations) — the `packages/console-ui/...` path some references mention does not exist here.
+`ui/page.tsx` is ordinary React that default-exports `setup(host)`. It registers the page with `host.pages.register({ id: '<page-id>', title: '<worker-title>', render })`, whose `render` returns `<App client={hostClient(host)} />`, and registers only the ADE-only surfaces that are implemented (`host.configForms.register`, `host.functionTriggers.register`, `host.triggerRenderers?.register`).
 
-Icons are `lucide-react`, an external the Console's import map serves, so an import adds no bundle bytes: `import { Boxes } from 'lucide-react'` and render it at its default 16 px. Never hand-write `<svg>` glyphs (the build lint flags them) and never add another icon dependency. Where a prop asks for an icon, pass a Lucide component or element exactly as its type in `index.d.ts` declares.
+Set `configurationId: '<configuration-id>'` on the page registration only when `page.tsx` registers a config form; do not advertise settings without a corresponding interface. The template ships none: it has a configuration but no form, so change the greeting with `configuration::set { "id": "<worker-name>", "value": { "greeting": "Hi" } }`.
 
-```tsx
-import {
-  PageHeader,
-  PageMain,
-  PageShell,
-  type Host,
-  type PageRenderProps,
-} from '@iii-dev/console-ui'
-import { Boxes } from 'lucide-react'
+Read the package's public types before using any host API or component; never guess an export or prop. In this portable layout the types are at `node_modules/@iii-dev/console-ui/` — `index.d.ts`, plus `hooks.d.mts` and `format.d.mts` for the two subpaths that bundle into the asset (read them in full after `pnpm install`; `README.md` beside them documents `host.panels.open` and the chat integrations) — the `packages/console-ui/...` path some references mention does not exist here.
 
-function WorkerPage({
-  host,
-  onRequestClose,
-}: PageRenderProps & { host: Host }) {
-  return (
-    <PageShell className="<worker-name>-ui-shell">
-      <PageHeader
-        icon={<Boxes />}
-        title="<worker-title>"
-        description="<worker-description>"
-        onClose={onRequestClose}
-      />
-      <PageMain className="<worker-name>-ui-main">
-        {/* Compose the domain-specific page here. */}
-      </PageMain>
-    </PageShell>
-  )
-}
-
-export default function setup(host: Host) {
-  host.pages.register({
-    id: '<page-id>',
-    title: '<worker-title>',
-    configurationId: '<configuration-id>',
-    render: (props) => <WorkerPage host={host} {...props} />,
-  })
-
-  // Register only surfaces that are implemented.
-  // host.configForms.register('<configuration-id>', WorkerConfigForm)
-  // host.functionTriggers.register(createFunctionRenderer())
-  // host.triggerRenderers?.register(createTriggerRenderer())
-}
-```
-
-If the worker has no configuration, omit both `configurationId` and the config form. If it has configuration, implement and register the form; do not advertise settings without a corresponding interface.
+Icons are `lucide-react`: external in the ADE assets, where the Console's import map serves it, so an import adds no bundle bytes there; bundled into the standalone page. `import { Boxes } from 'lucide-react'` and render it at its default 16 px. Never hand-write `<svg>` glyphs (the build lint flags them) and never add another icon dependency. Where a prop asks for an icon, pass a Lucide component or element exactly as its type in `index.d.ts` declares.
 
 The page body is the designer's work: `harness/ade-worker-design/console-injectable-ui` covers narrow panes, loading/error/empty states, renderer fallthrough, redaction, dirty state, live triggers, accessibility, and real-Console testing; `harness/ade-worker-design/console-design` covers visual decisions.
 
@@ -428,217 +344,40 @@ Every selector in `ui/styles.css` must be scoped under `[data-iii-ui="<worker-na
 }
 ```
 
-Use shared tokens and components from the bundled references. Do not use Tailwind classes in injected markup, unscoped selectors, hard-coded theme colors, decorative gradients, or a custom control system. Prefix custom keyframe names with the worker name because keyframes are global.
+Use shared tokens from the bundled references; their components belong only in ADE-only surfaces (Dual-mode screen). Do not use Tailwind classes in injected markup, unscoped selectors, hard-coded theme colors, or decorative gradients; in ADE-only surfaces, use the shared components instead of a custom control system. Prefix custom keyframe names with the worker name because keyframes are global.
 
 ## Worker-side asset delivery
 
-Node workers implement the injectable UI wire contract directly:
+The scaffold's `src/index.ts` implements the injectable UI wire contract directly. Keep these rules when you edit it:
 
 1. Build first, so `dist/ui/page.js` and `dist/ui/styles.css` exist.
-2. From compiled `dist/index.js`, read them with URLs relative to `import.meta.url`.
-3. Register one content function accepting `{ path }` and returning `{ content, content_type }`.
+2. Read both at process startup.
+3. Register one content function, `<worker-name>::ui-content`, accepting `{ path }` and returning `{ content, content_type }`.
 4. Register one SDK Message-path trigger per asset:
    - `console:script` with `config: { path: '<worker-name>/page.js' }`;
    - `console:style` with `config: { path: '<worker-name>/styles.css' }`.
 5. Keep the first path segment equal to `<worker-name>`; it defines the CSS scope.
 6. Reject unknown asset paths.
 
-```ts
-import { readFile } from 'node:fs/promises'
-
-const UI_CONTENT_FUNCTION = '<worker-name>::ui-content'
-
-const uiAssets: Record<string, { content: string; content_type: string }> = {
-  '<worker-name>/page.js': {
-    content: await readFile(new URL('./ui/page.js', import.meta.url), 'utf8'),
-    content_type: 'text/javascript',
-  },
-  '<worker-name>/styles.css': {
-    content: await readFile(new URL('./ui/styles.css', import.meta.url), 'utf8'),
-    content_type: 'text/css',
-  },
-}
-
-iii.registerFunction(
-  UI_CONTENT_FUNCTION,
-  async ({ path }: { path: string }) => {
-    const asset = uiAssets[path]
-    if (!asset) throw new Error(`Unknown UI asset: ${path}`)
-    return asset
-  },
-  {
-    description: 'Serve this worker’s injectable Console UI assets.',
-    request_format: {
-      type: 'object',
-      properties: { path: { type: 'string' } },
-      required: ['path'],
-    },
-    response_format: {
-      type: 'object',
-      properties: {
-        content: { type: 'string' },
-        content_type: { type: 'string' },
-      },
-      required: ['content', 'content_type'],
-    },
-  },
-)
-
-iii.registerTrigger({
-  type: 'console:script',
-  function_id: UI_CONTENT_FUNCTION,
-  config: { path: '<worker-name>/page.js' },
-})
-
-iii.registerTrigger({
-  type: 'console:style',
-  function_id: UI_CONTENT_FUNCTION,
-  config: { path: '<worker-name>/styles.css' },
-})
-```
-
 Use SDK Message-path trigger registrations here, not the engine's durable trigger-registration function. SDK registrations are replayed after reconnect and removed when the worker disconnects.
 
 The in-memory asset map is intentionally populated at process startup. During development, rebuilding `dist/ui` restarts the worker, which reads the new bytes and re-registers the same paths with new content hashes.
 
-## Development loop required for injectable UI
+## Development loop
 
-Create `scripts/dev.mjs` with this coordinated build/watch process:
+`pnpm dev` runs `scripts/dev.mjs`, and the scaffold's compose entry runs it as the container's `run` script: it is what gives the worker hot reload under compose. Keep it working when you edit the package. Do not replace it with a single watcher; it must:
 
-```js
-import { spawn } from 'node:child_process'
-import { resolve } from 'node:path'
+1. build the ADE assets and the standalone page once before starting anything else;
+2. rebuild them on every `ui/` and `web/` edit, so TSX and CSS changes rewrite `dist/`;
+3. run the worker with reload, so a `src/` edit or a rebuilt `dist/ui` restarts it;
+4. terminate all children if any watcher fails;
+5. forward `SIGINT`/`SIGTERM` and escalate only after a short grace period.
 
-const node = process.execPath
-const tsc = resolve('node_modules/typescript/bin/tsc')
-const children = new Set()
-let shuttingDown = false
-
-function spawnNode(args) {
-  const child = spawn(node, args, {
-    env: process.env,
-    stdio: 'inherit',
-  })
-  children.add(child)
-  child.once('exit', () => children.delete(child))
-  return child
-}
-
-async function runOnce(label, args) {
-  console.log(`[dev] ${label}`)
-  const child = spawnNode(args)
-  const result = await new Promise((resolveResult, reject) => {
-    child.once('error', reject)
-    child.once('exit', (code, signal) => resolveResult({ code, signal }))
-  })
-  if (result.code !== 0) {
-    throw new Error(`${label} failed (${result.signal ?? `exit ${result.code}`})`)
-  }
-}
-
-function watch(label, args) {
-  console.log(`[dev] watching ${label}`)
-  const child = spawnNode(args)
-  child.once('error', (error) => {
-    if (shuttingDown) return
-    console.error(`[dev] ${label} failed to start:`, error)
-    shutdown(1)
-  })
-  child.once('exit', (code, signal) => {
-    if (shuttingDown) return
-    console.error(`[dev] ${label} stopped (${signal ?? `exit ${code}`})`)
-    shutdown(code || 1)
-  })
-}
-
-function shutdown(code = 0) {
-  if (shuttingDown) return
-  shuttingDown = true
-  for (const child of children) child.kill('SIGTERM')
-  setTimeout(() => {
-    for (const child of children) child.kill('SIGKILL')
-    process.exit(code)
-  }, 1_500)
-}
-
-process.once('SIGINT', () => shutdown(0))
-process.once('SIGTERM', () => shutdown(0))
-
-try {
-  await runOnce('building backend', [tsc, '-p', 'tsconfig.json'])
-  await runOnce('checking UI types', [tsc, '-p', 'ui/tsconfig.json', '--noEmit'])
-  await runOnce('building UI', ['ui/build.mjs'])
-
-  watch('backend TypeScript', [
-    tsc,
-    '-p',
-    'tsconfig.json',
-    '--watch',
-    '--preserveWatchOutput',
-  ])
-  watch('UI TypeScript', [
-    tsc,
-    '-p',
-    'ui/tsconfig.json',
-    '--noEmit',
-    '--watch',
-    '--preserveWatchOutput',
-  ])
-  watch('UI bundle', ['ui/build.mjs', '--watch'])
-  watch('<worker-name> worker', [
-    '--watch',
-    '--watch-path=dist',
-    '--watch-preserve-output',
-    'dist/index.js',
-  ])
-} catch (error) {
-  console.error('[dev]', error instanceof Error ? error.message : error)
-  shutdown(1)
-}
-```
-
-Replace `<worker-name>` in the watch label. Keep the commands and lifecycle generic; do not hardcode a repository name or absolute path.
-
-Do not replace this script with only `tsc --watch`. It must:
-
-1. build the backend once;
-2. type-check the UI once;
-3. bundle the UI once;
-4. watch backend TypeScript into `dist/`;
-5. watch UI TypeScript for type errors;
-6. watch the UI bundle so TSX/CSS changes rewrite `dist/ui/`;
-7. run the worker with Node watching `dist/`;
-8. terminate all children if any watcher fails;
-9. forward `SIGINT`/`SIGTERM` and escalate only after a short grace period.
-
-This enables injectable UI hot development: an edit changes `dist/ui`, Node restarts the worker, the worker reconnects and re-registers the same asset paths with new content, and the Console hot-swaps the asset. The Console itself is not rebuilt.
+This enables injectable UI hot development: an edit changes `dist/ui`, the worker restarts, reconnects and re-registers the same asset paths with new content, and the Console hot-swaps the asset. The Console itself is not rebuilt. The standalone page shows a rebuild on its next browser reload.
 
 ## Worker manifest
 
-Create `iii.worker.yaml` at the worker root:
-
-```yaml
-iii: v1
-name: <worker-name>
-language: javascript
-deploy: bundle
-manifest: package.json
-license: Apache-2.0
-tags: [<domain-tag>, console-ui]
-description: <worker-description>
-
-runtime:
-  kind: javascript
-
-scripts:
-  start: node ./dist/index.js
-
-dependencies:
-  configuration: "0.x"
-  console: "0.x"
-```
-
-Replace all placeholders. Declare only dependencies the worker actually uses. If there is no configuration integration, remove `configuration`. If there is no injectable UI, remove `console` and the UI-specific structure from the project.
+The scaffold ships `iii.worker.yaml` at the worker root. Keep its `name` equal to `<worker-name>`; if you add a `dependencies:` block, list only what the worker uses.
 
 ## Declare the worker with `compose::add`
 
@@ -657,31 +396,29 @@ Never write the worker's entry into `worker-compose.yaml` by hand. A running dae
    }
    ```
 
-2. Declare the worker with the same id, as a container object, so the dev loop and the start order land in the file with it:
+2. Read `compose::status` once. If it already lists a container named like the last segment of `compose.worker` (`<worker-name>`), stop and pick another name: `compose::add` replaces a container with the same key, so it would repoint the running one to the new folder. Otherwise build the `workers` list from the scaffold result and that read: the returned `compose` object, unchanged except for an added `start_after`, then an entry for every `requires` container that `compose::status` does not list in `containers[].container`:
 
-   ```json
-   compose::add {
-     "operation_id": "add-issue-board-7f3a",
-     "workers": [
-       {
-         "worker": "./<worker-directory>",
-         "start_after": ["<console container>"],
-         "scripts": { "run": "pnpm dev" }
-       }
-     ]
-   }
+   ```text
+   workers = [
+     { ...result.compose, start_after: ["<console container>"] },
+     ...result.requires.filter((name) => !declared.includes(name)),
+     // http → { worker: "package://http", version: "latest", config_name: "http" }
+   ]
    ```
 
-   - `worker` is the local path relative to the directory containing `worker-compose.yaml`, starting with `.` or `/`. `path://` and `package://` are compose-file syntax and are misread here. The container key is derived from the directory name; `compose::status` shows it.
+   Declare them with the same operation id: `compose::add { "operation_id": "add-issue-board-7f3a", "workers": <workers> }`. For `issue-board` in a stack without `http`, `workers` holds the container object followed by `{ "worker": "package://http", "version": "latest", "config_name": "http" }`.
+
+   - `compose.worker` is already the absolute path of the scaffolded folder, which `compose::add` accepts; pass it unchanged. The container key is the folder's last segment, `<worker-name>`; `compose::status` shows it.
    - `start_after` names the container that runs the console in this compose file (`ade` in the harness template; `compose::status` lists the real keys), so the console's UI provider exists before the worker registers its assets.
-   - `scripts.run: pnpm dev` runs the coordinated loop from `scripts/dev.mjs` instead of the production `start` script; it is what gives the worker hot reload under compose.
+   - Keep `compose.scripts` as returned: `pre_run` installs the dependencies and `run` starts the dev loop (`pnpm dev`), which gives the worker hot reload under compose.
+   - Declare a missing `http` with that object, the same form the templates use, so it reads its `http` configuration. A `requires` container the stack already declares is not added again.
    - The response `{ operation_id, requested, status }` is an acceptance, not readiness.
 
 3. Read `compose::operation { "operation_id": "add-issue-board-7f3a" }` once. If `last_event.terminal` is true, unregister the wake and read the result; otherwise end the turn and let the terminal event wake you. Do not poll.
 
-4. On the terminal event, confirm: `compose::status` shows the container `ready`, and `engine::workers::info { "name": "<worker-name>" }` lists its functions and trigger types. On `failed`, `compose::logs { "container": "<container key>", "tail": 100 }` has the real error. The container runs the worker's own install and start scripts, so the first run installs dependencies and restarts once or twice while the watchers write `dist/`; that is expected.
+4. On the terminal event, confirm: `compose::status` shows the worker's container and every added `requires` container `ready`, `engine::workers::info { "name": "<worker-name>" }` lists its functions and trigger types, and, before you replace the example, `<worker-name>::hello` answers a real call. On `failed`, `compose::logs { "container": "<container key>", "tail": 100 }` has the real error. The container runs the worker's own install and start scripts, so the first run installs dependencies and restarts once or twice while the dev loop writes `dist/`; that is expected.
 
-A container that is already declared is left as it is by `compose::add`; if it is stopped, `compose::up { "container": "<container key>" }` starts it. A dependency added later is `pnpm install` in the worker directory, as during scaffolding; the running loop picks it up on the next rebuild. Never restart the whole project: the harness is a container of it and goes down mid-turn.
+A container that is already declared is left as it is by `compose::add`; if it is stopped, `compose::up { "container": "<container key>" }` starts it. A dependency added later is `pnpm add <package>` in the worker directory; the running loop picks it up on the next rebuild. Never restart the whole project: the harness is a container of it and goes down mid-turn.
 
 ## Implementation order
 
@@ -690,21 +427,17 @@ existing worker, apply only affected steps and prerequisites; preserve its
 working scaffolding and implemented UI. Use the spec's `Project context`
 instead of repeating discovery. Each engineer performs only its assigned side.
 
-1. Resolve all project identifiers and paths.
+1. Resolve all project identifiers and paths; the worker name passes the name rule.
 2. Use this file for backend/delivery work; fetch only references needed by
    the assigned change. Preloaded bodies need no second fetch. UI
    implementation references belong to the Frontend Engineer.
-3. Inspect the destination project's existing package manager, SDK version, Compose shape, and coding conventions.
-4. Create the single-package folder structure.
-5. Write package and TypeScript configuration, then install dependencies.
-6. Implement and test backend domain behavior.
-7. Register functions with complete contracts and add configuration integration if needed.
-8. Leave a working UI shell for the Frontend Engineer, which builds the page, renderers and forms using shared Console components and scoped CSS after the backend/delivery contracts are verified.
-9. Add worker-side asset delivery and Message-path registrations.
-10. Add the coordinated `scripts/dev.mjs` loop.
-11. Add or update `iii.worker.yaml`.
-12. Declare the worker through `compose::add` under a `compose-operation` wake, then confirm with `compose::status` and `engine::workers::info`.
-13. Verify the assigned side: backend checks static builds, runtime registration, asset delivery and hot reload; frontend checks real rendering through the `browser` worker. The Tech Lead independently checks contracts and integration before the Builder performs user acceptance.
+3. Inspect the destination project's Compose shape, existing workers and coding conventions; reuse a registered capability instead of scaffolding a duplicate.
+4. Scaffold the package with `coder::scaffold-worker` (Scaffold a new worker).
+5. Declare it through `compose::add` under a `compose-operation` wake, with its `requires` containers, then confirm with `compose::status`, `engine::workers::info` and a real `<worker-name>::hello` call.
+6. Replace the example `hello` with the domain: backend modules, functions with complete contracts, tests, and the API allowlist in `src/web.ts` for the functions the screen calls.
+7. Add configuration integration if needed.
+8. Leave `ui/App.tsx` building against the new functions through `client`. The Frontend Engineer builds the screen and the ADE-only surfaces, with shared tokens and scoped CSS, after the backend/delivery contracts are verified.
+9. Verify the assigned side: backend checks static builds, runtime registration, asset delivery, the HTTP allowlists and hot reload; frontend checks real rendering in the ADE through the `browser` worker and at the standalone URL. The Tech Lead independently checks contracts and integration before the Builder performs user acceptance.
 
 ## Validation checklist
 
@@ -715,7 +448,7 @@ screen. Report the evidence for your assigned checks and hand off the rest.
 For corrections, rerun affected checks and dependencies, retaining earlier
 evidence only while it remains applicable; broaden checks if impact is unclear.
 
-- No angle-bracket placeholders remain in generated project files.
+- No `my-worker` token remains in any path or file of the worker, and no angle-bracket placeholder copied from this file remains.
 - No example project name or repository-specific absolute path leaked into identifiers, scripts, or documentation.
 - `pnpm install` succeeds and the lockfile resolves `@iii-dev/console-ui` from npm at `0.2.0`, not through `file:`, `link:`, or `workspace:`.
 - `pnpm typecheck`, `pnpm test`, and `pnpm build` pass.
@@ -725,12 +458,15 @@ evidence only while it remains applicable; broaden checks if impact is unclear.
 - Every public function exposes accurate descriptions and request/response schemas.
 - Configuration registration, read, update, and reload behavior work without erasing existing or unknown values.
 - `dist/ui/page.js` and `dist/ui/styles.css` are non-empty; `react`, `@iii-dev/console-ui` and `lucide-react` stay bare imports (release builds are minified, so expect `from"react"`), and the build's scope, token and lint checks passed.
+- `dist/web/index.html`, `dist/web/app.js` and `dist/web/styles.css` exist, and `app.js` carries React inside it (no bare `react` import).
+- `ui/App.tsx` imports nothing from `@iii-dev/console-ui` except through `import type`.
+- `GET http://127.0.0.1:3111/<worker-name>` renders the same screen as the ADE page, in light and dark color schemes, and its calls succeed; `GET /<worker-name>/<any other file>` and `POST /<worker-name>/api/<a function outside the allowlist>` answer 404.
 - The UI content function serves both registered paths and rejects unknown ones.
-- Asset paths, CSS scope, worker name, function prefix, and configuration id are internally consistent.
+- Asset paths, CSS scope, HTTP prefix, worker name, function prefix, and configuration id are internally consistent.
 - The Console manifest (`GET http://127.0.0.1:<console port>/ui`, or `console::ui-manifest`) contains both assets, reports no CSS warnings, and changes hashes after a UI edit.
 - A real harness call to the worker (e.g. the agent fetching one record) renders through the worker's chat renderer — the result arrives as a `{ content, details }` envelope and must be unwrapped (see the designer's `console-injectable-ui`); confirm a `[data-iii-ui="<worker-name>"]` wrapper exists inside the chat DOM.
-- Live updates reach an open page without a reload: mutate through a function from outside the UI and watch the page change.
-- A record opens as its own pane in the same workspace tab through `host.panels.open`, and the collection page adapts when the tab splits (narrow mode).
+- When the domain has live data (ADE-only surfaces): live updates reach an open ADE surface without a reload: mutate through a function from outside the UI and watch it change.
+- When the domain has records (ADE-only surfaces): a record opens as its own pane in the same workspace tab through `host.panels.open`. In every case the page adapts when the tab splits (narrow mode).
 - The real Console renders the page (alone at `#/worker/<worker-name>[/<page-id>]` for screenshots, and inside the workspace) in narrow and wide panes, light and dark themes, with keyboard navigation, visible focus, stable async states, and no browser-console errors.
 - Reconnects and repeated UI edits do not accumulate duplicate functions, triggers, pages, renderers, or forms.
-- The worker was declared through `compose::add`, never by editing `worker-compose.yaml`; `compose::status` shows it `ready`, and its entry runs `pnpm dev` after the console container.
+- The worker was declared through `compose::add`, never by editing `worker-compose.yaml`; `compose::status` shows it and every `requires` container `ready`, and its entry is the scaffold's `compose` object with `start_after` the console container.

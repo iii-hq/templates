@@ -7,7 +7,7 @@ icon: code
 color: teal
 extends: default
 skills: [harness/ade-solo/plan, harness/ade-worker-design/planning]
-functions: ["coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "coder::list-folder", "shell::exec", "directory::skills::get", "engine::functions::info"]
+functions: ["coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "coder::list-folder", "coder::list-templates", "shell::exec", "directory::skills::get", "engine::functions::info"]
 ---
 # Create a tool in the ADE
 
