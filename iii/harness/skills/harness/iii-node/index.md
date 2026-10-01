@@ -451,7 +451,7 @@ evidence only while it remains applicable; broaden checks if impact is unclear.
 - No `my-worker` token remains in any path or file of the worker, and no angle-bracket placeholder copied from this file remains.
 - No example project name or repository-specific absolute path leaked into identifiers, scripts, or documentation.
 - `pnpm install` succeeds and the lockfile resolves `@iii-dev/console-ui` from npm at `0.2.0`, not through `file:`, `link:`, or `workspace:`.
-- `pnpm test` and `pnpm build` pass.
+- `pnpm typecheck`, `pnpm test`, and `pnpm build` pass.
 - `pnpm dev` builds all outputs before starting watchers and shuts down cleanly.
 - The worker appears in the engine with every intended function and trigger type.
 - A worker-provided trigger type forwards every subscription's metadata (`binding.metadata`, or the config's `metadata` field) on every `iii.trigger`, and its description names that field.
