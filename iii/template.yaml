@@ -2,6 +2,7 @@
 templates:
   - bare
   - worker-python
+  - worker-python-ade
   - worker-node
   - worker-node-ade
   - docker

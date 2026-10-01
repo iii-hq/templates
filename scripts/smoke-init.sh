@@ -149,6 +149,33 @@ static_template_checks() {
 }
 
 static_template_checks
+
+# worker-python-ade: coder::scaffold-worker and iii project init copy only the
+# files: entries, so every file the template ships must be listed, and nothing
+# generated (.venv, node_modules, dist, caches) may ship. The page (ui/, web/)
+# is a copy of worker-node-ade's, apart from ui/'s package manifest.
+static_python_ade_checks() {
+  local ade="$TEMPLATE_DIR/worker-python-ade"
+  local node_ade="$TEMPLATE_DIR/worker-node-ade"
+  assert_file "$ade/template.yaml"
+  assert_contains "$TEMPLATE_DIR/template.yaml" "  - worker-python-ade"
+  assert_all_files_listed "$ade"
+  assert_no_active_base_image "$ade/workers/my-worker/iii.worker.yaml"
+  assert_contains "$ade/workers/my-worker/iii.worker.yaml" "#   base_image: docker.io/iiidev/python:latest"
+  assert_contains "$ade/workers/my-worker/pyproject.toml" '"iii-sdk=='
+  assert_contains "$ade/workers/my-worker/ui/package.json" '"@iii-dev/console-ui": "0.2.0"'
+  assert_contains "$ade/worker-compose.yaml" '        (cd ui && pnpm install && pnpm build)'
+  assert_contains "$ade/template.yaml" "  requires: [http]"
+  if ! diff -rq --exclude=package.json --exclude=pnpm-workspace.yaml --exclude=node_modules --exclude=dist \
+    "$node_ade/workers/my-worker/ui" "$ade/workers/my-worker/ui" ||
+    ! diff -rq --exclude=node_modules --exclude=dist \
+      "$node_ade/workers/my-worker/web" "$ade/workers/my-worker/web"; then
+    echo "error: worker-python-ade ui/ or web/ drifted from worker-node-ade" >&2
+    exit 1
+  fi
+}
+static_python_ade_checks
+
 if [[ "${1:-}" == "--static-only" ]]; then
   echo "static template checks passed"
   exit 0
@@ -521,6 +548,7 @@ smoke_ade_template() {
 }
 
 smoke_ade_template worker-node-ade
+smoke_ade_template worker-python-ade
 
 # `worker init` lives on the `iii-worker` binary, which the `iii` CLI installs
 # and manages. Override the path with III_WORKER_BIN.

@@ -1,0 +1,64 @@
+name: Worker with ADE page (Python)
+description: A Python worker with settings, its own trigger type and one page shown in the ADE and over HTTP.
+version: "0.24.2"
+min_iii_version: "0.24.2"
+
+treat_required_as_included: true
+requires:
+  - python
+optional: []
+
+# The page is built with Node (ui/package.json), so these files are copied
+# whatever languages are selected; the root language_files would drop them.
+language_files:
+  common:
+    - '*.ts'
+    - '*.tsx'
+    - '*.mjs'
+    - '*.css'
+    - '*.html'
+    - 'package.json'
+    - 'tsconfig.json'
+    - 'pnpm-workspace.yaml'
+
+# Scaffoldable by the IDE (coder::scaffold-worker): copies the files: entries
+# under `dir`, replacing `name` in paths and contents; `compose` is the
+# container key in worker-compose.yaml; `requires` lists the containers the
+# worker needs. `iii project init` ignores this block.
+worker:
+  dir: workers/my-worker
+  name: my-worker
+  compose: my-worker
+  requires: [http]
+
+# Explicit list of files to copy (shared_files from root are added automatically)
+files:
+  - README.md
+  - worker-compose.yaml
+  - workers/my-worker/README.md
+  - workers/my-worker/iii.worker.yaml
+  - workers/my-worker/pyproject.toml
+  - workers/my-worker/src/__init__.py
+  - workers/my-worker/src/main.py
+  - workers/my-worker/tests/conftest.py
+  - workers/my-worker/tests/test_main.py
+  - workers/my-worker/tests/test_web.py
+  - workers/my-worker/ui/App.tsx
+  - workers/my-worker/ui/build.mjs
+  - workers/my-worker/ui/client.ts
+  - workers/my-worker/ui/package.json
+  - workers/my-worker/ui/page.tsx
+  - workers/my-worker/ui/pnpm-workspace.yaml
+  - workers/my-worker/ui/styles.css
+  - workers/my-worker/ui/tsconfig.json
+  - workers/my-worker/web/index.html
+  - workers/my-worker/web/main.tsx
+  - workers/my-worker/web/tokens.css
+
+next_steps:
+  - 'Needs Python 3.11+, Node 22+ and pnpm 10+ on PATH'
+  - 'In terminal 1 from the project root, start Compose: iii compose --up'
+  - 'Compose pre_run creates a private venv, installs the worker and builds its page'
+  - 'In terminal 2 from the project root, call: iii trigger my-worker::hello name=World'
+  - 'Open http://127.0.0.1:3111/my-worker, or the my-worker page in the ADE'
+  - 'Edits to workers/my-worker/src/ reload on save; after editing ui/ or web/, run pnpm build in workers/my-worker/ui'

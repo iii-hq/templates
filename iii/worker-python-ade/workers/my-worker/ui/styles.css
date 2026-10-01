@@ -1,0 +1,85 @@
+/* Every rule is scoped to [data-iii-ui="my-worker"] and uses only console
+   tokens: the ADE supplies them, web/tokens.css stands in for the browser. */
+
+[data-iii-ui="my-worker"] .my-worker-app {
+  display: grid;
+  gap: 16px;
+  max-width: 480px;
+  padding: 24px;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+[data-iii-ui="my-worker"] .my-worker-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+[data-iii-ui="my-worker"] .my-worker-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+[data-iii-ui="my-worker"] .my-worker-label {
+  color: var(--color-muted-foreground);
+}
+
+[data-iii-ui="my-worker"] .my-worker-input {
+  flex: 1 1 160px;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--color-edge);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+}
+
+[data-iii-ui="my-worker"] .my-worker-input:focus-visible,
+[data-iii-ui="my-worker"] .my-worker-button:focus-visible {
+  outline: 2px solid var(--color-rule-focus);
+  outline-offset: 1px;
+}
+
+[data-iii-ui="my-worker"] .my-worker-button {
+  padding: 6px 12px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: var(--color-accent-fg);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+[data-iii-ui="my-worker"] .my-worker-button:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+[data-iii-ui="my-worker"] .my-worker-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+[data-iii-ui="my-worker"] .my-worker-result,
+[data-iii-ui="my-worker"] .my-worker-error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+}
+
+[data-iii-ui="my-worker"] .my-worker-result {
+  background: var(--color-ok-muted);
+}
+
+[data-iii-ui="my-worker"] .my-worker-error {
+  background: var(--color-alert-muted);
+  color: var(--color-alert);
+}
