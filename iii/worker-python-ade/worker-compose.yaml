@@ -1,0 +1,41 @@
+# Project workers for the iii engine.
+# Docs: https://iii.dev/docs/next/using-iii/compose
+#
+# pre_run prepares a private venv and builds the page. Start with:
+#
+#   iii compose --up
+#
+namespace: default
+startup_timeout: 360s
+
+engine:
+  url: ws://127.0.0.1:49134
+
+containers:
+  # Host development. Hooks run from the worker directory. pre_run reuses a
+  # private venv, installs the worker into it, then builds the page into dist/
+  # (dist/ui for the ADE, dist/web for http://127.0.0.1:3111/my-worker).
+  my-worker:
+    worker: path://./workers/my-worker
+    scripts:
+      pre_run: |
+        set -e
+        if [ ! -x .venv/bin/python ]; then
+          python3 -m venv .venv
+        fi
+        .venv/bin/python -m pip install -e .
+        (cd ui && pnpm install && pnpm build)
+      pre_run_timeout: 5m
+      run: ".venv/bin/watchfiles '.venv/bin/python src/main.py'"
+
+  # Serves the page and its API on http://127.0.0.1:3111/my-worker. No auth:
+  # never expose port 3111 through a public proxy or tunnel.
+  http:
+    worker: package://http
+    version: latest
+    config_name: http
+
+  # The ADE on http://127.0.0.1:3113 shows the same page as a console page.
+  # ade:
+  #   worker: package://ade
+  #   version: latest
