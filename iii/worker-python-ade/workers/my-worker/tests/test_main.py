@@ -1,10 +1,14 @@
 """my-worker::hello, its settings, its trigger type and its ADE assets, on the fake bus."""
 
 import asyncio
+import os
+import signal
+import threading
 
 import pytest
 from iii.triggers import TriggerConfig
 
+import src.main
 from src.main import NAME, SETTINGS_SCHEMA, build_greeting, register
 
 
@@ -83,3 +87,24 @@ def test_every_function_but_hello_is_internal(bus, dist):
     register(bus, dist)
     public = [fid for fid, options in bus.options.items() if not (options.get("metadata") or {}).get("internal")]
     assert public == [f"{NAME}::hello"]
+
+
+def test_main_disconnects_on_sigterm(monkeypatch):
+    shutdowns = []
+
+    class Worker:
+        def shutdown(self):
+            shutdowns.append(True)
+
+    monkeypatch.setattr(src.main, "register_worker", lambda **_: Worker())
+    monkeypatch.setattr(src.main, "register", lambda iii: None)
+    handlers = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+    timer = threading.Timer(0.1, os.kill, (os.getpid(), signal.SIGTERM))
+    timer.start()
+    try:
+        src.main.main()
+    finally:
+        timer.cancel()  # main() returned without waiting: fail the assert, not the run
+        for sig, handler in handlers.items():
+            signal.signal(sig, handler)
+    assert shutdowns == [True]

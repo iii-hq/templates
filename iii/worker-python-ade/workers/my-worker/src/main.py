@@ -4,6 +4,8 @@ shown in the ADE and at http://127.0.0.1:3111/my-worker through the http worker.
 from __future__ import annotations
 
 import asyncio
+import signal
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -224,6 +226,14 @@ def main() -> None:
     )
     register(iii)
     print(f"{NAME} started: http://127.0.0.1:3111/{NAME}", flush=True)
+    # The SDK runs its event loop in a non-daemon thread, so the process outlives
+    # main() and does not exit on SIGINT. Wait for SIGINT (watchfiles, on every save)
+    # or SIGTERM (Compose, on stop), then disconnect and let the process end.
+    stop = threading.Event()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        signal.signal(sig, lambda *_: stop.set())
+    stop.wait()
+    iii.shutdown()
 
 
 if __name__ == "__main__":
