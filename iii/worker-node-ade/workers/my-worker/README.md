@@ -19,6 +19,7 @@ An iii worker with one function and one page: built from the console's component
 |---|---|
 | `src/index.ts` | Registrations: functions, configuration, trigger type, ADE assets, HTTP routes |
 | `src/hello.ts` | Pure domain logic, tested without an engine |
+| `src/ui-assets.ts` | `my-worker::ui-content`: reads `dist/ui` on request, so a start without a build still runs |
 | `src/web.ts` | HTTP handlers and their allowlists |
 | `ui/WorkerPage.tsx` | The ADE page: `@iii-dev/console-ui` components (the console supplies them at runtime), calling `host.iii` |
 | `ui/App.tsx` | The standalone page: plain React, `lucide-react` icons, scoped CSS from `ui/styles.css` |

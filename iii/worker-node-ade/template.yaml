@@ -39,8 +39,10 @@ files:
   - workers/my-worker/scripts/dev.mjs
   - workers/my-worker/src/hello.ts
   - workers/my-worker/src/index.ts
+  - workers/my-worker/src/ui-assets.ts
   - workers/my-worker/src/web.ts
   - workers/my-worker/test/hello.test.ts
+  - workers/my-worker/test/ui-assets.test.ts
   - workers/my-worker/test/web.test.ts
   - workers/my-worker/ui/App.tsx
   - workers/my-worker/ui/WorkerPage.tsx

@@ -1,9 +1,9 @@
-import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { registerWorker, TriggerAction } from 'iii-sdk'
 import type { RegisterFunctionFormat } from 'iii-sdk/protocol'
 import type { TriggerConfig } from 'iii-sdk/trigger'
 import { greetee, hello, type HelloInput, type HelloOutput } from './hello.js'
+import { uiContent } from './ui-assets.js'
 import { webHandlers, webUrl } from './web.js'
 
 const root = new URL('../', import.meta.url)
@@ -122,18 +122,9 @@ iii.registerFunction('my-worker::info', async () => ({ web_url: WEB_URL, greetin
 
 // --- ADE page: the console loads dist/ui through console:script/console:style ---
 
-const uiAssets = new Map([
-  ['my-worker/page.js', { content: await readFile(new URL('dist/ui/page.js', root), 'utf8'), content_type: 'text/javascript' }],
-  ['my-worker/styles.css', { content: await readFile(new URL('dist/ui/styles.css', root), 'utf8'), content_type: 'text/css' }],
-])
-
 iii.registerFunction(
   'my-worker::ui-content',
-  async ({ path }: { path: string }) => {
-    const asset = uiAssets.get(path)
-    if (!asset) throw new Error(`Unknown UI asset: ${path}`)
-    return asset
-  },
+  uiContent(fileURLToPath(new URL('dist/ui', root))),
   {
     description: 'Serve this worker’s ADE page assets.',
     request_format: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] },

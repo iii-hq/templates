@@ -98,6 +98,7 @@ The scaffold writes one Node package; the backend, the ADE assets and the standa
   src/
     index.ts            # registerWorker, functions, configuration, trigger type, ADE assets, HTTP triggers
     hello.ts            # domain logic of the example function
+    ui-assets.ts        # ui-content: the ADE assets, read on request
     web.ts              # HTTP handlers and their allowlists
   ui/
     WorkerPage.tsx      # the ADE page: console-ui components, host.iii
@@ -111,7 +112,7 @@ The scaffold writes one Node package; the backend, the ADE assets and the standa
     main.tsx            # standalone entry
     index.html
     tokens.css          # tokens for the standalone page, light and dark
-  test/                 # hello.test.ts, web.test.ts (allowlists, 404s)
+  test/                 # hello.test.ts, ui-assets.test.ts, web.test.ts (allowlists, 404s)
   dist/                 # generated; do not hand-edit
     ui/                 # page.js, styles.css: the ADE assets
     web/                # index.html, app.js, styles.css: the standalone page
@@ -354,7 +355,7 @@ Use shared tokens from the bundled references; their components belong only in A
 The scaffold's `src/index.ts` implements the injectable UI wire contract directly. Keep these rules when you edit it:
 
 1. Build first, so `dist/ui/page.js` and `dist/ui/styles.css` exist.
-2. Read both at process startup.
+2. Read each file when `ui-content` is called, not at startup: a start without a build must still register everything, and a missing file throws an error that names `pnpm build`.
 3. Register one content function, `<worker-name>::ui-content`, accepting `{ path }` and returning `{ content, content_type }`.
 4. Register one SDK Message-path trigger per asset:
    - `console:script` with `config: { path: '<worker-name>/page.js' }`;
@@ -364,7 +365,7 @@ The scaffold's `src/index.ts` implements the injectable UI wire contract directl
 
 Use SDK Message-path trigger registrations here, not the engine's durable trigger-registration function. SDK registrations are replayed after reconnect and removed when the worker disconnects.
 
-The in-memory asset map is intentionally populated at process startup. During development, rebuilding `dist/ui` restarts the worker, which reads the new bytes and re-registers the same paths with new content hashes.
+During development, rebuilding `dist/ui` restarts the worker, which re-registers the same paths; the next `ui-content` call reads the new bytes.
 
 ## Development loop
 
