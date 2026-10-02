@@ -1,6 +1,6 @@
 # my-worker
 
-A Python worker project. `workers/my-worker` registers `my-worker::hello`, keeps its settings in the `my-worker` configuration, provides the `my-worker:hello` trigger type, and shows one page in two places: inside the ADE, built from the console's own components, and as a plainer standalone page at http://127.0.0.1:3111/my-worker through the `http` worker.
+A Python worker project. `workers/my-worker` registers `my-worker::hello`, keeps its settings in the `my-worker` configuration, provides the `my-worker:hello` trigger type, and shows two pages: a console-native one inside the ADE, built from the console's own components, and a plainer standalone page at http://127.0.0.1:3111/my-worker through the `http` worker.
 
 ## Prerequisites
 
