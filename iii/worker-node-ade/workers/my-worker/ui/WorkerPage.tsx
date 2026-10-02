@@ -22,8 +22,14 @@ import { useContainerNarrow, useCopyFlash } from '@iii-dev/console-ui/hooks'
 import { Check, Copy, ExternalLink } from 'lucide-react'
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
 
-/** my-worker::info: where the standalone page lives and the live greeting. */
-type Info = { web_url: string; greeting: string }
+/** my-worker::info: where the standalone page lives and the live greeting.
+    web_url is absolute only when the worker has III_HTTP_URL set. */
+type Info = { web_url: string | null; web_path: string; greeting: string }
+
+/** The http worker's default port. Without web_url the page is opened on this port
+    of the host the console is browsed from; set III_HTTP_URL on the worker for
+    another port or host. */
+const HTTP_WORKER_PORT = 3111
 
 type Result = { kind: 'ok'; message: string; ms: number } | { kind: 'error'; message: string }
 
@@ -77,16 +83,19 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
     }
   }
 
-  const openOutside = info ? (
+  const webHref =
+    info && (info.web_url ?? `${window.location.protocol}//${window.location.hostname}:${HTTP_WORKER_PORT}${info.web_path}`)
+
+  const openOutside = webHref ? (
     narrow ? (
       <IconButton label="Open outside console" asChild>
-        <a href={info.web_url} target="_blank" rel="noreferrer">
+        <a href={webHref} target="_blank" rel="noreferrer">
           <ExternalLink aria-hidden />
         </a>
       </IconButton>
     ) : (
       <Button variant="ghost" size="sm" asChild>
-        <a href={info.web_url} target="_blank" rel="noreferrer">
+        <a href={webHref} target="_blank" rel="noreferrer">
           <ExternalLink aria-hidden />
           Open outside console
         </a>

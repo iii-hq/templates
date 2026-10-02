@@ -17,10 +17,14 @@ const ASSETS = new Map([
 /** Functions the page may call over HTTP, by short name (`my-worker::<name>`). */
 export const API_FUNCTIONS = new Set(['hello'])
 
-/** Where the standalone page answers: the http worker's base URL (III_HTTP_URL,
-    default http://127.0.0.1:3111) plus this worker's route. */
-export function webUrl(base?: string): string {
-  return `${(base || 'http://127.0.0.1:3111').replace(/\/+$/, '')}/my-worker`
+/** The standalone page's route on the http worker. */
+export const WEB_PATH = '/my-worker'
+
+/** Where the standalone page answers: the http worker's base URL (III_HTTP_URL)
+    plus this worker's route; null when it is unset or empty, so the ADE page
+    falls back to the host it is browsed from. */
+export function webUrl(base?: string): string | null {
+  return base ? `${base.replace(/\/+$/, '')}${WEB_PATH}` : null
 }
 
 const json = (status_code: number, body: unknown): HttpResponse => ({

@@ -5,7 +5,7 @@ A Python worker with one page: built from the console's components in the ADE, a
 | What | Where |
 |---|---|
 | `my-worker::hello`: `{ name? }` → `{ message }` | `src/main.py` |
-| `my-worker::info`: internal, `{}` → `{ web_url, greeting }`, feeds the ADE page's **Open outside console** button | `src/main.py` |
+| `my-worker::info`: internal, `{}` → `{ web_url, web_path, greeting }` (`web_url` is `null` unless `III_HTTP_URL` is set), feeds the ADE page's **Open outside console** button | `src/main.py` |
 | The `my-worker` configuration (`greeting`), reloaded on `configuration:updated` | `src/main.py` |
 | The `my-worker:hello` trigger type, fired after every `my-worker::hello` | `src/main.py` |
 | ADE assets: `my-worker::ui-content` with `console:script` / `console:style` | `src/main.py`, `ui/page.tsx` |
@@ -21,7 +21,7 @@ Python 3.11 or newer, Node 22 or newer and pnpm 10 or newer. `scripts/start.sh` 
 
 Two screens make the same call:
 
-- In the ADE, `ui/page.tsx` registers `ui/WorkerPage.tsx`. It uses the `@iii-dev/console-ui` components the console supplies at runtime, and calls `my-worker::hello` and `my-worker::info` through `host.iii`. Its **Open outside console** button links to the `web_url` that `my-worker::info` returns: `III_HTTP_URL` (default `http://127.0.0.1:3111`) plus `/my-worker`. Set `III_HTTP_URL` in the worker's environment when the `http` worker is reachable somewhere else.
+- In the ADE, `ui/page.tsx` registers `ui/WorkerPage.tsx`. It uses the `@iii-dev/console-ui` components the console supplies at runtime, and calls `my-worker::hello` and `my-worker::info` through `host.iii`. Its **Open outside console** button links to the `http` worker on the same host the console is browsed from (port 3111), or to the `web_url` that `my-worker::info` returns when `III_HTTP_URL` is set (`III_HTTP_URL` plus `/my-worker`). Set it in the worker's environment when the `http` worker is on another port or host; the `http` worker must listen on an address the browser can reach (its `host` defaults to `127.0.0.1`).
 - In a browser, `web/main.tsx` renders `ui/App.tsx`, plain React with no console components, and passes it `httpClient('/my-worker/api')`, which POSTs the payload as JSON to `/my-worker/api/<fn>`.
 
 `pnpm build` in `ui/` builds both: `dist/ui` for the ADE and `dist/web` for the browser. The worker reads them from `dist/` on each request.

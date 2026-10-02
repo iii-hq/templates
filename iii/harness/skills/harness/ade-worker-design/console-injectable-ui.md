@@ -22,7 +22,7 @@ Composition recipes for record-shaped UIs: `patterns`.
 > of done) apply to `ui/WorkerPage.tsx`, `page.tsx` and the console-only
 > surfaces it registers. `ui/WorkerPage.tsx` is the ADE page: it has the iii
 > `Wordmark` as its header icon, calls the worker through `host.iii` and shows
-> **Open outside console** from `<worker>::info`'s `web_url`. `ui/App.tsx` is
+> **Open outside console** from `<worker>::info`'s `web_url` (else `web_path` on the console's host). `ui/App.tsx` is
 > the standalone page at `http://127.0.0.1:3111/<worker>`: it reaches the
 > backend through its `client` prop and imports nothing from
 > `@iii-dev/console-ui` at runtime, because those components exist only in the

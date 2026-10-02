@@ -4,13 +4,14 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { after, before, describe, it } from 'node:test'
 import { hello } from '../src/hello.js'
-import { webHandlers, webUrl } from '../src/web.js'
+import { WEB_PATH, webHandlers, webUrl } from '../src/web.js'
 
 describe('webUrl', () => {
-  it('defaults to the local http worker', () => {
-    assert.equal(webUrl(), 'http://127.0.0.1:3111/my-worker')
-    assert.equal(webUrl(undefined), 'http://127.0.0.1:3111/my-worker')
-    assert.equal(webUrl(''), 'http://127.0.0.1:3111/my-worker')
+  it('is null unless III_HTTP_URL is set, so the page follows the console host', () => {
+    assert.equal(webUrl(), null)
+    assert.equal(webUrl(undefined), null)
+    assert.equal(webUrl(''), null)
+    assert.equal(WEB_PATH, '/my-worker')
   })
 
   it('takes III_HTTP_URL with or without a trailing slash', () => {

@@ -7,7 +7,7 @@ An iii worker with one function and one page: built from the console's component
 | Kind | Id | Notes |
 |---|---|---|
 | Function | `my-worker::hello` | `{ name? }` → `{ message }`, using the configured greeting |
-| Function | `my-worker::info` | Internal. `{}` → `{ web_url, greeting }`: where the standalone page answers (`III_HTTP_URL`, default `http://127.0.0.1:3111`, plus `/my-worker`) and the live greeting. Feeds the ADE page's **Open outside console** button |
+| Function | `my-worker::info` | Internal. `{}` → `{ web_url, web_path, greeting }`: where the standalone page answers (`web_url` is `III_HTTP_URL` plus `/my-worker`, or `null` when it is unset; `web_path` is `/my-worker`) and the live greeting. Feeds the ADE page's **Open outside console** button |
 | Configuration | `my-worker` | `{ greeting }`, seeded with `Hello`, reloaded by `my-worker::config-changed` |
 | Trigger type | `my-worker:hello` | Fires after every greeting with `{ name, message }`; a binding's `metadata` is passed through |
 | ADE assets | `my-worker/page.js`, `my-worker/styles.css` | Served by `my-worker::ui-content` from `dist/ui` |

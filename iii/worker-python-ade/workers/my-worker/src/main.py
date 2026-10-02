@@ -14,7 +14,7 @@ from iii import InitOptions, TriggerAction, register_worker
 from iii.triggers import TriggerConfig, TriggerHandler
 
 NAME = "my-worker"
-HTTP_URL = "http://127.0.0.1:3111"
+WEB_PATH = f"/{NAME}"
 # Written by `pnpm build` in ui/: dist/ui is the ADE page, dist/web the standalone one.
 DIST = Path(__file__).resolve().parent.parent / "dist"
 
@@ -35,8 +35,12 @@ HELLO_RESPONSE = {
 }
 INFO_RESPONSE = {
     "type": "object",
-    "properties": {"web_url": {"type": "string"}, "greeting": {"type": "string"}},
-    "required": ["web_url", "greeting"],
+    "properties": {
+        "web_url": {"type": ["string", "null"]},
+        "web_path": {"type": "string"},
+        "greeting": {"type": "string"},
+    },
+    "required": ["web_path", "greeting"],
 }
 ANY_OBJECT = {"type": "object"}
 
@@ -53,10 +57,11 @@ def build_greeting(greeting: str, name: str) -> dict[str, str]:
     return {"message": f"{greeting}, {name}!"}
 
 
-def web_url(base: str | None = None) -> str:
-    """Where the standalone page answers: the http worker's base URL (III_HTTP_URL,
-    default http://127.0.0.1:3111) plus this worker's route."""
-    return f"{(base or HTTP_URL).rstrip('/')}/{NAME}"
+def web_url(base: str | None = None) -> str | None:
+    """Where the standalone page answers: the http worker's base URL (III_HTTP_URL)
+    plus this worker's route; None when it is unset or empty, so the ADE page
+    falls back to the host it is browsed from."""
+    return f"{base.rstrip('/')}{WEB_PATH}" if base else None
 
 
 class HelloTriggers(TriggerHandler):
@@ -124,8 +129,12 @@ def register(iii: Any, dist: Path = DIST) -> None:
         await hello_triggers.emit(iii, {"name": name, **result})
         return result
 
-    def info(_payload: dict[str, Any]) -> dict[str, str]:
-        return {"web_url": web_url(os.environ.get("III_HTTP_URL")), "greeting": settings["greeting"]}
+    def info(_payload: dict[str, Any]) -> dict[str, str | None]:
+        return {
+            "web_url": web_url(os.environ.get("III_HTTP_URL")),
+            "web_path": WEB_PATH,
+            "greeting": settings["greeting"],
+        }
 
     def config_changed(event: dict[str, Any]) -> dict[str, bool]:
         settings.update(event.get("new_value") or {})
@@ -197,7 +206,7 @@ def register(iii: Any, dist: Path = DIST) -> None:
     iii.register_function(
         f"{NAME}::info",
         info,
-        description="Where the standalone page answers, and the configured greeting.",
+        description="Where the standalone page answers (web_url only when III_HTTP_URL is set), and the greeting.",
         metadata={"internal": True},
         request_format=ANY_OBJECT,
         response_format=INFO_RESPONSE,

@@ -4,7 +4,7 @@ import type { RegisterFunctionFormat } from 'iii-sdk/protocol'
 import type { TriggerConfig } from 'iii-sdk/trigger'
 import { greetee, hello, type HelloInput, type HelloOutput } from './hello.js'
 import { uiContent } from './ui-assets.js'
-import { webHandlers, webUrl } from './web.js'
+import { WEB_PATH, webHandlers, webUrl } from './web.js'
 
 const root = new URL('../', import.meta.url)
 
@@ -109,13 +109,13 @@ iii.registerFunction(
 
 const WEB_URL = webUrl(process.env.III_HTTP_URL)
 
-iii.registerFunction('my-worker::info', async () => ({ web_url: WEB_URL, greeting }), {
-  description: 'Where the standalone page answers, and the configured greeting.',
+iii.registerFunction('my-worker::info', async () => ({ web_url: WEB_URL, web_path: WEB_PATH, greeting }), {
+  description: 'Where the standalone page answers (web_url only when III_HTTP_URL is set), and the greeting.',
   request_format: { type: 'object' },
   response_format: {
     type: 'object',
-    properties: { web_url: { type: 'string' }, greeting: { type: 'string' } },
-    required: ['web_url', 'greeting'],
+    properties: { web_url: { type: ['string', 'null'] }, web_path: { type: 'string' }, greeting: { type: 'string' } },
+    required: ['web_path', 'greeting'],
   },
   metadata: { internal: true },
 })

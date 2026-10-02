@@ -42,7 +42,7 @@ Expected response:
 
 ## Open the page
 
-- **ADE:** uncomment the `ade` container in `worker-compose.yaml` and restart Compose, then open `http://127.0.0.1:3113` and pick the `my-worker` page. Alone, it is at `http://127.0.0.1:3113/#/worker/my-worker/my-worker`. The page uses the console's components and calls the worker through the console's own connection, not over HTTP. **Open outside console** opens the standalone page in a new tab. Its address is `my-worker::info`'s `web_url`: the worker's `III_HTTP_URL` environment variable (default `http://127.0.0.1:3111`) plus `/my-worker`. Set it when the `http` worker is reachable somewhere else.
+- **ADE:** uncomment the `ade` container in `worker-compose.yaml` and restart Compose, then open `http://127.0.0.1:3113` and pick the `my-worker` page. Alone, it is at `http://127.0.0.1:3113/#/worker/my-worker/my-worker`. The page uses the console's components and calls the worker through the console's own connection, not over HTTP. **Open outside console** opens the standalone page in a new tab, on the `http` worker on the same host the console is browsed from (port 3111), or at the worker's `III_HTTP_URL` plus `/my-worker` when that environment variable is set (`my-worker::info` returns it as `web_url`). The `http` worker must listen on an address your browser can reach: its configuration's `host` defaults to `127.0.0.1`, which answers only on the machine it runs on.
 - **Browser:** `http://127.0.0.1:3111/my-worker`. A plainer version of the same call, in plain React: it calls the worker through `POST /my-worker/api/hello`.
 
 The ADE page is `ui/WorkerPage.tsx`; the standalone page is `ui/App.tsx`. How it works, how to edit it and how to run the tests: `workers/my-worker/README.md`.
