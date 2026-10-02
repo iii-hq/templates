@@ -21,7 +21,7 @@ Python 3.11 or newer, Node 22 or newer and pnpm 10 or newer. `scripts/start.sh` 
 
 Two screens make the same call:
 
-- In the ADE, `ui/page.tsx` registers `ui/WorkerPage.tsx`. It uses the `@iii-dev/console-ui` components the console supplies at runtime, and calls `my-worker::hello` and `my-worker::info` through `host.iii`. Its **Open outside console** button links to the `http` worker on the same host the console is browsed from (port 3111), or to the `web_url` that `my-worker::info` returns when `III_HTTP_URL` is set (`III_HTTP_URL` plus `/my-worker`). Set it in the worker's environment when the `http` worker is on another port or host; the `http` worker must listen on an address the browser can reach (its `host` defaults to `127.0.0.1`).
+- In the ADE, `ui/page.tsx` registers `ui/WorkerPage.tsx`. It uses the `@iii-dev/console-ui` components the console supplies at runtime, and calls `my-worker::hello` and `my-worker::info` through `host.iii`. Its **Open outside console** button links to `http://<console host>:3111/my-worker`, or to the `web_url` that `my-worker::info` returns when `III_HTTP_URL` is set (`III_HTTP_URL` plus `/my-worker`). While the `http` worker listens on `127.0.0.1`, that answers only from this machine. To open it from another device, use an SSH tunnel (`ssh -L 3111:127.0.0.1:3111 <host>`) or set `III_HTTP_URL` to an address that reaches it, and never expose port 3111 on an untrusted network.
 - In a browser, `web/main.tsx` renders `ui/App.tsx`, plain React with no console components, and passes it `httpClient('/my-worker/api')`, which POSTs the payload as JSON to `/my-worker/api/<fn>`.
 
 `pnpm build` in `ui/` builds both: `dist/ui` for the ADE and `dist/web` for the browser. The worker reads them from `dist/` on each request.

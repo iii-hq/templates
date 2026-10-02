@@ -38,9 +38,9 @@ One Node package owns backend and UI. Backend source is under `src/`, UI
 under `ui/`, the standalone entry under `web/`, generated outputs under
 `dist/`. The ADE page, `ui/WorkerPage.tsx`, is built from `@iii-dev/console-ui`
 components, shows the iii `Wordmark` in its header and an **Open outside
-console** link built from `web_url` (else `web_path`) of `<worker>::info`, and calls functions
-through `host.iii`. The standalone page, `ui/App.tsx`, is served at
-`http://127.0.0.1:3111/<worker>`: plain React, no runtime
+console** link built from `web_url` (else `web_path`) of `<worker>::info`,
+and calls functions through `host.iii`. The standalone page, `ui/App.tsx`,
+is served at `http://127.0.0.1:3111/<worker>`: plain React, no runtime
 `@iii-dev/console-ui` export, calling functions only through its `client` prop
 (the worker's allowlisted HTTP API). Neither imports a backend module or
 backend file.

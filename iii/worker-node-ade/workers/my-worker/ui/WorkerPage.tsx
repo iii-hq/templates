@@ -84,7 +84,7 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
   }
 
   const webHref =
-    info && (info.web_url ?? `${window.location.protocol}//${window.location.hostname}:${HTTP_WORKER_PORT}${info.web_path}`)
+    info && (info.web_url ?? `http://${window.location.hostname}:${HTTP_WORKER_PORT}${info.web_path}`)
 
   const openOutside = webHref ? (
     narrow ? (

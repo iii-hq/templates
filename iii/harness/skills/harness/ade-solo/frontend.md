@@ -94,8 +94,9 @@ Never a component, prop or export from memory.
 - **Shared primitives first, in ADE-only surfaces** (the ADE page
   `ui/WorkerPage.tsx` and the pages, renderers and forms `page.tsx`
   registers, which App never imports). The ADE page keeps the iii `Wordmark`
-  as its header icon and an **Open outside console** link to `web_url` (else `web_path`
-  on the console's host) from `<worker>::info`, and reaches the backend through `host.iii`.
+  as its header icon and an **Open outside console** link to `web_url` (else
+  `web_path` on the console's host) from `<worker>::info`, and reaches the
+  backend through `host.iii`.
   `PageShell` + `PageHeader` wrap every such page;
   `PageSidebar` owns collapse, resize and narrow mode; `ConfirmDialog`,
   never `window.confirm`. Configuration forms are `SettingsSection` →
