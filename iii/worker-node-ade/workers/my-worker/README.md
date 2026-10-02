@@ -39,6 +39,7 @@ An iii worker with one function and one page: built from the console's component
 
 ```sh
 pnpm dev        # what Compose runs
+pnpm start      # build, then run once: what a plain `compose::add` of this folder runs
 pnpm test       # node --test, no engine needed
 pnpm typecheck
 pnpm build      # dist/ui and dist/web

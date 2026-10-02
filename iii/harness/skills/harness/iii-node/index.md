@@ -354,8 +354,8 @@ Use shared tokens from the bundled references; their components belong only in A
 
 The scaffold's `src/index.ts` implements the injectable UI wire contract directly. Keep these rules when you edit it:
 
-1. Build first, so `dist/ui/page.js` and `dist/ui/styles.css` exist.
-2. Read each file when `ui-content` is called, not at startup: a start without a build must still register everything, and a missing file throws an error that names `pnpm build`.
+1. Build first, so `dist/ui/page.js` and `dist/ui/styles.css` exist. The manifest's `start` script does (`pnpm build && tsx src/index.ts`), so even a plain `compose::add` of the folder serves the page.
+2. Read each file when `ui-content` is called, not at startup: a start without a build must still register everything, and a missing file throws an error that names `pnpm build` and the restart.
 3. Register one content function, `<worker-name>::ui-content`, accepting `{ path }` and returning `{ content, content_type }`.
 4. Register one SDK Message-path trigger per asset:
    - `console:script` with `config: { path: '<worker-name>/page.js' }`;

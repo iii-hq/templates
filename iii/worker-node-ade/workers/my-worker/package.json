@@ -10,7 +10,7 @@
   "scripts": {
     "build": "node ui/build.mjs",
     "dev": "node scripts/dev.mjs",
-    "start": "tsx src/index.ts",
+    "start": "pnpm build && tsx src/index.ts",
     "test": "node --import tsx --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json && tsc -p ui/tsconfig.json"
   },

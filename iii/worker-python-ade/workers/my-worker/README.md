@@ -15,7 +15,7 @@ A Python worker with one page: built from the console's components in the ADE, a
 
 ## Prerequisites
 
-Python 3.11 or newer, Node 22 or newer and pnpm 10 or newer. Compose's `scripts.pre_run` creates `.venv`, installs the worker and builds the page.
+Python 3.11 or newer, Node 22 or newer and pnpm 10 or newer. Compose's `scripts.pre_run` creates `.venv`, installs the worker and builds the page. The worker needs that `pre_run` (it comes with the `compose` entry `coder::scaffold-worker` returns, and with `worker-compose.yaml`): a bare `compose::add worker=<dir>` skips it, so there is no `.venv` and no `dist/`.
 
 ## How the page works
 

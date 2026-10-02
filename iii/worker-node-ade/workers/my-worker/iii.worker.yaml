@@ -13,5 +13,6 @@ description: Example worker — my-worker::hello, configuration, a my-worker:hel
 
 scripts:
   # Compose skips these in host mode. They are the portable bundle recipe.
-  install: "pnpm install && pnpm build"
+  # `pnpm start` builds the page first, so install needs no build of its own.
+  install: "pnpm install"
   start: "pnpm start"

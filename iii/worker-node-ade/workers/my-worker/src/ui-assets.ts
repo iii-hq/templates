@@ -1,5 +1,5 @@
 // The ADE page assets. Read on request, not at startup, so a start without a
-// build still registers every function; only the page itself needs `pnpm build`.
+// build still registers every function; only the page itself needs `pnpm build` (`pnpm start` runs it).
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -16,7 +16,7 @@ export function uiContent(uiDir: string) {
     try {
       return { content: await readFile(join(uiDir, asset.file), 'utf8'), content_type: asset.content_type }
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new Error(`dist/ui/${asset.file} is missing: run pnpm build`)
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new Error(`dist/ui/${asset.file} is missing: run pnpm build in the worker folder, then restart the worker`)
       throw error
     }
   }

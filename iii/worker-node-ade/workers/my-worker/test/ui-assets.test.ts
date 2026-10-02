@@ -23,8 +23,8 @@ describe('ui-content', () => {
   })
 
   it('names the fix when the build is missing', async () => {
-    await assert.rejects(uiContent(dir)({ path: 'my-worker/styles.css' }), /dist\/ui\/styles\.css is missing: run pnpm build/)
-    await assert.rejects(uiContent(join(dir, 'nope'))({ path: 'my-worker/page.js' }), /dist\/ui\/page\.js is missing: run pnpm build/)
+    await assert.rejects(uiContent(dir)({ path: 'my-worker/styles.css' }), /dist\/ui\/styles\.css is missing: run pnpm build in the worker folder, then restart the worker/)
+    await assert.rejects(uiContent(join(dir, 'nope'))({ path: 'my-worker/page.js' }), /dist\/ui\/page\.js is missing: run pnpm build in the worker folder, then restart the worker/)
   })
 
   it('rejects a path outside the allowlist', async () => {
