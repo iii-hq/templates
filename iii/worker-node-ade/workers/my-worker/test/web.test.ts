@@ -10,6 +10,7 @@ describe('webUrl', () => {
   it('defaults to the local http worker', () => {
     assert.equal(webUrl(), 'http://127.0.0.1:3111/my-worker')
     assert.equal(webUrl(undefined), 'http://127.0.0.1:3111/my-worker')
+    assert.equal(webUrl(''), 'http://127.0.0.1:3111/my-worker')
   })
 
   it('takes III_HTTP_URL with or without a trailing slash', () => {

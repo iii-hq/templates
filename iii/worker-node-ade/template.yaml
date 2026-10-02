@@ -1,5 +1,5 @@
 name: Worker with ADE page (Node)
-description: A Node/TypeScript worker with settings, its own trigger type and one page shown in the ADE and over HTTP.
+description: A Node/TypeScript worker with settings, its own trigger type and a console page in the ADE and a plainer page over HTTP.
 version: "0.24.2"
 min_iii_version: "0.24.2"
 

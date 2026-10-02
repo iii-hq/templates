@@ -1,15 +1,5 @@
-import type { Host } from '@iii-dev/console-ui'
-
 /** How App reaches this worker's functions, by short name (`hello` → `my-worker::hello`). */
 export type Client = { call<T>(fn: string, payload: unknown): Promise<T> }
-
-/** Inside the ADE: the console's own engine connection. */
-export function hostClient(host: Pick<Host, 'iii'>): Client {
-  return {
-    call: <T>(fn: string, payload: unknown) =>
-      host.iii.trigger<T>(`my-worker::${fn}`, payload as Record<string, unknown>),
-  }
-}
 
 /** Standalone page: POST JSON to the worker's HTTP API (src/web.ts allowlists `fn`). */
 export function httpClient(base: string): Client {

@@ -1,4 +1,5 @@
-// Two builds of the same screen (ui/App.tsx):
+// Two builds: the ADE page (ui/page.tsx → WorkerPage) and the standalone
+// page (web/main.tsx → App):
 //   1. ADE asset: page.tsx + styles.css → dist/ui. React and
 //      @iii-dev/console-ui stay external (the console's import map serves
 //      them); scope, token and strict design-lint checks run here.

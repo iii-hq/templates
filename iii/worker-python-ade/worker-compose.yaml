@@ -35,7 +35,7 @@ containers:
     version: latest
     config_name: http
 
-  # The ADE on http://127.0.0.1:3113 shows the same page as a console page.
+  # The ADE on http://127.0.0.1:3113 shows a console-native page that links to it.
   # ade:
   #   worker: package://ade
   #   version: latest

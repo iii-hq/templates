@@ -22,7 +22,7 @@ An iii worker with one function and one page: built from the console's component
 | `src/web.ts` | HTTP handlers and their allowlists |
 | `ui/WorkerPage.tsx` | The ADE page: `@iii-dev/console-ui` components (the console supplies them at runtime), calling `host.iii` |
 | `ui/App.tsx` | The standalone page: plain React, `lucide-react` icons, scoped CSS from `ui/styles.css` |
-| `ui/client.ts` | The `Client` type and `httpClient` (standalone page, `fetch`); `hostClient` wraps `host.iii` in the same shape |
+| `ui/client.ts` | The `Client` type and `httpClient` (standalone page, `fetch`) |
 | `ui/page.tsx` | ADE entry: registers `WorkerPage` |
 | `web/` | Standalone entry, its HTML, and the tokens the ADE would otherwise provide |
 | `ui/build.mjs` | Builds `dist/ui` (ADE) and `dist/web` (browser) |

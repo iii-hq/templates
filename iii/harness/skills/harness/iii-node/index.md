@@ -59,7 +59,7 @@ Before scaffolding, resolve these placeholders and use them consistently:
 - UI content function id `<worker-name>::ui-content`;
 - injectable asset paths `<worker-name>/page.js` and `<worker-name>/styles.css`;
 - CSS scope `[data-iii-ui="<worker-name>"]`;
-- the HTTP prefix `/<worker-name>` and the function prefix `hostClient` adds;
+- the HTTP prefix `/<worker-name>`;
 - configuration id unless the domain requires a separate stable form family;
 - `package.json` and `iii.worker.yaml` name;
 - the `worker-compose.yaml` container key, which is the last segment of the worker's directory; the scaffold makes that segment `<worker-name>`.
@@ -102,7 +102,7 @@ The scaffold writes one Node package; the backend, the ADE assets and the standa
   ui/
     WorkerPage.tsx      # the ADE page: console-ui components, host.iii
     App.tsx             # the standalone page: plain React, client
-    client.ts           # hostClient(host), httpClient(base)
+    client.ts           # httpClient(base)
     page.tsx            # ADE entry: setup(host)
     styles.css          # scoped, tokens only
     build.mjs           # ADE assets + standalone bundle
@@ -300,7 +300,7 @@ The worker has two pages for its functions: the ADE page inside the console, and
 - `ui/WorkerPage.tsx` is the ADE page, and `ui/page.tsx` renders `<WorkerPage host={host} onClose={onRequestClose} />` (Injectable UI entrypoint). It is built from `@iii-dev/console-ui` components: `PageShell` → `PageHeader` (the iii `Wordmark` as its icon) → `PageMain`, `SettingsSection`/`SettingsList`/`SettingsField`/`SettingsRow`, `Input`, `Button`, `StatusPanel`, with `useContainerNarrow`, `useCopyFlash` and `errorMessage` from the `/hooks` and `/format` subpaths. It reaches the backend through `host.iii.trigger('<worker-name>::<fn>', payload)` (positional: `trigger(functionId, payload?, options?)`, as `index.d.ts` declares).
 - The ADE page's header shows **Open outside console**, a link to the `web_url` that the internal `<worker-name>::info` function returns: `III_HTTP_URL` (default `http://127.0.0.1:3111`) plus `/<worker-name>`. The page loads it through `host.iii` and renders the link once it arrives. `info` is not in the HTTP allowlist.
 - `ui/App.tsx` is the standalone page. It takes one prop, `client: { call<T>(fn: string, payload: unknown): Promise<T> }`, and reaches the backend only through `client.call('<fn>', payload)` with the function's bare name (`hello`, not `<worker-name>::hello`).
-- `ui/client.ts` holds the `Client` type and both clients: `httpClient(base)` POSTs the payload as JSON to `base + '/' + fn`; `hostClient(host)` wraps `host.iii.trigger('<worker-name>::' + fn, payload)` in the same shape, for an ADE page that wants the bare-name calls.
+- `ui/client.ts` holds the `Client` type and `httpClient(base)`, which POSTs the payload as JSON to `base + '/' + fn`. The ADE page does not use it: `WorkerPage.tsx` calls `host.iii.trigger('<worker-name>::<fn>', payload)` directly.
 - `web/main.tsx` mounts `<div data-iii-ui="<worker-name>"><App client={httpClient('/<worker-name>/api')} /></div>` with `createRoot`, so the scoped styles apply to both pages.
 - App uses React, `lucide-react` icons and its own scoped CSS. It imports nothing from `@iii-dev/console-ui` at runtime: no `PageShell`, `Button` or other component, no `/hooks` or `/format` helper; `import type` is fine. Those exist only inside the ADE, which refuses cross-origin loads of its runtime (`CORP: same-origin`, `frame-ancestors 'none'`); that is why the standalone page stays plain and the ADE page does not.
 - Other ADE-only surfaces — configuration forms, function and trigger renderers, panels, chat cards — live in other `ui/` modules that `page.tsx` registers and App never imports. Like `WorkerPage.tsx`, they follow the `ade-worker-design` manuals and use `@iii-dev/console-ui` components.
@@ -327,7 +327,7 @@ The worker has two pages for its functions: the ADE page inside the console, and
 
 ## Injectable UI entrypoint
 
-`ui/page.tsx` is ordinary React that default-exports `setup(host)`. It registers the page with `host.pages.register({ id: '<page-id>', title: '<worker-title>', render })`, whose `render` returns `<App client={hostClient(host)} />`, and registers only the ADE-only surfaces that are implemented (`host.configForms.register`, `host.functionTriggers.register`, `host.triggerRenderers?.register`).
+`ui/page.tsx` is ordinary React that default-exports `setup(host)`. It registers the page with `host.pages.register({ id: '<page-id>', title: '<worker-title>', render })`, whose `render` returns `<WorkerPage host={host} onClose={onRequestClose} />`, and registers only the ADE-only surfaces that are implemented (`host.configForms.register`, `host.functionTriggers.register`, `host.triggerRenderers?.register`).
 
 Set `configurationId: '<configuration-id>'` on the page registration only when `page.tsx` registers a config form; do not advertise settings without a corresponding interface. The template ships none: it has a configuration but no form, so change the greeting with `configuration::set { "id": "<worker-name>", "value": { "greeting": "Hi" } }`.
 

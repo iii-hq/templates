@@ -1,7 +1,7 @@
 [project]
 name = "my-worker"
 version = "0.1.0"
-description = "Example Python worker: my-worker::hello, settings, a trigger type and one page in the ADE and over HTTP."
+description = "Example Python worker: my-worker::hello, settings, a trigger type, a console page in the ADE and a plainer page over HTTP."
 requires-python = ">=3.11"
 dependencies = [
     "iii-sdk==0.24.2",

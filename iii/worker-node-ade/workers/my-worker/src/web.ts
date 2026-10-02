@@ -19,8 +19,8 @@ export const API_FUNCTIONS = new Set(['hello'])
 
 /** Where the standalone page answers: the http worker's base URL (III_HTTP_URL,
     default http://127.0.0.1:3111) plus this worker's route. */
-export function webUrl(base = 'http://127.0.0.1:3111'): string {
-  return `${base.replace(/\/+$/, '')}/my-worker`
+export function webUrl(base?: string): string {
+  return `${(base || 'http://127.0.0.1:3111').replace(/\/+$/, '')}/my-worker`
 }
 
 const json = (status_code: number, body: unknown): HttpResponse => ({

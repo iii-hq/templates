@@ -12,7 +12,7 @@ const root = new URL('../', import.meta.url)
 // ws://127.0.0.1:49134; it reads III_NAMESPACE itself.
 const iii = registerWorker(process.env.III_URL, {
   workerName: 'my-worker',
-  workerDescription: 'Example worker: greets by name, shows one page in the ADE and over HTTP.',
+  workerDescription: 'Example worker: greets by name, shows a console page in the ADE and a plainer page over HTTP.',
 })
 
 // --- Configuration: one greeting, seeded once, reloaded on every update ---

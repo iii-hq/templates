@@ -1,5 +1,5 @@
-"""my-worker: my-worker::hello, its settings, its own trigger type, and one page
-shown in the ADE and at http://127.0.0.1:3111/my-worker through the http worker."""
+"""my-worker: my-worker::hello, its settings, its own trigger type, a console page
+in the ADE, and a plainer page at http://127.0.0.1:3111/my-worker through the http worker."""
 
 from __future__ import annotations
 
@@ -246,7 +246,7 @@ def register(iii: Any, dist: Path = DIST) -> None:
 
 def main() -> None:
     iii = register_worker(
-        options=InitOptions(worker_name=NAME, worker_description=f"{NAME}: hello, settings and one page.")
+        options=InitOptions(worker_name=NAME, worker_description=f"{NAME}: hello, settings and two pages.")
     )
     register(iii)
     print(f"{NAME} started: http://127.0.0.1:3111/{NAME}", flush=True)
