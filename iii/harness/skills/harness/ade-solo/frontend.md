@@ -10,10 +10,11 @@ description: >-
 
 # Frontend (Frontend Engineer hat)
 
-You build what lives in `ui/App.tsx`, `ui/page.tsx`, `ui/styles.css`,
-`ui/src/**` and `web/tokens.css`, against functions the worker already
-registers. In a scaffolded worker `ui/App.tsx` is the screen: the ADE shows
-it, and so does `http://127.0.0.1:3111/<worker>`. In this phase you do not
+You build what lives in `ui/WorkerPage.tsx`, `ui/App.tsx`, `ui/page.tsx`,
+`ui/styles.css`, `ui/src/**` and `web/tokens.css`, against functions the worker
+already registers. In a scaffolded worker `ui/WorkerPage.tsx` is the ADE page,
+built from console components, and `ui/App.tsx` is the plain standalone page at
+`http://127.0.0.1:3111/<worker>`. In this phase you do not
 change functions, trigger types, the configuration schema, asset delivery,
 the HTTP allowlists in `src/web.ts` or the package and build files. A gap
 there sends you back to the Backend phase, and to `## Architecture` first
@@ -30,7 +31,7 @@ rules and every number, about 27 KB) › `harness/ade-worker-design/patterns`
 | Need | Read |
 | --- | --- |
 | Any page | console-injectable-ui: How it works; Project layout; Authoring workflow; Archetypes; 1. The script asset (with Slots); 2. The style asset |
-| A scaffolded worker's screen (`ui/App.tsx`) | `harness/iii-node/index`: Dual-mode screen |
+| A scaffolded worker's pages (`ui/WorkerPage.tsx`, `ui/App.tsx`) | `harness/iii-node/index`: ADE page and standalone page |
 | Phone and narrow panes | console-injectable-ui: Behaviour across widths, only the subsections in play |
 | Shared components, tokens | console-design: Numbers; the Shared components subsections for components you use; Do / Don't |
 | The chosen archetype | patterns: that archetype's section, plus 8. Live updates |
@@ -85,13 +86,16 @@ Never a component, prop or export from memory.
 - **One 6 px radius.** Sans for human-facing text in natural case; mono only
   for ids, paths, values, payloads, code and tabular data. `lucide-react`
   icons at 16 px, never inline `<svg>`.
-- **App stays portable.** A scaffolded worker's `ui/App.tsx` also runs
-  standalone, where the console runtime does not exist. It reaches the
-  backend only through its `client` prop and imports nothing from
-  `@iii-dev/console-ui` except with `import type`: a runtime import still
-  builds, then leaves the standalone page blank.
-- **Shared primitives first, in ADE-only surfaces** (the pages, renderers
-  and forms `page.tsx` registers, which App never imports).
+- **The standalone page stays plain.** A scaffolded worker's `ui/App.tsx`
+  runs outside the ADE, where the console runtime does not exist. It reaches
+  the backend only through its `client` prop (the HTTP API allowlist) and
+  imports nothing from `@iii-dev/console-ui` except with `import type`: a
+  runtime import still builds, then leaves the standalone page blank.
+- **Shared primitives first, in ADE-only surfaces** (the ADE page
+  `ui/WorkerPage.tsx` and the pages, renderers and forms `page.tsx`
+  registers, which App never imports). The ADE page keeps the iii `Wordmark`
+  as its header icon and an **Open outside console** link to `web_url` from
+  `<worker>::info`, and reaches the backend through `host.iii`.
   `PageShell` + `PageHeader` wrap every such page;
   `PageSidebar` owns collapse, resize and narrow mode; `ConfirmDialog`,
   never `window.confirm`. Configuration forms are `SettingsSection` →
@@ -135,19 +139,21 @@ except to dispatch the `DragEvent`s a drag-and-drop check needs
    (an older worker without them: its own UI build script, such as
    `pnpm build:ui`); the emitted asset keeps bare `react`,
    `@iii-dev/console-ui` and `lucide-react` imports, and `ui/App.tsx`
-   imports nothing from `@iii-dev/console-ui` at runtime.
+   imports nothing from `@iii-dev/console-ui` at runtime (`ui/WorkerPage.tsx`
+   is built from its components).
 2. **Delivery:** `console::ui-manifest` shows a fresh hash and an empty
    `warnings` array (select rows by `path`, see the backend playbook);
    `browser::fetch` of `/ui/<path>` returns the bytes.
 3. **Real rendering:** `browser::navigate` to the page alone,
    `#/worker/<scope>[/<page-id>]`. A scaffolded worker's standalone page,
-   `http://127.0.0.1:3111/<worker>`, renders the same screen and its calls
-   succeed. A control that opens another of the worker's pages
-   (`host.panels.open`, for example a Canvas link) is
-   checked there too: click it, confirm with `browser::sessions::list` that
-   a tab opened at `#/worker/<scope>/<page-id>?context=…`, then navigate to
-   that URL and see the target render the context. Only chat renderers,
-   session chips and palette rows need the full console,
+   `http://127.0.0.1:3111/<worker>`, renders and its calls succeed;
+   **Open outside console** on the ADE page opens it. A control that opens
+   another of the worker's pages (`host.panels.open`, for example a Canvas
+   link) is checked there too: click it, confirm with
+   `browser::sessions::list` that a tab opened at
+   `#/worker/<scope>/<page-id>?context=…`, then navigate to that URL and see
+   the target render the context. Only chat renderers, session chips and
+   palette rows need the full console,
    `console::workspace::open { "screen": "ext:<page-id>" }`: it is the
    workspace the operator is looking at, so close each screen you opened
    with `console::workspace::close` when its check ends. About 360 px, a

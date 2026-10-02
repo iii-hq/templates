@@ -16,21 +16,24 @@ Composition recipes for record-shaped UIs: `patterns`.
 > worker is one Node package outside the `iii-hq/workers` monorepo. Its
 > `package.json`, `ui/build.mjs`, `ui/tsconfig.json`, `scripts/dev.mjs` and
 > the Node asset delivery are the Backend Engineer's boilerplate from
-> `iii-node`; the Frontend Engineer edits `ui/App.tsx`, `ui/page.tsx`,
-> `ui/styles.css`, `ui/src/**` and `web/tokens.css`. `ui/App.tsx` is the
-> screen, shown in the console and standalone at
-> `http://127.0.0.1:3111/<worker>`: it reaches the backend through its
-> `client` prop and imports nothing from `@iii-dev/console-ui` at runtime, so
-> the shared components this document requires (§1's example, the Definition
-> of done) apply to `page.tsx` and the console-only surfaces it registers
-> (`iii-node` › Dual-mode screen). `@iii-dev/console-ui` is installed from npm
-> at **0.2.0 or later** — the release that ships the `/hooks` and `/format`
-> subpaths, `build-worker-ui` and `lint-worker-ui` — and its types are read
-> from `node_modules/@iii-dev/console-ui/` (`index.d.ts`, `hooks.d.mts`,
-> `format.d.mts`). Monorepo paths this document names (`packages/console-ui`,
-> `ade/web`, `state/`, `browser/`, `cron/`) are upstream examples, not files
-> of this project: consult one only for a specific unresolved convention and
-> never block on it.
+> `iii-node`; the Frontend Engineer edits `ui/WorkerPage.tsx`, `ui/App.tsx`,
+> `ui/page.tsx`, `ui/styles.css`, `ui/src/**` and `web/tokens.css`.
+> The shared components this document requires (§1's example, the Definition
+> of done) apply to `ui/WorkerPage.tsx`, `page.tsx` and the console-only
+> surfaces it registers. `ui/WorkerPage.tsx` is the ADE page: it has the iii
+> `Wordmark` as its header icon, calls the worker through `host.iii` and shows
+> **Open outside console** from `<worker>::info`'s `web_url`. `ui/App.tsx` is
+> the standalone page at `http://127.0.0.1:3111/<worker>`: it reaches the
+> backend through its `client` prop and imports nothing from
+> `@iii-dev/console-ui` at runtime, because those components exist only in the
+> ADE (`iii-node` › ADE page and standalone page). `@iii-dev/console-ui` is
+> installed from npm at **0.2.0 or later** — the release that ships the
+> `/hooks` and `/format` subpaths, `build-worker-ui` and `lint-worker-ui` —
+> and its types are read from `node_modules/@iii-dev/console-ui/`
+> (`index.d.ts`, `hooks.d.mts`, `format.d.mts`). Monorepo paths this document
+> names (`packages/console-ui`, `ade/web`, `state/`, `browser/`, `cron/`) are
+> upstream examples, not files of this project: consult one only for a
+> specific unresolved convention and never block on it.
 
 ## How it works
 
@@ -47,7 +50,8 @@ Registration is deployment; disconnect is teardown.
 <worker>/
   ui/
     page.tsx      # the script asset — default-exports setup(host)
-    App.tsx       # scaffold: the screen, also served standalone (web/)
+    WorkerPage.tsx # scaffold: the ADE page, built from console-ui components
+    App.tsx       # scaffold: the standalone page (web/), plain React
     styles.css    # the style asset — every rule scoped
     build.mjs     # buildWorkerUi({ scope, root: import.meta.dirname, outdir: '../dist/ui' })
     tsconfig.json

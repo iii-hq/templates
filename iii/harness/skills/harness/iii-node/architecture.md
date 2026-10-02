@@ -36,11 +36,14 @@ reference only to resolve a concrete question, not to prepare their work.
 
 One Node package owns backend and UI. Backend source is under `src/`, UI
 under `ui/`, the standalone entry under `web/`, generated outputs under
-`dist/`. The screen, `ui/App.tsx`, shows in the console and at
-`http://127.0.0.1:3111/<worker>`. It calls functions only through its
-`client` prop (`host.iii` in the console, the worker's allowlisted HTTP API
-standalone) and imports no backend module, backend file or runtime
-`@iii-dev/console-ui` export.
+`dist/`. The ADE page, `ui/WorkerPage.tsx`, is built from `@iii-dev/console-ui`
+components, shows the iii `Wordmark` in its header and an **Open outside
+console** link to the `web_url` of `<worker>::info`, and calls functions
+through `host.iii`. The standalone page, `ui/App.tsx`, is served at
+`http://127.0.0.1:3111/<worker>`: plain React, no runtime
+`@iii-dev/console-ui` export, calling functions only through its `client` prop
+(the worker's allowlisted HTTP API). Neither imports a backend module or
+backend file.
 
 The Backend Engineer owns package/dependency files, both TypeScript configs,
 `pnpm-workspace.yaml`, `scripts/dev.mjs`, `ui/build.mjs`, initial UI shell,
@@ -60,10 +63,11 @@ Installed public types are the authority for host methods and components;
 portable workers use the public npm package (`@iii-dev/console-ui@0.2.0` or
 later) rather than monorepo links.
 
-The Frontend Engineer owns `ui/App.tsx`, `ui/page.tsx`, `ui/styles.css`,
-`ui/src/**` and `web/tokens.css`: the screen, plus pages, renderers and
-configuration forms against registered contracts. `@iii-dev/console-ui`
-components belong only in the console-only surfaces `page.tsx` registers.
+The Frontend Engineer owns `ui/WorkerPage.tsx`, `ui/App.tsx`, `ui/page.tsx`,
+`ui/styles.css`, `ui/src/**` and `web/tokens.css`: the two pages, plus pages,
+renderers and configuration forms against registered contracts.
+`@iii-dev/console-ui` components belong only in the console-only surfaces
+`page.tsx` registers, the ADE page included.
 Package, build or API gaps go back to the Backend Engineer. Existing working
 scaffolding is reused; skeleton files are created only for a new package.
 

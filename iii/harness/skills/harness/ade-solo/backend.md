@@ -21,8 +21,8 @@ sections the work needs, each when you reach the step it shapes:
 
 | Work | Read |
 | --- | --- |
-| New worker | Choose project identifiers once; Scaffold a new worker; Project shape; Node SDK rules; Dual-mode screen; Declare the worker with `compose::add`; Validation checklist |
-| Workspace already ships the worker's package and compose entry | Node SDK rules (with Namespaces); Worker-side asset delivery; Dual-mode screen when it has `ui/App.tsx`; skip the Scaffold a new worker, Project shape and `compose::add` sections |
+| New worker | Choose project identifiers once; Scaffold a new worker; Project shape; Node SDK rules; ADE page and standalone page; Declare the worker with `compose::add`; Validation checklist |
+| Workspace already ships the worker's package and compose entry | Node SDK rules (with Namespaces); Worker-side asset delivery; ADE page and standalone page when it has `ui/App.tsx`; skip the Scaffold a new worker, Project shape and `compose::add` sections |
 | New or changed function | Node SDK rules (Namespaces when crossing one or when you start the worker yourself) |
 | Own trigger type, live updates | Live updates (own trigger type) |
 | Operator settings | Configuration, plus `harness/iii-node/configuration` whole (about 6 KB) |
@@ -56,10 +56,10 @@ call writes the whole package into `workers/<worker-name>`:
 `coder::scaffold-worker { "template": "worker-node-ade", "name": "<worker-name>" }`
 
 It holds the backend with configuration and its own trigger type, the asset
-content function and its two Message-path triggers, the dual-mode screen
-and its HTTP API, tests, `iii.worker.yaml` and the dev loop. Its
-`ui/App.tsx` is the shell that proves build and delivery; the real screen
-belongs to the Frontend phase.
+content function and its two Message-path triggers, the ADE page, the
+standalone page and its HTTP API, `<worker-name>::info`, tests, `iii.worker.yaml`
+and the dev loop. Its `ui/WorkerPage.tsx` and `ui/App.tsx` are the shells that
+prove build and delivery; the real pages belong to the Frontend phase.
 
 Declare the returned `compose` object through `compose::add`, with
 `start_after` the console container and every `requires` container that
