@@ -1,11 +1,11 @@
-// Two builds: the ADE page (ui/page.tsx → WorkerPage) and the standalone
-// page (web/main.tsx → App):
+// Two builds: the admin page in the ADE (ui/page.tsx → WorkerPage) and the
+// public page (web/main.tsx → App):
 //   1. ADE asset: page.tsx + styles.css → dist/ui. React and
 //      @iii-dev/console-ui stay external (the console's import map serves
 //      them); scope, token and strict design-lint checks run here.
-//   2. Standalone page: web/main.tsx with React bundled → dist/web/app.js,
-//      web/tokens.css + ui/styles.css → dist/web/styles.css, and a copy of
-//      web/index.html.
+//   2. Public page: web/main.tsx with React bundled → dist/web/app.js,
+//      web/app.css → dist/web/styles.css, and a copy of web/index.html. It is
+//      not injected into the console, so it keeps its own look.
 // `--watch` keeps both rebuilding; index.html is copied once per start.
 import { copyFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -32,11 +32,7 @@ const shared = {
 }
 for (const options of [
   { ...shared, entryPoints: [resolve(web, 'main.tsx')], outfile: resolve(outdir, 'app.js'), format: 'esm', jsx: 'automatic' },
-  {
-    ...shared,
-    stdin: { contents: '@import "./tokens.css";\n@import "../ui/styles.css";\n', resolveDir: web, loader: 'css' },
-    outfile: resolve(outdir, 'styles.css'),
-  },
+  { ...shared, entryPoints: [resolve(web, 'app.css')], outfile: resolve(outdir, 'styles.css') },
 ]) {
   if (watch) await (await esbuild.context(options)).watch()
   else await esbuild.build(options)

@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url'
 import { registerWorker, TriggerAction } from 'iii-sdk'
 import type { RegisterFunctionFormat } from 'iii-sdk/protocol'
 import type { TriggerConfig } from 'iii-sdk/trigger'
-import { greetee, hello, type HelloInput, type HelloOutput } from './hello.js'
+import { greetee, hello, normalizeGreeting, type HelloInput, type HelloOutput } from './hello.js'
 import { uiContent } from './ui-assets.js'
 import { WEB_PATH, webHandlers, webUrl } from './web.js'
 
@@ -105,12 +105,12 @@ iii.registerFunction(
   { description: 'Greet `name` (default World) with the configured greeting.', request_format: HELLO_REQUEST, response_format: HELLO_RESPONSE },
 )
 
-// --- What the ADE page shows: the standalone page URL and the live greeting ---
+// --- The admin page in the ADE: where the public page lives, and the greeting ---
 
 const WEB_URL = webUrl(process.env.III_HTTP_URL)
 
 iii.registerFunction('my-worker::info', async () => ({ web_url: WEB_URL, web_path: WEB_PATH, greeting }), {
-  description: 'Where the standalone page answers (web_url only when III_HTTP_URL is set), and the greeting.',
+  description: 'Where the public page answers (web_url only when III_HTTP_URL is set), and the greeting.',
   request_format: { type: 'object' },
   response_format: {
     type: 'object',
@@ -119,6 +119,32 @@ iii.registerFunction('my-worker::info', async () => ({ web_url: WEB_URL, web_pat
   },
   metadata: { internal: true },
 })
+
+iii.registerFunction(
+  'my-worker::set-greeting',
+  async ({ greeting: next }: { greeting?: string }) => {
+    const value = normalizeGreeting(next)
+    // configuration::* lives in the engine's `default` namespace; the
+    // configuration trigger above reloads `greeting` after the write too.
+    await iii.trigger({
+      function_id: 'configuration::set',
+      namespace: 'default',
+      payload: { id: 'my-worker', value: { greeting: value } },
+    })
+    greeting = value
+    return { greeting }
+  },
+  {
+    description: 'Save the greeting the public page uses (the ADE admin page calls this).',
+    request_format: {
+      type: 'object',
+      properties: { greeting: { type: 'string', minLength: 1, maxLength: 40 } },
+      required: ['greeting'],
+    },
+    response_format: { type: 'object', properties: { greeting: { type: 'string' } }, required: ['greeting'] },
+    metadata: { internal: true },
+  },
+)
 
 // --- ADE page: the console loads dist/ui through console:script/console:style ---
 

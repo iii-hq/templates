@@ -75,7 +75,7 @@ describe('web handlers', () => {
 
   it('answers 404 for a function outside the allowlist without calling it', async () => {
     called.length = 0
-    for (const fn of ['ui-content', 'constructor', '..']) {
+    for (const fn of ['ui-content', 'set-greeting', 'constructor', '..']) {
       const res = await web.api({ path_params: { fn }, body: {} })
       assert.equal(res.status_code, 404, fn)
     }
