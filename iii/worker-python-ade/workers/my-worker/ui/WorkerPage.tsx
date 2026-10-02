@@ -20,16 +20,21 @@ import {
 import { errorMessage } from '@iii-dev/console-ui/format'
 import { useContainerNarrow, useCopyFlash } from '@iii-dev/console-ui/hooks'
 import { Check, Copy, ExternalLink } from 'lucide-react'
-import { type FormEvent, useCallback, useEffect, useState } from 'react'
+import { type FormEvent, type MouseEvent, useCallback, useEffect, useState } from 'react'
 
 /** my-worker::info: where the public page lives and the live greeting.
     web_url is absolute only when the worker has III_HTTP_URL set. */
 type Info = { web_url: string | null; web_path: string; greeting: string }
 
 /** The http worker's default port. Without web_url the public page is opened
-    on this port of the host the console is browsed from; set III_HTTP_URL on
-    the worker for another port or host. */
+    on this port of the host the console is browsed from (a new tab) or of
+    127.0.0.1 (the browser worker, which runs beside the http worker); set
+    III_HTTP_URL on the worker for another port or host. */
 const HTTP_WORKER_PORT = 3111
+
+/** Opens a tab in the browser worker. When it is registered, "Open public
+    page" opens there, inside the console, instead of in a new browser tab. */
+const BROWSER_START = 'browser::sessions::start'
 
 type Outcome = { kind: 'ok'; headline: string; detail?: string } | { kind: 'error'; headline: string; detail: string }
 
@@ -65,11 +70,21 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
   const [name, setName] = useState('')
   const [calling, setCalling] = useState(false)
   const [tried, setTried] = useState<Outcome | null>(null)
+  const [browser, setBrowser] = useState(false)
 
   const loadInfo = useCallback(() => {
     host.iii.trigger<Info>('my-worker::info', {}).then(setInfo, () => setInfo(null))
   }, [host])
   useEffect(loadInfo, [loadInfo])
+
+  // engine::functions::info answers NOT_FOUND when no browser worker runs.
+  useEffect(() => {
+    if (!host.panels) return
+    host.iii.trigger('engine::functions::info', { function_id: BROWSER_START }).then(
+      () => setBrowser(true),
+      () => undefined,
+    )
+  }, [host])
 
   const greeting = draft ?? info?.greeting ?? ''
   const changed = info !== null && greeting.trim() !== '' && greeting.trim() !== info.greeting
@@ -106,16 +121,29 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
   const publicHref =
     info && (info.web_url ?? `http://${window.location.hostname}:${HTTP_WORKER_PORT}${info.web_path}`)
 
+  // Opens the public page in the browser worker's console page. Without a
+  // browser worker, on a modified click, or when no tab starts, the link opens
+  // a new browser tab as usual.
+  function openInBrowser(event: MouseEvent<HTMLAnchorElement>) {
+    if (!browser || !info || !publicHref || event.metaKey || event.ctrlKey || event.shiftKey) return
+    event.preventDefault()
+    const url = info.web_url ?? `http://127.0.0.1:${HTTP_WORKER_PORT}${info.web_path}`
+    host.iii.trigger<{ session_id: string }>(BROWSER_START, { url, preview: false }).then(
+      ({ session_id }) => host.panels?.open({ pageId: 'browser', context: { sessionId: session_id } }),
+      () => window.open(publicHref, '_blank', 'noreferrer'),
+    )
+  }
+
   const openPublic = publicHref ? (
     narrow ? (
       <IconButton label="Open public page" asChild>
-        <a href={publicHref} target="_blank" rel="noreferrer">
+        <a href={publicHref} target="_blank" rel="noreferrer" onClick={openInBrowser}>
           <ExternalLink aria-hidden />
         </a>
       </IconButton>
     ) : (
       <Button variant="ghost" size="sm" asChild>
-        <a href={publicHref} target="_blank" rel="noreferrer">
+        <a href={publicHref} target="_blank" rel="noreferrer" onClick={openInBrowser}>
           <ExternalLink aria-hidden />
           Open public page
         </a>
