@@ -1,5 +1,5 @@
-"""my-worker: my-worker::hello, its settings, its own trigger type, a console page
-in the ADE, and a plainer page at http://127.0.0.1:3111/my-worker through the http worker."""
+"""my-worker: my-worker::hello, its settings, its own trigger type, an admin page
+in the ADE, and the public page users open at http://127.0.0.1:3111/my-worker through the http worker."""
 
 from __future__ import annotations
 
@@ -15,10 +15,11 @@ from iii.triggers import TriggerConfig, TriggerHandler
 
 NAME = "my-worker"
 WEB_PATH = f"/{NAME}"
-# Written by `pnpm build` in ui/: dist/ui is the ADE page, dist/web the standalone one.
+# Written by `pnpm build` in ui/: dist/ui is the ADE page, dist/web the public one.
 DIST = Path(__file__).resolve().parent.parent / "dist"
 
 DEFAULT_SETTINGS = {"greeting": "Hello"}
+GREETING_MAX = 40
 SETTINGS_SCHEMA = {
     "type": "object",
     "properties": {"greeting": {"type": "string", "description": "Word said before the name"}},
@@ -42,6 +43,16 @@ INFO_RESPONSE = {
     },
     "required": ["web_path", "greeting"],
 }
+SET_GREETING_REQUEST = {
+    "type": "object",
+    "properties": {"greeting": {"type": "string", "minLength": 1, "maxLength": GREETING_MAX}},
+    "required": ["greeting"],
+}
+SET_GREETING_RESPONSE = {
+    "type": "object",
+    "properties": {"greeting": {"type": "string"}},
+    "required": ["greeting"],
+}
 ANY_OBJECT = {"type": "object"}
 
 # The HTTP routes take `:file` and `:fn` straight from the URL (`..` included),
@@ -57,8 +68,18 @@ def build_greeting(greeting: str, name: str) -> dict[str, str]:
     return {"message": f"{greeting}, {name}!"}
 
 
+def normalize_greeting(value: Any) -> str:
+    """A greeting the admin page may save: trimmed, non-empty, at most 40 characters."""
+    greeting = ("" if value is None else str(value)).strip()
+    if not greeting:
+        raise ValueError("greeting must not be empty")
+    if len(greeting) > GREETING_MAX:
+        raise ValueError(f"greeting must be at most {GREETING_MAX} characters")
+    return greeting
+
+
 def web_url(base: str | None = None) -> str | None:
-    """Where the standalone page answers: the http worker's base URL (III_HTTP_URL)
+    """Where the public page answers: the http worker's base URL (III_HTTP_URL)
     plus this worker's route; None when it is unset or empty, so the ADE page
     falls back to the host it is browsed from."""
     return f"{base.rstrip('/')}{WEB_PATH}" if base else None
@@ -136,6 +157,20 @@ def register(iii: Any, dist: Path = DIST) -> None:
             "greeting": settings["greeting"],
         }
 
+    async def set_greeting(payload: dict[str, Any]) -> dict[str, str]:
+        greeting = normalize_greeting(payload.get("greeting"))
+        # configuration::* runs in the engine's `default` namespace; the configuration trigger
+        # below reloads `settings` after the write too.
+        await iii.trigger_async(
+            {
+                "function_id": "configuration::set",
+                "namespace": "default",
+                "payload": {"id": NAME, "value": {"greeting": greeting}},
+            }
+        )
+        settings["greeting"] = greeting
+        return {"greeting": greeting}
+
     def config_changed(event: dict[str, Any]) -> dict[str, bool]:
         settings.update(event.get("new_value") or {})
         return {"ok": True}
@@ -206,10 +241,18 @@ def register(iii: Any, dist: Path = DIST) -> None:
     iii.register_function(
         f"{NAME}::info",
         info,
-        description="Where the standalone page answers (web_url only when III_HTTP_URL is set), and the greeting.",
+        description="Where the public page answers (web_url only when III_HTTP_URL is set), and the greeting.",
         metadata={"internal": True},
         request_format=ANY_OBJECT,
         response_format=INFO_RESPONSE,
+    )
+    iii.register_function(
+        f"{NAME}::set-greeting",
+        set_greeting,
+        description="Save the greeting the public page uses (the ADE admin page calls this).",
+        metadata={"internal": True},
+        request_format=SET_GREETING_REQUEST,
+        response_format=SET_GREETING_RESPONSE,
     )
     iii.register_function(
         f"{NAME}::config-changed",
@@ -260,7 +303,9 @@ def register(iii: Any, dist: Path = DIST) -> None:
 
 def main() -> None:
     iii = register_worker(
-        options=InitOptions(worker_name=NAME, worker_description=f"{NAME}: hello, settings and two pages.")
+        options=InitOptions(
+            worker_name=NAME, worker_description=f"{NAME}: hello, settings, a public page and an ADE admin page."
+        )
     )
     register(iii)
     print(f"{NAME} started: http://127.0.0.1:3111/{NAME}", flush=True)

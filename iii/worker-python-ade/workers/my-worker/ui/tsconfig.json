@@ -5,5 +5,5 @@
     // worker keeps them; a Node worker's root node_modules needs no mapping.
     "paths": { "*": ["./node_modules/@types/*", "./node_modules/*"] }
   },
-  "include": ["./**/*.ts", "./**/*.tsx", "../web/**/*.tsx"]
+  "include": ["./**/*.ts", "./**/*.tsx", "../web/**/*.ts", "../web/**/*.tsx"]
 }

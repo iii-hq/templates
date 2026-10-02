@@ -46,10 +46,8 @@ files:
   - workers/my-worker/tests/conftest.py
   - workers/my-worker/tests/test_main.py
   - workers/my-worker/tests/test_web.py
-  - workers/my-worker/ui/App.tsx
   - workers/my-worker/ui/WorkerPage.tsx
   - workers/my-worker/ui/build.mjs
-  - workers/my-worker/ui/client.ts
   - workers/my-worker/ui/package.json
   - workers/my-worker/ui/page.tsx
   - workers/my-worker/ui/pnpm-workspace.yaml
@@ -57,7 +55,9 @@ files:
   - workers/my-worker/ui/tsconfig.json
   - workers/my-worker/web/index.html
   - workers/my-worker/web/main.tsx
-  - workers/my-worker/web/tokens.css
+  - workers/my-worker/web/App.tsx
+  - workers/my-worker/web/app.css
+  - workers/my-worker/web/client.ts
 
 next_steps:
   - 'Needs Python 3.11+, Node 22+ and pnpm 10+ on PATH'

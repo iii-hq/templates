@@ -9,7 +9,7 @@ import pytest
 from iii.triggers import TriggerConfig
 
 import src.main
-from src.main import NAME, SETTINGS_SCHEMA, WEB_PATH, build_greeting, register, web_url
+from src.main import NAME, SETTINGS_SCHEMA, WEB_PATH, build_greeting, normalize_greeting, register, web_url
 
 
 def hello(bus, payload):
@@ -28,6 +28,18 @@ def fired(bus):
 
 def test_build_greeting():
     assert build_greeting("Hello", "World") == {"message": "Hello, World!"}
+
+
+def test_normalize_greeting_trims():
+    assert normalize_greeting("  Hi ") == "Hi"
+
+
+@pytest.mark.parametrize(
+    ("value", "message"), [("   ", "must not be empty"), (None, "must not be empty"), ("x" * 41, "at most 40")]
+)
+def test_normalize_greeting_refuses_an_empty_or_overlong_greeting(value, message):
+    with pytest.raises(ValueError, match=message):
+        normalize_greeting(value)
 
 
 def test_web_url():
@@ -69,6 +81,24 @@ def test_settings_update_changes_the_greeting(bus, dist):
     assert binding["config"] == {"configuration_id": NAME, "event_types": ["configuration:updated"]}
     bus.functions[binding["function_id"]]({"new_value": {"greeting": "Hey"}})
     assert hello(bus, {}) == {"message": "Hey, World!"}
+
+
+def test_set_greeting_saves_it_in_the_default_namespace_and_greets_with_it(bus, dist):
+    register(bus, dist)
+    result = asyncio.run(bus.functions[f"{NAME}::set-greeting"]({"greeting": "  Olá "}))
+    assert result == {"greeting": "Olá"}
+    (call,) = bus.called("configuration::set")
+    assert call["namespace"] == "default"
+    assert call["payload"] == {"id": NAME, "value": {"greeting": "Olá"}}
+    assert hello(bus, {"name": "Ada"}) == {"message": "Olá, Ada!"}
+
+
+def test_set_greeting_refuses_a_bad_greeting_without_saving_it(bus, dist):
+    register(bus, dist)
+    with pytest.raises(ValueError, match="must not be empty"):
+        asyncio.run(bus.functions[f"{NAME}::set-greeting"]({"greeting": " "}))
+    assert not bus.called("configuration::set")
+    assert hello(bus, {}) == {"message": "Hello, World!"}
 
 
 def test_hello_fires_the_trigger_type_with_the_subscriber_metadata(bus, dist):

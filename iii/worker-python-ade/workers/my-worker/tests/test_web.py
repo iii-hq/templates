@@ -74,7 +74,7 @@ def test_api_turns_a_failed_call_into_a_500(routes, bus):
     assert response == {"status_code": 500, "headers": {"content-type": "application/json"}, "body": {"error": "boom"}}
 
 
-@pytest.mark.parametrize("fn", ["ui-content", "config-changed", "../hello", ""])
+@pytest.mark.parametrize("fn", ["ui-content", "config-changed", "set-greeting", "../hello", ""])
 def test_api_rejects_functions_outside_the_allowlist(routes, bus, fn):
     response = asyncio.run(routes[API]({"path_params": {"fn": fn}, "body": {}}))
     assert response["status_code"] == 404

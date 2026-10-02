@@ -1,7 +1,7 @@
-// The ADE page, built from the console's own components: @iii-dev/console-ui
-// is supplied by the console at runtime, so these exist only inside the ADE.
-// The standalone page served over HTTP (web/main.tsx) renders the plainer
-// App instead.
+// The worker's admin page in the ADE, built from the console's own
+// components (@iii-dev/console-ui is supplied by the console at runtime, so
+// they exist only inside the ADE). People who use the worker get the public
+// page instead: web/App.tsx, served over HTTP by the http worker.
 import type { Host } from '@iii-dev/console-ui'
 import {
   Button,
@@ -22,22 +22,22 @@ import { useContainerNarrow, useCopyFlash } from '@iii-dev/console-ui/hooks'
 import { Check, Copy, ExternalLink } from 'lucide-react'
 import { type FormEvent, useCallback, useEffect, useState } from 'react'
 
-/** my-worker::info: where the standalone page lives and the live greeting.
+/** my-worker::info: where the public page lives and the live greeting.
     web_url is absolute only when the worker has III_HTTP_URL set. */
 type Info = { web_url: string | null; web_path: string; greeting: string }
 
-/** The http worker's default port. Without web_url the page is opened on this port
-    of the host the console is browsed from; set III_HTTP_URL on the worker for
-    another port or host. */
+/** The http worker's default port. Without web_url the public page is opened
+    on this port of the host the console is browsed from; set III_HTTP_URL on
+    the worker for another port or host. */
 const HTTP_WORKER_PORT = 3111
 
-type Result = { kind: 'ok'; message: string; ms: number } | { kind: 'error'; message: string }
+type Outcome = { kind: 'ok'; headline: string; detail?: string } | { kind: 'error'; headline: string; detail: string }
 
-const EXPOSED = [
+const ENDPOINTS = [
   {
     label: 'Function',
     value: 'my-worker::hello',
-    description: 'Greets a name with the configured greeting.',
+    description: 'Greets a name with the saved greeting.',
   },
   {
     label: 'Trigger type',
@@ -45,59 +45,79 @@ const EXPOSED = [
     description: 'Fires after every greeting with { name, message }.',
   },
   {
-    label: 'Web page',
+    label: 'Public page',
     value: 'GET /my-worker',
-    description: 'This page outside the console, served by the http worker.',
+    description: 'What people who use this worker open, served by the http worker.',
   },
   {
-    label: 'Web API',
+    label: 'Public API',
     value: 'POST /my-worker/api/hello',
-    description: 'The same call over HTTP; only hello is allowlisted.',
+    description: 'The call the public page makes; only hello is allowlisted.',
   },
 ] as const
 
 export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void }) {
   const { ref, narrow } = useContainerNarrow()
   const [info, setInfo] = useState<Info | null>(null)
+  const [draft, setDraft] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState<Outcome | null>(null)
   const [name, setName] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [result, setResult] = useState<Result | null>(null)
+  const [calling, setCalling] = useState(false)
+  const [tried, setTried] = useState<Outcome | null>(null)
 
   const loadInfo = useCallback(() => {
     host.iii.trigger<Info>('my-worker::info', {}).then(setInfo, () => setInfo(null))
   }, [host])
   useEffect(loadInfo, [loadInfo])
 
-  async function submit(event: FormEvent) {
+  const greeting = draft ?? info?.greeting ?? ''
+  const changed = info !== null && greeting.trim() !== '' && greeting.trim() !== info.greeting
+
+  async function save(event: FormEvent) {
     event.preventDefault()
-    setBusy(true)
-    const started = performance.now()
+    setSaving(true)
     try {
-      const { message } = await host.iii.trigger<{ message: string }>('my-worker::hello', { name })
-      setResult({ kind: 'ok', message, ms: Math.round(performance.now() - started) })
-      loadInfo()
+      const next = await host.iii.trigger<{ greeting: string }>('my-worker::set-greeting', { greeting })
+      setInfo((current) => (current ? { ...current, greeting: next.greeting } : current))
+      setDraft(null)
+      setSaved({ kind: 'ok', headline: 'Greeting saved', detail: `The public page now says “${next.greeting}, …!”` })
     } catch (error) {
-      setResult({ kind: 'error', message: errorMessage(error) })
+      setSaved({ kind: 'error', headline: 'The greeting was not saved', detail: errorMessage(error) })
     } finally {
-      setBusy(false)
+      setSaving(false)
     }
   }
 
-  const webHref =
+  async function tryHello(event: FormEvent) {
+    event.preventDefault()
+    setCalling(true)
+    const started = performance.now()
+    try {
+      const { message } = await host.iii.trigger<{ message: string }>('my-worker::hello', { name })
+      setTried({ kind: 'ok', headline: message, detail: `my-worker::hello answered in ${Math.round(performance.now() - started)} ms` })
+    } catch (error) {
+      setTried({ kind: 'error', headline: 'my-worker::hello failed', detail: errorMessage(error) })
+    } finally {
+      setCalling(false)
+    }
+  }
+
+  const publicHref =
     info && (info.web_url ?? `http://${window.location.hostname}:${HTTP_WORKER_PORT}${info.web_path}`)
 
-  const openOutside = webHref ? (
+  const openPublic = publicHref ? (
     narrow ? (
-      <IconButton label="Open outside console" asChild>
-        <a href={webHref} target="_blank" rel="noreferrer">
+      <IconButton label="Open public page" asChild>
+        <a href={publicHref} target="_blank" rel="noreferrer">
           <ExternalLink aria-hidden />
         </a>
       </IconButton>
     ) : (
       <Button variant="ghost" size="sm" asChild>
-        <a href={webHref} target="_blank" rel="noreferrer">
+        <a href={publicHref} target="_blank" rel="noreferrer">
           <ExternalLink aria-hidden />
-          Open outside console
+          Open public page
         </a>
       </Button>
     )
@@ -108,16 +128,44 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
       <PageHeader
         icon={<Wordmark className="my-worker-mark" />}
         title="my-worker"
-        description="Hello-world starter"
-        actions={openOutside}
+        description="Admin"
+        actions={openPublic}
         onClose={onClose}
       />
       <PageMain>
         <div className="my-worker-scroll">
           <div className="my-worker-column">
-            <SettingsSection title="Say hello" description="Calls my-worker::hello through the iii engine.">
-              <div className="my-worker-try">
-                <form onSubmit={submit}>
+            <SettingsSection title="Settings" description="What people see on the public page.">
+              <div className="my-worker-stack">
+                <form onSubmit={save}>
+                  <SettingsList>
+                    <SettingsField
+                      label="Greeting"
+                      description="Comes before the name: “Hello, Ada!”."
+                      renderControl={(props) => (
+                        <Input
+                          {...props}
+                          value={greeting}
+                          onChange={setDraft}
+                          placeholder={info ? 'Hello' : 'Loading…'}
+                          disabled={info === null}
+                          autoComplete="off"
+                        />
+                      )}
+                      action={
+                        <Button type="submit" variant="primary" size="sm" disabled={!changed || saving}>
+                          {saving ? 'Saving…' : 'Save'}
+                        </Button>
+                      }
+                    />
+                  </SettingsList>
+                </form>
+                <Outcome outcome={saved} />
+              </div>
+            </SettingsSection>
+            <SettingsSection title="Test" description="Calls my-worker::hello the way the public page does.">
+              <div className="my-worker-stack">
+                <form onSubmit={tryHello}>
                   <SettingsList>
                     <SettingsField
                       label="Name"
@@ -126,39 +174,24 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
                         <Input {...props} value={name} onChange={setName} placeholder="World" autoComplete="off" />
                       )}
                       action={
-                        <Button type="submit" variant="primary" size="sm" disabled={busy}>
-                          {busy ? 'Calling…' : 'Say hello'}
+                        <Button type="submit" variant="ghost" size="sm" disabled={calling}>
+                          {calling ? 'Calling…' : 'Say hello'}
                         </Button>
                       }
                     />
                   </SettingsList>
                 </form>
-                {result?.kind === 'ok' ? (
-                  <StatusPanel
-                    role="status"
-                    variant="success"
-                    headline={result.message}
-                    detail={`my-worker::hello answered in ${result.ms} ms`}
-                  />
-                ) : null}
-                {result?.kind === 'error' ? (
-                  <StatusPanel role="alert" variant="alert" headline="my-worker::hello failed" detail={result.message} />
-                ) : null}
+                <Outcome outcome={tried} />
               </div>
             </SettingsSection>
             <SettingsSection
-              title="What this worker exposes"
+              title="Endpoints"
               description="Each one is registered in this worker’s entry file; change them there."
             >
               <SettingsList>
-                {EXPOSED.map((item) => (
-                  <ExposedRow key={item.label} {...item} />
+                {ENDPOINTS.map((item) => (
+                  <EndpointRow key={item.label} {...item} />
                 ))}
-                <SettingsRow
-                  label="Configuration"
-                  description="Change the greeting with configuration::set on my-worker."
-                  control={<code className="my-worker-value">greeting: {info ? JSON.stringify(info.greeting) : '…'}</code>}
-                />
               </SettingsList>
             </SettingsSection>
           </div>
@@ -168,7 +201,16 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
   )
 }
 
-function ExposedRow({ label, value, description }: { label: string; value: string; description: string }) {
+function Outcome({ outcome }: { outcome: Outcome | null }) {
+  if (!outcome) return null
+  return outcome.kind === 'ok' ? (
+    <StatusPanel role="status" variant="success" headline={outcome.headline} detail={outcome.detail} />
+  ) : (
+    <StatusPanel role="alert" variant="alert" headline={outcome.headline} detail={outcome.detail} />
+  )
+}
+
+function EndpointRow({ label, value, description }: { label: string; value: string; description: string }) {
   const { state, copy } = useCopyFlash(value)
   return (
     <SettingsRow
