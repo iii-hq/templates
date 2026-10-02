@@ -1,7 +1,7 @@
 name: Worker (Node)
 description: A minimal Node/TypeScript worker project — host development with local dependencies, plus an optional VM check before publishing.
-version: "0.23.0"
-min_iii_version: "0.23.0"
+version: "0.24.4"
+min_iii_version: "0.24.4"
 
 treat_required_as_included: true
 requires:
