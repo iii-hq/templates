@@ -1,7 +1,7 @@
 name: Linkly
 description: Scaffold for the Linkly tutorial - a link shortener built one worker at a time
-version: "0.23.0"
-min_iii_version: "0.23.0"
+version: "0.24.3"
+min_iii_version: "0.24.3"
 
 treat_required_as_included: true
 requires:
