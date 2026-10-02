@@ -4,7 +4,7 @@ import { registerWorker, TriggerAction } from 'iii-sdk'
 import type { RegisterFunctionFormat } from 'iii-sdk/protocol'
 import type { TriggerConfig } from 'iii-sdk/trigger'
 import { greetee, hello, type HelloInput, type HelloOutput } from './hello.js'
-import { webHandlers } from './web.js'
+import { webHandlers, webUrl } from './web.js'
 
 const root = new URL('../', import.meta.url)
 
@@ -104,6 +104,21 @@ iii.registerFunction(
   },
   { description: 'Greet `name` (default World) with the configured greeting.', request_format: HELLO_REQUEST, response_format: HELLO_RESPONSE },
 )
+
+// --- What the ADE page shows: the standalone page URL and the live greeting ---
+
+const WEB_URL = webUrl(process.env.III_HTTP_URL)
+
+iii.registerFunction('my-worker::info', async () => ({ web_url: WEB_URL, greeting }), {
+  description: 'Where the standalone page answers, and the configured greeting.',
+  request_format: { type: 'object' },
+  response_format: {
+    type: 'object',
+    properties: { web_url: { type: 'string' }, greeting: { type: 'string' } },
+    required: ['web_url', 'greeting'],
+  },
+  metadata: { internal: true },
+})
 
 // --- ADE page: the console loads dist/ui through console:script/console:style ---
 

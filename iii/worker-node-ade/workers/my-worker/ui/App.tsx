@@ -1,7 +1,7 @@
-// THE screen. The ADE (ui/page.tsx) and the standalone page (web/main.tsx)
-// both render it; only the client differs. Plain React, lucide-react icons and
-// the scoped classes in ui/styles.css — no @iii-dev/console-ui components,
-// which exist only inside the ADE.
+// The standalone page (web/main.tsx), served over HTTP outside the console.
+// Plain React, lucide-react icons and the scoped classes in ui/styles.css — no
+// @iii-dev/console-ui components, which exist only inside the ADE. The ADE
+// page is ui/WorkerPage.tsx.
 import { Hand } from 'lucide-react'
 import { type FormEvent, useId, useState } from 'react'
 import type { Client } from './client'

@@ -43,6 +43,7 @@ files:
   - workers/my-worker/test/hello.test.ts
   - workers/my-worker/test/web.test.ts
   - workers/my-worker/ui/App.tsx
+  - workers/my-worker/ui/WorkerPage.tsx
   - workers/my-worker/ui/build.mjs
   - workers/my-worker/ui/client.ts
   - workers/my-worker/ui/page.tsx

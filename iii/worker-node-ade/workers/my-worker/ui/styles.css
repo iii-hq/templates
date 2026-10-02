@@ -1,6 +1,43 @@
 /* Every rule is scoped to [data-iii-ui="my-worker"] and uses only console
    tokens: the ADE supplies them, web/tokens.css stands in for the browser. */
 
+/* ADE page (WorkerPage.tsx): the console components bring their own look;
+   these rules only lay them out. */
+
+[data-iii-ui="my-worker"] .my-worker-mark {
+  width: auto;
+  height: 16px;
+  margin: 0;
+}
+
+[data-iii-ui="my-worker"] .my-worker-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+[data-iii-ui="my-worker"] .my-worker-column {
+  display: grid;
+  gap: 32px;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+[data-iii-ui="my-worker"] .my-worker-try {
+  display: grid;
+  gap: 12px;
+}
+
+[data-iii-ui="my-worker"] .my-worker-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+/* Standalone page (App.tsx) */
+
 [data-iii-ui="my-worker"] .my-worker-app {
   display: grid;
   gap: 16px;

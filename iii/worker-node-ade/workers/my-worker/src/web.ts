@@ -17,6 +17,12 @@ const ASSETS = new Map([
 /** Functions the page may call over HTTP, by short name (`my-worker::<name>`). */
 export const API_FUNCTIONS = new Set(['hello'])
 
+/** Where the standalone page answers: the http worker's base URL (III_HTTP_URL,
+    default http://127.0.0.1:3111) plus this worker's route. */
+export function webUrl(base = 'http://127.0.0.1:3111'): string {
+  return `${base.replace(/\/+$/, '')}/my-worker`
+}
+
 const json = (status_code: number, body: unknown): HttpResponse => ({
   status_code,
   headers: { 'content-type': 'application/json' },

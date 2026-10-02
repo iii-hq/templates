@@ -4,7 +4,19 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { after, before, describe, it } from 'node:test'
 import { hello } from '../src/hello.js'
-import { webHandlers } from '../src/web.js'
+import { webHandlers, webUrl } from '../src/web.js'
+
+describe('webUrl', () => {
+  it('defaults to the local http worker', () => {
+    assert.equal(webUrl(), 'http://127.0.0.1:3111/my-worker')
+    assert.equal(webUrl(undefined), 'http://127.0.0.1:3111/my-worker')
+  })
+
+  it('takes III_HTTP_URL with or without a trailing slash', () => {
+    assert.equal(webUrl('https://iii.example.com/'), 'https://iii.example.com/my-worker')
+    assert.equal(webUrl('http://10.0.0.5:3111'), 'http://10.0.0.5:3111/my-worker')
+  })
+})
 
 describe('web handlers', () => {
   let dir = ''
