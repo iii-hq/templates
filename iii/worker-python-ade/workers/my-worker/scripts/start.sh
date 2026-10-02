@@ -3,13 +3,13 @@
 # Compose's pre_run calls it with --prepare, `run` and the manifest's scripts.start
 # call it bare, so every way of adding this folder ends up with a running worker.
 set -e
-cd "$(dirname "$0")/.."
+CDPATH= cd -- "$(dirname -- "$0")/.."
 
-# Python: the private .venv; else the system python3 when it already has the
-# dependencies (a VM image after `install`); else create the .venv.
+# Python: the private .venv; else the system python3 when it has this worker
+# installed (a VM image after `install`); else create the .venv.
 if [ -x .venv/bin/python ]; then
   PY=.venv/bin/python
-elif python3 -c 'import iii, watchfiles' 2>/dev/null; then
+elif python3 -c "import importlib.metadata as m; m.distribution('my-worker')" 2>/dev/null; then
   PY=python3
 else
   python3 -m venv .venv
@@ -23,11 +23,15 @@ if [ "$PY" = .venv/bin/python ] && ! [ .venv/.installed -nt pyproject.toml ]; th
 fi
 
 # Build the page (dist/ui for the ADE, dist/web for HTTP) when it is missing.
+# --prepare fails when the build does; a bare run warns and starts without pages.
 if [ ! -f dist/ui/page.js ]; then
-  if command -v pnpm >/dev/null 2>&1; then
-    (cd ui && pnpm install && pnpm build)
-  else
+  if ! command -v pnpm >/dev/null 2>&1; then
     echo "pnpm not found: the ADE and HTTP pages stay unavailable until ui/ is built" >&2
+  elif ! (cd ui && pnpm install && pnpm build); then
+    if [ "${1:-}" = --prepare ]; then
+      exit 1
+    fi
+    echo "pnpm install or build failed: the ADE and HTTP pages stay unavailable until ui/ is built" >&2
   fi
 fi
 

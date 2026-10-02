@@ -15,7 +15,7 @@ A Python worker with one page: built from the console's components in the ADE, a
 
 ## Prerequisites
 
-Python 3.11 or newer, Node 22 or newer and pnpm 10 or newer. `scripts/start.sh` creates `.venv`, installs the worker, builds the page when `dist/ui/page.js` is missing and starts the worker under `watchfiles`. Compose's `scripts.pre_run` runs it with `--prepare` before the start; a bare `compose::add worker=<dir>` has no `pre_run`, so the worker bootstraps itself on its first start, only slower. Without pnpm the worker still starts, and the pages stay unavailable until `ui/` is built.
+Python 3.11 or newer, Node 22 or newer and pnpm 10 or newer. `scripts/start.sh` creates `.venv`, installs the worker, builds the page when `dist/ui/page.js` is missing and starts the worker under `watchfiles`. Compose's `scripts.pre_run` runs it with `--prepare` before the start; a bare `compose::add worker=<dir>` has no `pre_run`, so the worker bootstraps itself on its first start, only slower, and that bootstrap counts against Compose's `startup_timeout` (60s by default; this template's `worker-compose.yaml` sets 360s). Without pnpm the worker still starts, and the pages stay unavailable until `ui/` is built.
 
 ## How the page works
 

@@ -8,8 +8,9 @@ requires:
   - python
 optional: []
 
-# The page is built with Node (ui/package.json), so these files are copied
-# whatever languages are selected; the root language_files would drop them.
+# The page is built with Node (ui/package.json) and the worker starts from
+# scripts/start.sh, so these files are copied whatever languages are selected;
+# the root language_files would drop them.
 language_files:
   common:
     - '*.ts'
@@ -17,6 +18,7 @@ language_files:
     - '*.mjs'
     - '*.css'
     - '*.html'
+    - '*.sh'
     - 'package.json'
     - 'tsconfig.json'
     - 'pnpm-workspace.yaml'

@@ -15,6 +15,9 @@ block, this asserts:
   * worker.name appears in worker.dir;
   * every `files:` entry is relative without `..` and exists, and at least
     one sits under worker.dir;
+  * every `files:` entry is copied by `iii project init`: its file name matches
+    a root or template `language_files` pattern, for the languages the template
+    `requires:` (a file no pattern matches, such as a `*.sh`, is silently dropped);
   * worker.compose is a key under `containers:` in worker-compose.yaml.
 
 Stdlib only, because CI runs the runner's system python3: the reader below
@@ -63,6 +66,41 @@ def block_map(lines: list[str]) -> dict[str, str]:
     return pairs
 
 
+LANGUAGES = ("common", "python", "typescript", "javascript", "node", "rust")  # the copier's lookup order
+
+
+def language_patterns(text: str) -> dict[str, list[str]]:
+    """The `language_files:` pattern lists, by language."""
+    patterns: dict[str, list[str]] = {}
+    language = ""
+    for line in top_level_block(text, "language_files"):
+        if line.strip().startswith("- "):
+            patterns.setdefault(language, []).extend(block_list([line]))
+        else:
+            language = line.strip().rstrip(":")
+    return patterns
+
+
+def matches(name: str, pattern: str) -> bool:
+    """The copier's match on a file name: `*suffix`, `prefix*`, else exact."""
+    if pattern.startswith("*"):
+        return name.endswith(pattern[1:])
+    if pattern.endswith("*"):
+        return name.startswith(pattern[:-1])
+    return name == pattern
+
+
+def copied(entry: str, patterns: dict[str, list[str]], selected: set[str]) -> bool:
+    """Whether `iii project init` copies `entry` when `selected` languages are chosen."""
+    name = entry.rsplit("/", 1)[-1]
+    for language in LANGUAGES:  # the first list with a match decides, as in the copier
+        if any(matches(name, pattern) for pattern in patterns.get(language, [])):
+            if language == "node":
+                return bool(selected & {"typescript", "javascript"})
+            return language == "common" or language in selected
+    return False
+
+
 def unsafe(path: str) -> bool:
     return path.startswith("/") or ".." in path.split("/")
 
@@ -71,7 +109,9 @@ def check(root: Path) -> tuple[list[str], list[str]]:
     """Return (ids of templates with a worker: block, errors) under `root`."""
     checked: list[str] = []
     errors: list[str] = []
-    for tid in block_list(top_level_block((root / "template.yaml").read_text(), "templates")):
+    root_text = (root / "template.yaml").read_text()
+    root_patterns = language_patterns(root_text)
+    for tid in block_list(top_level_block(root_text, "templates")):
         manifest = root / tid / "template.yaml"
         if not manifest.is_file():
             continue  # listed without a directory (worker-bare): nothing to scaffold
@@ -91,11 +131,19 @@ def check(root: Path) -> tuple[list[str], list[str]]:
         if name not in wdir:
             errors.append(f"{where}: worker.name {name} must appear in worker.dir {wdir}")
         files = block_list(top_level_block(text, "files"))
+        own_patterns = language_patterns(text)
+        patterns = {lang: root_patterns.get(lang, []) + own_patterns.get(lang, []) for lang in LANGUAGES}
+        selected = set(block_list(top_level_block(text, "requires")))
         for entry in files:
             if unsafe(entry):
                 errors.append(f"{where}: files entry {entry} must be relative, without '..'")
             elif not (root / tid / entry).is_file():
                 errors.append(f"{where}: files entry {entry} does not exist")
+            elif not copied(entry, patterns, selected):
+                errors.append(
+                    f"{where}: files entry {entry} matches no language_files pattern for the required "
+                    "languages, so iii project init would not copy it"
+                )
         if not any(entry.startswith(wdir + "/") for entry in files):
             errors.append(f"{where}: no files: entry under worker.dir {wdir}")
         compose_file = root / tid / "worker-compose.yaml"

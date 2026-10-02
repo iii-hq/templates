@@ -29,6 +29,15 @@ templates:
 shared_files:
   - source: default-gitignore
     dest: .gitignore
+
+language_files:
+  common:
+    - 'README*'
+    - 'worker-compose.yaml'
+  node:
+    - 'package.json'
+  typescript:
+    - '*.ts'
 """
 
 MANIFEST = """\
@@ -121,6 +130,24 @@ class CheckWorkerTemplatesTest(unittest.TestCase):
             "",
         )
         self.assert_error("no files: entry under worker.dir workers/hello-node")
+
+    def add_start_script(self) -> None:
+        write(self.template / "workers/hello-node/scripts/start.sh")
+        self.edit("  - README.md\n", "  - README.md\n  - workers/hello-node/scripts/start.sh\n")
+
+    def test_file_no_language_pattern_matches(self) -> None:
+        self.add_start_script()
+        self.assert_error("files entry workers/hello-node/scripts/start.sh matches no language_files pattern")
+
+    def test_template_language_files_extend_the_root_ones(self) -> None:
+        self.add_start_script()
+        self.edit("worker:\n", "language_files:\n  common:\n    - '*.sh'\n\nworker:\n")
+        self.assertEqual(check(self.root), (["worker-node"], []))
+
+    def test_language_not_required(self) -> None:
+        self.edit("  - typescript\n", "  - python\n")
+        self.assert_error("files entry workers/hello-node/src/index.ts matches no language_files pattern")
+        self.assert_error("files entry workers/hello-node/package.json matches no language_files pattern")
 
     def test_compose_key_missing(self) -> None:
         self.edit("  compose: hello-node", "  compose: hello-nod")

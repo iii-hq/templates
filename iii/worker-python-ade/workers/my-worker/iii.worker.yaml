@@ -7,9 +7,10 @@ license: Apache-2.0
 tags: [example, python, console-ui]
 description: Example Python worker — my-worker::hello, settings, a trigger type, a console page in the ADE and a plainer page over HTTP.
 
-# Host development is the default. For a VM run, build the page on the host
-# first (cd ui && pnpm install && pnpm build; the VM image has no Node), then
-# uncomment this block and remove the host scripts block from worker-compose.yaml.
+# Host development is the default. A VM run starts without the pages unless pnpm
+# is available in the guest (the VM copy excludes dist/, and the image has no
+# Node). To run in a VM, uncomment this block and remove the host scripts block
+# from worker-compose.yaml.
 # runtime:
 #   base_image: docker.io/iiidev/python:latest
 
