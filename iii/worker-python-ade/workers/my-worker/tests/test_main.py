@@ -100,6 +100,14 @@ def test_ui_content_serves_both_assets_and_rejects_others(bus, dist):
     assert assets == {("console:script", f"{NAME}/page.js"), ("console:style", f"{NAME}/styles.css")}
 
 
+def test_ui_content_names_the_fix_when_the_build_is_missing(bus, dist):
+    register(bus, dist / "nope")
+    with pytest.raises(
+        FileNotFoundError, match=r"dist/ui/page\.js is missing: run pnpm build in ui/, then restart the worker"
+    ):
+        bus.functions[f"{NAME}::ui-content"]({"path": f"{NAME}/page.js"})
+
+
 def test_every_function_but_hello_is_internal(bus, dist):
     register(bus, dist)
     public = [fid for fid, options in bus.options.items() if not (options.get("metadata") or {}).get("internal")]

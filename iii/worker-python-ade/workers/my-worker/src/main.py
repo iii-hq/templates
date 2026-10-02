@@ -140,7 +140,12 @@ def register(iii: Any, dist: Path = DIST) -> None:
         asset = ui_assets.get(payload.get("path"))
         if asset is None:
             raise ValueError(f"Unknown UI asset: {payload.get('path')}")
-        return {"content": (dist / "ui" / asset[0]).read_text(), "content_type": asset[1]}
+        try:
+            return {"content": (dist / "ui" / asset[0]).read_text(), "content_type": asset[1]}
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"dist/ui/{asset[0]} is missing: run pnpm build in ui/, then restart the worker"
+            ) from None
 
     def text(path: Path, content_type: str) -> dict[str, Any]:
         return {"status_code": 200, "headers": {"content-type": content_type}, "body": path.read_text()}

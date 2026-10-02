@@ -16,13 +16,15 @@ In terminal 1, from the project root:
 iii compose --up
 ```
 
-Before starting `my-worker`, Compose runs its `scripts.pre_run` from `workers/my-worker`:
+Before starting `my-worker`, Compose runs its `scripts.pre_run` from `workers/my-worker`: `sh scripts/start.sh --prepare`.
 
-1. it creates the private `.venv` when it is missing;
-2. it installs the worker into it with `pip install -e .`;
-3. it runs `pnpm install && pnpm build` in `ui/`, which writes `dist/ui` (the ADE page) and `dist/web` (the page served over HTTP).
+1. It creates the private `.venv` when it is missing;
+2. it installs the worker into it with `pip install -e .` when `pyproject.toml` changed since the last install;
+3. when `dist/ui/page.js` is missing, it runs `pnpm install && pnpm build` in `ui/`, which writes `dist/ui` (the ADE page) and `dist/web` (the page served over HTTP). Without pnpm it warns and goes on; the pages stay unavailable until `ui/` is built.
 
 If the hook fails, the worker does not start; read the hook error before retrying. Compose also starts the `http` worker, which serves the page.
+
+`run` is `sh scripts/start.sh` too: it repeats these steps (a no-op once done), then starts the worker under `watchfiles`. A compose entry without `pre_run`, such as a bare `compose::add worker=<dir>`, therefore starts as well: the worker bootstraps itself on its first start, only slower.
 
 ## Call the worker
 

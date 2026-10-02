@@ -38,6 +38,7 @@ files:
   - workers/my-worker/README.md
   - workers/my-worker/iii.worker.yaml
   - workers/my-worker/pyproject.toml
+  - workers/my-worker/scripts/start.sh
   - workers/my-worker/src/__init__.py
   - workers/my-worker/src/main.py
   - workers/my-worker/tests/conftest.py
@@ -59,7 +60,7 @@ files:
 next_steps:
   - 'Needs Python 3.11+, Node 22+ and pnpm 10+ on PATH'
   - 'In terminal 1 from the project root, start Compose: iii compose --up'
-  - 'Compose pre_run creates a private venv, installs the worker and builds its page'
+  - 'Compose pre_run runs scripts/start.sh, which creates a private venv, installs the worker and builds its page'
   - 'In terminal 2 from the project root, call: iii trigger my-worker::hello name=World'
   - 'Open http://127.0.0.1:3111/my-worker, or the my-worker page in the ADE'
   - 'Edits to workers/my-worker/src/ reload on save; after editing ui/ or web/, run pnpm build in workers/my-worker/ui'

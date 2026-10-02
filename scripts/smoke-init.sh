@@ -164,7 +164,11 @@ static_python_ade_checks() {
   assert_contains "$ade/workers/my-worker/iii.worker.yaml" "#   base_image: docker.io/iiidev/python:latest"
   assert_contains "$ade/workers/my-worker/pyproject.toml" '"iii-sdk=='
   assert_contains "$ade/workers/my-worker/ui/package.json" '"@iii-dev/console-ui": "0.2.0"'
-  assert_contains "$ade/worker-compose.yaml" '        (cd ui && pnpm install && pnpm build)'
+  assert_file "$ade/workers/my-worker/scripts/start.sh"
+  sh -n "$ade/workers/my-worker/scripts/start.sh"
+  assert_contains "$ade/workers/my-worker/scripts/start.sh" '(cd ui && pnpm install && pnpm build)'
+  assert_contains "$ade/worker-compose.yaml" '      pre_run: "sh scripts/start.sh --prepare"'
+  assert_contains "$ade/worker-compose.yaml" '      run: "sh scripts/start.sh"'
   assert_contains "$ade/template.yaml" "  requires: [http]"
   if ! diff -rq --exclude=package.json --exclude=pnpm-workspace.yaml --exclude=node_modules --exclude=dist \
     "$node_ade/workers/my-worker/ui" "$ade/workers/my-worker/ui" ||

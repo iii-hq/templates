@@ -14,6 +14,7 @@ description: Example Python worker — my-worker::hello, settings, a trigger typ
 #   base_image: docker.io/iiidev/python:latest
 
 scripts:
-  # Compose skips this in host mode. It is the portable VM/bundle install recipe.
+  # Compose skips install in host mode. It is the portable VM/bundle install recipe.
+  # Host mode runs start when the compose entry has no run of its own.
   install: "python -m pip install -e ."
-  start: "watchfiles 'python src/main.py'"
+  start: "sh scripts/start.sh"
