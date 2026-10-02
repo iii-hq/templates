@@ -1,4 +1,4 @@
-// HTTP handlers for the standalone page, served by the `http` worker on
+// HTTP handlers for the public page, served by the `http` worker on
 // 127.0.0.1:3111. That port has no auth, so every route answers from an
 // allowlist: `:file` and `:fn` come straight from the URL (`..` included).
 import { readFile } from 'node:fs/promises'
@@ -17,10 +17,10 @@ const ASSETS = new Map([
 /** Functions the page may call over HTTP, by short name (`my-worker::<name>`). */
 export const API_FUNCTIONS = new Set(['hello'])
 
-/** The standalone page's route on the http worker. */
+/** The public page's route on the http worker. */
 export const WEB_PATH = '/my-worker'
 
-/** Where the standalone page answers: the http worker's base URL (III_HTTP_URL)
+/** Where the public page answers: the http worker's base URL (III_HTTP_URL)
     plus this worker's route; null when it is unset or empty, so the ADE page
     falls back to the host it is browsed from. */
 export function webUrl(base?: string): string | null {

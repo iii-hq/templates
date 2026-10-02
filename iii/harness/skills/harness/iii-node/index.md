@@ -3,8 +3,8 @@ name: iii-node
 description: >-
   Scaffold portable TypeScript/Node.js iii workers from the `worker-node-ade`
   template with `coder::scaffold-worker`, declare them through `compose::add`,
-  and maintain them: a single-package backend, a console-native page in the iii
-  Console plus a standalone page over HTTP, configuration integration, and
+  and maintain them: a single-package backend, an admin page in the iii Console
+  plus a public page over HTTP for users, configuration integration, and
   coordinated development watchers.
 ---
 
@@ -26,7 +26,7 @@ This file still owns the worker-side half of an injectable UI — the build scri
 
 ### Precedence for this Node scaffold
 
-This file and the `worker-node-ade` template it scaffolds are the source of truth for the **single-package Node layout, npm dependency, build outputs, worker-side UI delivery, the standalone page and its HTTP API, development process, and Compose declaration**. Use the references above as the source of truth for the **current host API, UI components, accessibility, responsive behavior, configuration semantics, and visual design**.
+This file and the `worker-node-ade` template it scaffolds are the source of truth for the **single-package Node layout, npm dependency, build outputs, worker-side UI delivery, the public page and its HTTP API, development process, and Compose declaration**. Use the references above as the source of truth for the **current host API, UI components, accessibility, responsive behavior, configuration semantics, and visual design**.
 
 The injectable UI reference may describe repository-internal `workspace:*` dependencies, local `file:` dependencies, a root workspace file, or a separate `<worker>/ui/package.json`. Those instructions do **not** apply to this portable Node scaffold. Use one package at the worker root and consume the public npm package:
 
@@ -86,7 +86,7 @@ If `engine::functions::info` reports `coder::scaffold-worker` as not available, 
 
 ## Project shape
 
-The scaffold writes one Node package; the backend, the ADE assets and the standalone page share it:
+The scaffold writes one Node package; the backend, the ADE assets and the public page share it:
 
 ```text
 <worker-directory>/
@@ -101,24 +101,24 @@ The scaffold writes one Node package; the backend, the ADE assets and the standa
     ui-assets.ts        # ui-content: the ADE assets, read on request
     web.ts              # HTTP handlers and their allowlists
   ui/
-    WorkerPage.tsx      # the ADE page: console-ui components, host.iii
-    App.tsx             # the standalone page: plain React, client
-    client.ts           # httpClient(base)
+    WorkerPage.tsx      # the ADE page, the worker's admin: console-ui components, host.iii
     page.tsx            # ADE entry: setup(host)
-    styles.css          # scoped, tokens only
-    build.mjs           # ADE assets + standalone bundle
-    tsconfig.json
-  web/
-    main.tsx            # standalone entry
+    styles.css          # admin layout: scoped, tokens only
+    build.mjs           # ADE assets + public page bundle
+    tsconfig.json       # also covers ../web
+  web/                  # the public page: not injected into the console
+    App.tsx             # the page users open: plain React, client
+    app.css             # its own palette, type and spacing, light and dark
+    client.ts           # httpClient(base)
+    main.tsx            # entry
     index.html
-    tokens.css          # tokens for the standalone page, light and dark
   test/                 # hello.test.ts, ui-assets.test.ts, web.test.ts (allowlists, 404s)
   dist/                 # generated; do not hand-edit
     ui/                 # page.js, styles.css: the ADE assets
-    web/                # index.html, app.js, styles.css: the standalone page
+    web/                # index.html, app.js, styles.css: the public page
 ```
 
-Keep domain logic, validation, persistence, and iii registrations under `src/`; the ADE page, the standalone page and the other ADE-only surfaces under `ui/`; only the standalone entry under `web/`. The UI reaches the backend only through `host.iii` (ADE page) or its `client` (standalone page); it never imports backend modules or reads backend files.
+Keep domain logic, validation, persistence, and iii registrations under `src/`; the ADE page and the other ADE-only surfaces under `ui/`; the public page under `web/`. The UI reaches the backend only through `host.iii` (ADE page) or its `client` (public page); it never imports backend modules or reads backend files.
 
 When you edit the package:
 
@@ -294,29 +294,31 @@ Emit from the store after each persisted mutation and include the **whole record
 
 **Every trigger type the worker provides must carry trigger metadata.** A registration's `metadata` arrives at the provider as `binding.metadata` (`TriggerConfig.metadata`) and must come back out on every `iii.trigger` as `metadata`; the bound handler receives it as its **second argument**, a channel separate from the payload, and a fan-out that omits it silently drops it. Because the top-level `metadata` slot also carries the harness's own control fields (`{ payload, event_into }`) for call-to-function bindings, also accept a `metadata` field inside the trigger's config, name it in the trigger type's `description`, and forward whichever the subscriber set (config first). Never merge metadata into the payload.
 
-## ADE page and standalone page
+## Public page and ADE admin page
 
-The worker has two pages for its functions: the ADE page inside the console, and a standalone page at `http://127.0.0.1:3111/<worker-name>`, served by the `http` worker the template requires.
+The worker has two pages, for two audiences. The **public page** is what people who use the worker open: `http://127.0.0.1:3111/<worker-name>`, served by the `http` worker the template requires, with a design of its own. The **ADE page** is the worker's admin, inside the console: it edits the worker's settings, tries its functions and lists its endpoints.
 
-- `ui/WorkerPage.tsx` is the ADE page, and `ui/page.tsx` renders `<WorkerPage host={host} onClose={onRequestClose} />` (Injectable UI entrypoint). It is built from `@iii-dev/console-ui` components: `PageShell` → `PageHeader` (the iii `Wordmark` as its icon) → `PageMain`, `SettingsSection`/`SettingsList`/`SettingsField`/`SettingsRow`, `Input`, `Button`, `StatusPanel`, with `useContainerNarrow`, `useCopyFlash` and `errorMessage` from the `/hooks` and `/format` subpaths. It reaches the backend through `host.iii.trigger('<worker-name>::<fn>', payload)` (positional: `trigger(functionId, payload?, options?)`, as `index.d.ts` declares).
-- The ADE page's header shows **Open outside console**, a link to the standalone page. The internal `<worker-name>::info` function returns `web_url` (`III_HTTP_URL` plus `/<worker-name>`, `null` when `III_HTTP_URL` is unset) and `web_path` (`/<worker-name>`); the page loads them through `host.iii` and links to `web_url`, else to `web_path` on port 3111 of the host the console is browsed from (`window.location.hostname`, always `http:`), never a hardcoded `127.0.0.1`, because the console may be browsed from another machine. The `http` worker stays on `127.0.0.1`, so that link answers only from the machine it runs on; for another device use an SSH tunnel (`ssh -L 3111:127.0.0.1:3111 <host>`) or set `III_HTTP_URL`, and never expose port 3111 on an untrusted network. `info` is not in the HTTP allowlist.
-- `ui/App.tsx` is the standalone page. It takes one prop, `client: { call<T>(fn: string, payload: unknown): Promise<T> }`, and reaches the backend only through `client.call('<fn>', payload)` with the function's bare name (`hello`, not `<worker-name>::hello`).
-- `ui/client.ts` holds the `Client` type and `httpClient(base)`, which POSTs the payload as JSON to `base + '/' + fn`. The ADE page does not use it: `WorkerPage.tsx` calls `host.iii.trigger('<worker-name>::<fn>', payload)` directly.
-- `web/main.tsx` mounts `<div data-iii-ui="<worker-name>"><App client={httpClient('/<worker-name>/api')} /></div>` with `createRoot`, so the scoped styles apply to both pages.
-- App uses React, `lucide-react` icons and its own scoped CSS. It imports nothing from `@iii-dev/console-ui` at runtime: no `PageShell`, `Button` or other component, no `/hooks` or `/format` helper; `import type` is fine. Those exist only inside the ADE, which refuses cross-origin loads of its runtime (`CORP: same-origin`, `frame-ancestors 'none'`); that is why the standalone page stays plain and the ADE page does not.
-- Other ADE-only surfaces — configuration forms, function and trigger renderers, panels, chat cards — live in other `ui/` modules that `page.tsx` registers and App never imports. Like `WorkerPage.tsx`, they follow the `ade-worker-design` manuals and use `@iii-dev/console-ui` components.
-- `ui/styles.css` uses only design tokens (`var(--color-*)` and the rest). The ADE supplies them; `web/tokens.css` defines the same tokens, light and dark through `prefers-color-scheme`, for the standalone page. When App starts using a token, add it to `web/tokens.css` too.
+- `ui/WorkerPage.tsx` is the ADE page, and `ui/page.tsx` renders `<WorkerPage host={host} onClose={onRequestClose} />` (Injectable UI entrypoint). It is built from `@iii-dev/console-ui` components: `PageShell` → `PageHeader` (the iii `Wordmark` as its icon, description "Admin") → `PageMain`, `SettingsSection`/`SettingsList`/`SettingsField`/`SettingsRow`, `Input`, `Button`, `StatusPanel`, with `useContainerNarrow`, `useCopyFlash` and `errorMessage` from the `/hooks` and `/format` subpaths. It reaches the backend through `host.iii.trigger('<worker-name>::<fn>', payload)` (positional: `trigger(functionId, payload?, options?)`, as `index.d.ts` declares). The template has three sections: **Settings** (the greeting, with Save, and a `StatusPanel` for the outcome), **Test** (calls `hello` the way the public page does) and **Endpoints** (the function, the trigger type, the public page and the public API, each with a copy button).
+- Settings writes go through an internal function, not a direct `configuration::set` from the page. `<worker-name>::set-greeting` takes `{ greeting }`, validates it (`normalizeGreeting` in `src/hello.ts`: trimmed, not empty, at most 40 characters), calls `configuration::set { id: '<worker-name>', value: { greeting } }` in the `default` namespace and updates the greeting it keeps in memory. It is not in the HTTP allowlist, so only the ADE changes the greeting. Give the domain's own admin edits the same shape: one internal function per write, validation in `src/<domain>.ts`, a unit test.
+- The ADE page's header shows **Open public page**, a link to the public page. The internal `<worker-name>::info` function returns `web_url` (`III_HTTP_URL` plus `/<worker-name>`, `null` when `III_HTTP_URL` is unset), `web_path` (`/<worker-name>`) and the live `greeting`; the page loads them through `host.iii` and links to `web_url`, else to `web_path` on port 3111 of the host the console is browsed from (`window.location.hostname`, always `http:`), never a hardcoded `127.0.0.1`, because the console may be browsed from another machine. The `http` worker stays on `127.0.0.1`, so that link answers only from the machine it runs on; for another device use an SSH tunnel (`ssh -L 3111:127.0.0.1:3111 <host>`) or set `III_HTTP_URL`, and never expose port 3111 on an untrusted network. `info` is not in the HTTP allowlist.
+- `web/App.tsx` is the public page. It takes one prop, `client: { call<T>(fn: string, payload: unknown): Promise<T> }`, and reaches the backend only through `client.call('<fn>', payload)` with the function's bare name (`hello`, not `<worker-name>::hello`).
+- `web/client.ts` holds the `Client` type and `httpClient(base)`, which POSTs the payload as JSON to `base + '/' + fn`. The ADE page does not use it: `WorkerPage.tsx` calls `host.iii.trigger('<worker-name>::<fn>', payload)` directly.
+- `web/main.tsx` renders `<App client={httpClient('/<worker-name>/api')} />` into `#root` with `createRoot`. There is no `data-iii-ui` wrapper: `web/app.css` is not scoped.
+- The public page is the user's own page, so it is designed as a small product, not as a console screen: the worker's name as the brand at the top, one central card holding the call's input and its result (the result shown large), a discreet "Powered by iii" footer, a warm light and dark palette that follows `prefers-color-scheme`, and the system font stack (no font files). Its palette, type and spacing are custom properties in `web/app.css`. When you adapt it, keep the structure and change the copy and the controls to the domain.
+- The public page is not injected into the console, so the console's design tokens, the `data-iii-ui` scope and the design-rule lint do not apply to it; accessibility and responsiveness still do (labels, focus rings, contrast in both schemes, `prefers-reduced-motion`, stacking at phone width). It uses React, `lucide-react` icons and its own CSS, and imports nothing from `@iii-dev/console-ui` at runtime: no `PageShell`, `Button` or other component, no `/hooks` or `/format` helper; `import type` is fine. Those exist only inside the ADE, which refuses cross-origin loads of its runtime (`CORP: same-origin`, `frame-ancestors 'none'`); that is why the public page stays plain and the ADE page does not.
+- Other ADE-only surfaces — configuration forms, function and trigger renderers, panels, chat cards — live in other `ui/` modules that `page.tsx` registers and the public page never imports. Like `WorkerPage.tsx`, they follow the `ade-worker-design` manuals and use `@iii-dev/console-ui` components.
+- `ui/styles.css` holds only the ADE page's layout, and uses only design tokens (`var(--color-*)` and the rest) that the ADE supplies. The public page does not share it.
 
-`src/web.ts` serves the standalone page through three HTTP triggers, each behind an allowlist:
+`src/web.ts` serves the public page through three HTTP triggers, each behind an allowlist:
 
 | Route | Serves |
 |---|---|
 | `GET /<worker-name>` | `dist/web/index.html` |
 | `GET /<worker-name>/:file` | only `app.js` and `styles.css` from `dist/web/`; `:file` can be `..`, hence the allowlist |
-| `POST /<worker-name>/api/:fn` | only the functions the standalone page calls (template: `hello`): the request `body` is the payload, the answer is `{ status_code, headers: { "content-type": "application/json" }, body }`; any other `:fn` answers 404 |
+| `POST /<worker-name>/api/:fn` | only the functions the public page calls (template: `hello`): the request `body` is the payload, the answer is `{ status_code, headers: { "content-type": "application/json" }, body }`; any other `:fn` answers 404 |
 
-- When App calls a new function, add it to the API allowlist in `src/web.ts` and to `test/web.test.ts`; a call outside the allowlist works from the ADE page and answers 404 standalone. Never replace the allowlist with a pass-through.
-- Return text bodies (HTML, JS, CSS) as strings with an explicit `content-type`. Ship no binary assets (fonts, images) in the standalone page.
+- When the public page calls a new function, add it to the API allowlist in `src/web.ts` and to `test/web.test.ts`; a call outside the allowlist works from the ADE page and answers 404 on the public page. Admin-only functions (`set-greeting`, `info`) stay off the list; `test/web.test.ts` checks that `set-greeting` answers 404. Never replace the allowlist with a pass-through.
+- Return text bodies (HTML, JS, CSS) as strings with an explicit `content-type`. Ship no binary assets (fonts, images) in the public page.
 - Port 3111 has no authentication: everything on the allowlists is open to anything that can reach it. Never expose it through a public proxy or tunnel.
 
 ## Injectable UI builder
@@ -324,7 +326,7 @@ The worker has two pages for its functions: the ADE page inside the console, and
 `ui/build.mjs` runs two builds; `pnpm build` and the dev loop run it from the package root.
 
 1. **ADE assets.** `buildWorkerUi` from `@iii-dev/console-ui/build-worker-ui`, called with `scope: '<worker-name>'` (the `data-iii-ui` value, the first asset path segment), `root: import.meta.dirname` (`ui/`) and `outdir: '../dist/ui'`, writes `dist/ui/page.js` and `dist/ui/styles.css`. It (typed in `build-worker-ui.d.mts`) bundles `page.tsx` and `styles.css` with esbuild, keeps the six specifiers the Console's import map serves external — `react`, `react-dom`, `react-dom/client`, `react/jsx-runtime`, `@iii-dev/console-ui`, `lucide-react` — matched exactly so that `@iii-dev/console-ui/hooks` and `/format` still bundle, then checks every asset against the 8 MiB cap, refuses an unscoped stylesheet (`assertScoped`), fails on an unknown design token (`checkTokens`) and, on a non-watch build, runs the design-rule lint (`lintWorkerUi`) over `ui/`. Watch builds are unminified; release builds are minified. A failed check exits 1, which `pnpm build` and the dev loop surface. Never route the ADE assets through hand-rolled esbuild: a missing `react` external is a second React instance and "Invalid hook call"; a missing `@iii-dev/console-ui` external throws at once with the fix. Do not bundle an editor; use the Console's shared editor components in ADE-only surfaces. The remaining options (`entryPoints`, `keyframePrefixes`, `allowUnscopedSelectors`, `strictTokens`, `lint`, `plugins`, `extraExternal`, `define`) and the lint rules are in the designer's `console-injectable-ui` › The build.
-2. **Standalone page.** esbuild bundles `web/main.tsx`, with React, `lucide-react` and App inside it, into `dist/web/app.js`; joins `web/tokens.css` and `ui/styles.css` into `dist/web/styles.css`; and copies `web/index.html`. It is the only hand-rolled esbuild in the package, and bundling React is its point. `web/` sits outside `ui/`, so the literal colours in `tokens.css` stay out of the strict lint.
+2. **Public page.** esbuild bundles `web/main.tsx`, with React, `lucide-react` and App inside it, into `dist/web/app.js`; bundles `web/app.css` into `dist/web/styles.css`; and copies `web/index.html`. It is the only hand-rolled esbuild in the package, and bundling React is its point. `web/` sits outside `ui/` (`ui/tsconfig.json` still type-checks it), so the token check and the strict lint leave the page's own palette alone.
 
 ## Injectable UI entrypoint
 
@@ -334,7 +336,7 @@ Set `configurationId: '<configuration-id>'` on the page registration only when `
 
 Read the package's public types before using any host API or component; never guess an export or prop. In this portable layout the types are at `node_modules/@iii-dev/console-ui/` — `index.d.ts`, plus `hooks.d.mts` and `format.d.mts` for the two subpaths that bundle into the asset (read them in full after `pnpm install`; `README.md` beside them documents `host.panels.open` and the chat integrations) — the `packages/console-ui/...` path some references mention does not exist here.
 
-Icons are `lucide-react`: external in the ADE assets, where the Console's import map serves it, so an import adds no bundle bytes there; bundled into the standalone page. `import { Boxes } from 'lucide-react'` and render it at its default 16 px. Never hand-write `<svg>` glyphs (the build lint flags them) and never add another icon dependency. Where a prop asks for an icon, pass a Lucide component or element exactly as its type in `index.d.ts` declares.
+Icons are `lucide-react`: external in the ADE assets, where the Console's import map serves it, so an import adds no bundle bytes there; bundled into the public page. `import { Boxes } from 'lucide-react'` and render it at its default 16 px. Never hand-write `<svg>` glyphs (the build lint flags them) and never add another icon dependency. Where a prop asks for an icon, pass a Lucide component or element exactly as its type in `index.d.ts` declares.
 
 The page body is the designer's work: `harness/ade-worker-design/console-injectable-ui` covers narrow panes, loading/error/empty states, renderer fallthrough, redaction, dirty state, live triggers, accessibility, and real-Console testing; `harness/ade-worker-design/console-design` covers visual decisions.
 
@@ -348,7 +350,7 @@ Every selector in `ui/styles.css` must be scoped under `[data-iii-ui="<worker-na
 }
 ```
 
-Use shared tokens from the bundled references; their components belong only in ADE-only surfaces, the ADE page included, never in the standalone App (ADE page and standalone page). Do not use Tailwind classes in injected markup, unscoped selectors, hard-coded theme colors, or decorative gradients; in ADE-only surfaces, use the shared components instead of a custom control system. Prefix custom keyframe names with the worker name because keyframes are global.
+Use shared tokens from the bundled references; their components belong only in ADE-only surfaces, the ADE page included, never in the public page's App (Public page and ADE admin page). Do not use Tailwind classes in injected markup, unscoped selectors, hard-coded theme colors, or decorative gradients; in ADE-only surfaces, use the shared components instead of a custom control system. Prefix custom keyframe names with the worker name because keyframes are global.
 
 ## Worker-side asset delivery
 
@@ -371,13 +373,13 @@ During development, rebuilding `dist/ui` restarts the worker, which re-registers
 
 `pnpm dev` runs `scripts/dev.mjs`, and the scaffold's compose entry runs it as the container's `run` script: it is what gives the worker hot reload under compose. Keep it working when you edit the package. Do not replace it with a single watcher; it must:
 
-1. build the ADE assets and the standalone page once before starting anything else;
+1. build the ADE assets and the public page once before starting anything else;
 2. rebuild them on every `ui/` and `web/` edit, so TSX and CSS changes rewrite `dist/`;
 3. run the worker with reload, so a `src/` edit or a rebuilt `dist/ui` restarts it;
 4. terminate all children if any watcher fails;
 5. forward `SIGINT`/`SIGTERM` and escalate only after a short grace period.
 
-This enables injectable UI hot development: an edit changes `dist/ui`, the worker restarts, reconnects and re-registers the same asset paths with new content, and the Console hot-swaps the asset. The Console itself is not rebuilt. The standalone page shows a rebuild on its next browser reload.
+This enables injectable UI hot development: an edit changes `dist/ui`, the worker restarts, reconnects and re-registers the same asset paths with new content, and the Console hot-swaps the asset. The Console itself is not rebuilt. The public page shows a rebuild on its next browser reload.
 
 ## Worker manifest
 
@@ -438,10 +440,10 @@ instead of repeating discovery. Each engineer performs only its assigned side.
 3. Inspect the destination project's Compose shape, existing workers and coding conventions; reuse a registered capability instead of scaffolding a duplicate.
 4. Scaffold the package with `coder::scaffold-worker` (Scaffold a new worker).
 5. Declare it through `compose::add` under a `compose-operation` wake, with its `requires` containers, then confirm with `compose::status`, `engine::workers::info` and a real `<worker-name>::hello` call.
-6. Replace the example `hello` with the domain (keep `info`: the ADE page's **Open outside console** reads it): backend modules, functions with complete contracts, tests, and the API allowlist in `src/web.ts` for the functions the standalone page calls.
+6. Replace the example `hello` with the domain (keep `info`: the ADE page's **Open public page** reads it; keep or replace `set-greeting` with the domain's own admin writes): backend modules, functions with complete contracts, tests, and the API allowlist in `src/web.ts` for the functions the public page calls.
 7. Add configuration integration if needed.
-8. Leave `ui/WorkerPage.tsx` and `ui/App.tsx` building against the new functions (`host.iii` and `client`). The Frontend Engineer builds the ADE page and the other ADE-only surfaces from console components, and the standalone page with shared tokens and scoped CSS, after the backend/delivery contracts are verified.
-9. Verify the assigned side: backend checks static builds, runtime registration, asset delivery, the HTTP allowlists and hot reload; frontend checks real rendering in the ADE through the `browser` worker and at the standalone URL. The Tech Lead independently checks contracts and integration before the Builder performs user acceptance.
+8. Leave `ui/WorkerPage.tsx` and `web/App.tsx` building against the new functions (`host.iii` and `client`). The Frontend Engineer builds the admin page and the other ADE-only surfaces from console components, and the public page with its own design in `web/app.css`, after the backend/delivery contracts are verified.
+9. Verify the assigned side: backend checks static builds, runtime registration, asset delivery, the HTTP allowlists and hot reload; frontend checks real rendering in the ADE through the `browser` worker and at the public URL. The Tech Lead independently checks contracts and integration before the Builder performs user acceptance.
 
 ## Validation checklist
 
@@ -463,8 +465,8 @@ evidence only while it remains applicable; broaden checks if impact is unclear.
 - Configuration registration, read, update, and reload behavior work without erasing existing or unknown values.
 - `dist/ui/page.js` and `dist/ui/styles.css` are non-empty; `react`, `@iii-dev/console-ui` and `lucide-react` stay bare imports (release builds are minified, so expect `from"react"`), and the build's scope, token and lint checks passed.
 - `dist/web/index.html`, `dist/web/app.js` and `dist/web/styles.css` exist, and `app.js` carries React inside it (no bare `react` import).
-- `ui/App.tsx` imports nothing from `@iii-dev/console-ui` except through `import type`; `ui/WorkerPage.tsx` is built from its components (`PageShell`, `PageHeader` with the iii `Wordmark` as icon) and shows **Open outside console** from `<worker-name>::info`'s `web_url`, else `web_path` on the console's host.
-- `GET http://127.0.0.1:3111/<worker-name>` renders the standalone page (`App`), in light and dark color schemes, and its calls succeed; `GET /<worker-name>/<any other file>` and `POST /<worker-name>/api/<a function outside the allowlist>` answer 404.
+- `web/App.tsx` imports nothing from `@iii-dev/console-ui` except through `import type`; `ui/WorkerPage.tsx` is built from its components (`PageShell`, `PageHeader` with the iii `Wordmark` as icon), saves the greeting through `<worker-name>::set-greeting` and shows **Open public page** from `<worker-name>::info`'s `web_url`, else `web_path` on the console's host.
+- `GET http://127.0.0.1:3111/<worker-name>` renders the public page (`App`), in light and dark color schemes and at phone width, and its calls succeed; `GET /<worker-name>/<any other file>` and `POST /<worker-name>/api/<a function outside the allowlist>` answer 404.
 - The UI content function serves both registered paths and rejects unknown ones.
 - Asset paths, CSS scope, HTTP prefix, worker name, function prefix, and configuration id are internally consistent.
 - The Console manifest (`GET http://127.0.0.1:<console port>/ui`, or `console::ui-manifest`) contains both assets, reports no CSS warnings, and changes hashes after a UI edit.

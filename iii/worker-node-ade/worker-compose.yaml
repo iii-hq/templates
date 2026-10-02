@@ -21,7 +21,7 @@ containers:
       pre_run_timeout: 5m
       run: pnpm dev
 
-  # Serves the standalone page on http://127.0.0.1:3111/my-worker.
+  # Serves the public page on http://127.0.0.1:3111/my-worker.
   # No auth: never expose port 3111 through a public proxy or tunnel.
   http:
     worker: package://http

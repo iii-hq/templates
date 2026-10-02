@@ -16,18 +16,20 @@ Composition recipes for record-shaped UIs: `patterns`.
 > worker is one Node package outside the `iii-hq/workers` monorepo. Its
 > `package.json`, `ui/build.mjs`, `ui/tsconfig.json`, `scripts/dev.mjs` and
 > the Node asset delivery are the Backend Engineer's boilerplate from
-> `iii-node`; the Frontend Engineer edits `ui/WorkerPage.tsx`, `ui/App.tsx`,
-> `ui/page.tsx`, `ui/styles.css`, `ui/src/**` and `web/tokens.css`.
+> `iii-node`; the Frontend Engineer edits `ui/WorkerPage.tsx`, `ui/page.tsx`,
+> `ui/styles.css`, `ui/src/**`, `web/App.tsx` and `web/app.css`.
 > The shared components this document requires (§1's example, the Definition
 > of done) apply to `ui/WorkerPage.tsx`, `page.tsx` and the console-only
-> surfaces it registers. `ui/WorkerPage.tsx` is the ADE page: it has the iii
-> `Wordmark` as its header icon, calls the worker through `host.iii` and shows
-> **Open outside console** from `<worker>::info`'s `web_url` (else `web_path`
-> on the console's host). `ui/App.tsx` is the standalone page at
-> `http://127.0.0.1:3111/<worker>`: it reaches the
-> backend through its `client` prop and imports nothing from
-> `@iii-dev/console-ui` at runtime, because those components exist only in the
-> ADE (`iii-node` › ADE page and standalone page). `@iii-dev/console-ui` is
+> surfaces it registers. `ui/WorkerPage.tsx` is the ADE page, the worker's
+> admin (Settings, Test, Endpoints): it has the iii `Wordmark` as its header
+> icon, calls the worker through `host.iii` and shows **Open public page** from
+> `<worker>::info`'s `web_url` (else `web_path` on the console's host).
+> `web/App.tsx` is the public page users open at
+> `http://127.0.0.1:3111/<worker>`, in its own design (`web/app.css`, not
+> console-linted): it reaches the backend through its `client` prop and
+> imports nothing from `@iii-dev/console-ui` at runtime, because those
+> components exist only in the ADE (`iii-node` › Public page and ADE admin
+> page). `@iii-dev/console-ui` is
 > installed from npm at **0.2.0 or later** — the release that ships the
 > `/hooks` and `/format` subpaths, `build-worker-ui` and `lint-worker-ui` —
 > and its types are read from `node_modules/@iii-dev/console-ui/`
@@ -51,12 +53,12 @@ Registration is deployment; disconnect is teardown.
 <worker>/
   ui/
     page.tsx      # the script asset — default-exports setup(host)
-    WorkerPage.tsx # scaffold: the ADE page, built from console-ui components
-    App.tsx       # scaffold: the standalone page (web/), plain React
+    WorkerPage.tsx # scaffold: the ADE page (the worker's admin), built from console-ui components
     styles.css    # the style asset — every rule scoped
     build.mjs     # buildWorkerUi({ scope, root: import.meta.dirname, outdir: '../dist/ui' })
     tsconfig.json
     src/          # page, renderers, config form, widgets
+  web/            # scaffold: the public page users open (App.tsx, app.css), plain React, not part of the ADE
   src/
     ui.ts         # Node delivery: one content function + one trigger per asset
   dist/ui/        # page.js + styles.css — the bytes the worker serves
@@ -458,7 +460,7 @@ attribute** — the console mounts each render inside
 
 `buildWorkerUi` (`@iii-dev/console-ui/build-worker-ui`, typed in
 `build-worker-ui.d.mts`) is the one esbuild driver. In the portable layout
-`ui/build.mjs` makes this call, then bundles the standalone page; `pnpm build`
+`ui/build.mjs` makes this call, then bundles the public page from `web/`; `pnpm build`
 runs it from the package root:
 
 ```js

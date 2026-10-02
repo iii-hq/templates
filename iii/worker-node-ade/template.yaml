@@ -1,5 +1,5 @@
 name: Worker with ADE page (Node)
-description: A Node/TypeScript worker with settings, its own trigger type and a console page in the ADE and a plainer page over HTTP.
+description: A Node/TypeScript worker with settings, its own trigger type and a public page over HTTP for users and an admin page in the ADE.
 version: "0.24.2"
 min_iii_version: "0.24.2"
 
@@ -59,5 +59,5 @@ next_steps:
   - 'In terminal 1 from the project root, start Compose: iii compose --up'
   - 'Compose pre_run runs pnpm install; pnpm dev builds the page and restarts the worker on save'
   - 'In terminal 2 from the project root, call: iii trigger my-worker::hello name=World'
-  - 'Open http://127.0.0.1:3111/my-worker, or the my-worker page in the ADE'
+  - 'Open the public page at http://127.0.0.1:3111/my-worker; the my-worker page in the ADE is its admin'
   - 'Port 3111 has no auth: never expose it through a public proxy or tunnel'

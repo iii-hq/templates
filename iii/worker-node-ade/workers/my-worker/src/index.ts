@@ -12,7 +12,7 @@ const root = new URL('../', import.meta.url)
 // ws://127.0.0.1:49134; it reads III_NAMESPACE itself.
 const iii = registerWorker(process.env.III_URL, {
   workerName: 'my-worker',
-  workerDescription: 'Example worker: greets by name, shows a console page in the ADE and a plainer page over HTTP.',
+  workerDescription: 'Example worker: greets by name, serves a public page over HTTP and an admin page in the ADE.',
 })
 
 // --- Configuration: one greeting, seeded once, reloaded on every update ---
@@ -146,7 +146,7 @@ iii.registerFunction(
   },
 )
 
-// --- ADE page: the console loads dist/ui through console:script/console:style ---
+// --- Admin page in the ADE: the console loads dist/ui through console:script/console:style ---
 
 iii.registerFunction(
   'my-worker::ui-content',
@@ -165,13 +165,13 @@ iii.registerFunction(
 iii.registerTrigger({ type: 'console:script', function_id: 'my-worker::ui-content', config: { path: 'my-worker/page.js' } })
 iii.registerTrigger({ type: 'console:style', function_id: 'my-worker::ui-content', config: { path: 'my-worker/styles.css' } })
 
-// --- Standalone page over HTTP (http worker, 127.0.0.1:3111) ---
+// --- Public page over HTTP (http worker, 127.0.0.1:3111) ---
 
 const web = webHandlers(fileURLToPath(new URL('dist/web', root)), (fn, payload) =>
   iii.trigger({ function_id: `my-worker::${fn}`, payload }),
 )
 iii.registerFunction('my-worker::http-page', web.page, {
-  description: 'GET /my-worker: the standalone page.',
+  description: 'GET /my-worker: the public page.',
   metadata: { internal: true },
 })
 iii.registerFunction('my-worker::http-asset', web.asset, {

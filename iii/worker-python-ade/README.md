@@ -1,6 +1,6 @@
 # my-worker
 
-A Python worker project. `workers/my-worker` registers `my-worker::hello`, keeps its settings in the `my-worker` configuration, provides the `my-worker:hello` trigger type, and shows two pages: a console-native one inside the ADE, built from the console's own components, and a plainer standalone page at http://127.0.0.1:3111/my-worker through the `http` worker.
+A Python worker project. `workers/my-worker` registers `my-worker::hello`, keeps its settings in the `my-worker` configuration, provides the `my-worker:hello` trigger type, and has two pages: the public page users open at http://127.0.0.1:3111/my-worker through the `http` worker, and the worker's admin inside the ADE, built from the console's own components.
 
 ## Prerequisites
 
@@ -40,13 +40,13 @@ Expected response:
 { "message": "Hello, World!" }
 ```
 
-## Open the page
+## Open the pages
 
-- **ADE:** uncomment the `ade` container in `worker-compose.yaml` and restart Compose, then open `http://127.0.0.1:3113` and pick the `my-worker` page. Alone, it is at `http://127.0.0.1:3113/#/worker/my-worker/my-worker`. The page uses the console's components and calls the worker through the console's own connection, not over HTTP. **Open outside console** opens the standalone page in a new tab at `http://<console host>:3111/my-worker`, or at the worker's `III_HTTP_URL` plus `/my-worker` when that environment variable is set (`my-worker::info` returns it as `web_url`). While the `http` worker listens on `127.0.0.1`, that answers only from this machine. To open it from another device, use an SSH tunnel (`ssh -L 3111:127.0.0.1:3111 <host>`) or set `III_HTTP_URL` to an address that reaches it, and never expose port 3111 on an untrusted network.
-- **Browser:** `http://127.0.0.1:3111/my-worker`. A plainer version of the same call, in plain React: it calls the worker through `POST /my-worker/api/hello`.
+- **Public page:** `http://127.0.0.1:3111/my-worker`. What a user opens, with its own design in plain React: the worker's name on top and a card that asks for a name and shows the greeting large. It calls the worker through `POST /my-worker/api/hello`.
+- **Admin, in the ADE:** uncomment the `ade` container in `worker-compose.yaml` and restart Compose, then open `http://127.0.0.1:3113` and pick the `my-worker` page. Alone, it is at `http://127.0.0.1:3113/#/worker/my-worker/my-worker`. The page is the worker's admin: it edits the greeting (Settings), tries `my-worker::hello` (Test) and lists the endpoints. It uses the console's components and calls the worker through the console's own connection, not over HTTP. **Open public page** opens the public page in a new tab at `http://<console host>:3111/my-worker`, or at the worker's `III_HTTP_URL` plus `/my-worker` when that environment variable is set (`my-worker::info` returns it as `web_url`). While the `http` worker listens on `127.0.0.1`, that answers only from this machine. To open it from another device, use an SSH tunnel (`ssh -L 3111:127.0.0.1:3111 <host>`) or set `III_HTTP_URL` to an address that reaches it, and never expose port 3111 on an untrusted network.
 
-The ADE page is `ui/WorkerPage.tsx`; the standalone page is `ui/App.tsx`. How it works, how to edit it and how to run the tests: `workers/my-worker/README.md`.
+The public page is `web/App.tsx`; the ADE page is `ui/WorkerPage.tsx`. How it works, how to edit it and how to run the tests: `workers/my-worker/README.md`.
 
 ## Security
 
-The `http` worker on port 3111 has no authentication. Anyone who can reach the port can load the page and call every function in `API_FUNCTIONS` (`workers/my-worker/src/main.py`). Do not expose port 3111 through a public proxy or tunnel.
+The `http` worker on port 3111 has no authentication. Anyone who can reach the port can load the page and call every function in `API_FUNCTIONS` (`workers/my-worker/src/main.py`: `hello`, not `my-worker::set-greeting`, so only the ADE changes the greeting). Do not expose port 3111 through a public proxy or tunnel.

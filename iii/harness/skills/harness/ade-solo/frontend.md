@@ -10,11 +10,12 @@ description: >-
 
 # Frontend (Frontend Engineer hat)
 
-You build what lives in `ui/WorkerPage.tsx`, `ui/App.tsx`, `ui/page.tsx`,
-`ui/styles.css`, `ui/src/**` and `web/tokens.css`, against functions the worker
+You build what lives in `ui/WorkerPage.tsx`, `ui/page.tsx`, `ui/styles.css`,
+`ui/src/**`, `web/App.tsx` and `web/app.css`, against functions the worker
 already registers. In a scaffolded worker `ui/WorkerPage.tsx` is the ADE page,
-built from console components, and `ui/App.tsx` is the plain standalone page at
-`http://127.0.0.1:3111/<worker>`. In this phase you do not
+the worker's admin, built from console components, and `web/App.tsx` is the
+public page users open at `http://127.0.0.1:3111/<worker>`, in its own design.
+In this phase you do not
 change functions, trigger types, the configuration schema, asset delivery,
 the HTTP allowlists in `src/web.ts` or the package and build files. A gap
 there sends you back to the Backend phase, and to `## Architecture` first
@@ -31,7 +32,7 @@ rules and every number, about 27 KB) › `harness/ade-worker-design/patterns`
 | Need | Read |
 | --- | --- |
 | Any page | console-injectable-ui: How it works; Project layout; Authoring workflow; Archetypes; 1. The script asset (with Slots); 2. The style asset |
-| A scaffolded worker's pages (`ui/WorkerPage.tsx`, `ui/App.tsx`) | `harness/iii-node/index`: ADE page and standalone page |
+| A scaffolded worker's pages (`ui/WorkerPage.tsx`, `web/App.tsx`) | `harness/iii-node/index`: Public page and ADE admin page |
 | Phone and narrow panes | console-injectable-ui: Behaviour across widths, only the subsections in play |
 | Shared components, tokens | console-design: Numbers; the Shared components subsections for components you use; Do / Don't |
 | The chosen archetype | patterns: that archetype's section, plus 8. Live updates |
@@ -72,7 +73,7 @@ Never a component, prop or export from memory.
 4. The ADE URL: profile › The ADE URL (`http://127.0.0.1:3113` unless
    `Project context` names another). Navigate to it; no lookup first.
 5. Confirm the worker runs under its dev script (`pnpm dev` in a new
-   worker): every save under `ui/` rebuilds, re-registers the assets and
+   worker): every save under `ui/` or `web/` rebuilds, re-registers the assets and
    hot-swaps open tabs.
 
 ## Doctrine (non-negotiable)
@@ -86,17 +87,22 @@ Never a component, prop or export from memory.
 - **One 6 px radius.** Sans for human-facing text in natural case; mono only
   for ids, paths, values, payloads, code and tabular data. `lucide-react`
   icons at 16 px, never inline `<svg>`.
-- **The standalone page stays plain.** A scaffolded worker's `ui/App.tsx`
-  runs outside the ADE, where the console runtime does not exist. It reaches
-  the backend only through its `client` prop (the HTTP API allowlist) and
-  imports nothing from `@iii-dev/console-ui` except with `import type`: a
-  runtime import still builds, then leaves the standalone page blank.
+- **The public page has its own design, and stays plain React.** A
+  scaffolded worker's `web/App.tsx` is the page users open, outside the ADE,
+  where the console runtime and tokens do not exist. It reaches the backend
+  only through its `client` prop (the HTTP API allowlist) and imports nothing
+  from `@iii-dev/console-ui` except with `import type`: a runtime import
+  still builds, then leaves the public page blank. Its look lives in
+  `web/app.css` (own palette, system type, light and dark, no console lint):
+  the worker's name at the top, one central card with the result shown large,
+  a discreet "Powered by iii" footer. The rules above are for ADE surfaces;
+  here keep labels, focus, contrast, reduced motion and phone width.
 - **Shared primitives first, in ADE-only surfaces** (the ADE page
   `ui/WorkerPage.tsx` and the pages, renderers and forms `page.tsx`
-  registers, which App never imports). The ADE page keeps the iii `Wordmark`
-  as its header icon and an **Open outside console** link to `web_url` (else
-  `web_path` on the console's host) from `<worker>::info`, and reaches the
-  backend through `host.iii`.
+  registers, which App never imports). The ADE page is the worker's admin:
+  it keeps the iii `Wordmark` as its header icon and an **Open public page**
+  link to `web_url` (else `web_path` on the console's host) from
+  `<worker>::info`, and reaches the backend through `host.iii`.
   `PageShell` + `PageHeader` wrap every such page;
   `PageSidebar` owns collapse, resize and narrow mode; `ConfirmDialog`,
   never `window.confirm`. Configuration forms are `SettingsSection` →
@@ -139,16 +145,16 @@ except to dispatch the `DragEvent`s a drag-and-drop check needs
 1. **Static:** `pnpm typecheck` and `pnpm build` pass with a clean lint
    (an older worker without them: its own UI build script, such as
    `pnpm build:ui`); the emitted asset keeps bare `react`,
-   `@iii-dev/console-ui` and `lucide-react` imports, and `ui/App.tsx`
+   `@iii-dev/console-ui` and `lucide-react` imports, and `web/App.tsx`
    imports nothing from `@iii-dev/console-ui` at runtime (`ui/WorkerPage.tsx`
    is built from its components).
 2. **Delivery:** `console::ui-manifest` shows a fresh hash and an empty
    `warnings` array (select rows by `path`, see the backend playbook);
    `browser::fetch` of `/ui/<path>` returns the bytes.
 3. **Real rendering:** `browser::navigate` to the page alone,
-   `#/worker/<scope>[/<page-id>]`. A scaffolded worker's standalone page,
-   `http://127.0.0.1:3111/<worker>`, renders and its calls succeed;
-   **Open outside console** on the ADE page opens it. A control that opens
+   `#/worker/<scope>[/<page-id>]`. A scaffolded worker's public page,
+   `http://127.0.0.1:3111/<worker>`, renders (light, dark and phone width)
+   and its calls succeed; **Open public page** on the ADE page opens it. A control that opens
    another of the worker's pages (`host.panels.open`, for example a Canvas
    link) is checked there too: click it, confirm with
    `browser::sessions::list` that a tab opened at

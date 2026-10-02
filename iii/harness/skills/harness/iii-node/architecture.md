@@ -35,15 +35,17 @@ reference only to resolve a concrete question, not to prepare their work.
 ## Delivery contract
 
 One Node package owns backend and UI. Backend source is under `src/`, UI
-under `ui/`, the standalone entry under `web/`, generated outputs under
-`dist/`. The ADE page, `ui/WorkerPage.tsx`, is built from `@iii-dev/console-ui`
-components, shows the iii `Wordmark` in its header and an **Open outside
-console** link built from `web_url` (else `web_path`) of `<worker>::info`,
-and calls functions through `host.iii`. The standalone page, `ui/App.tsx`,
-is served at `http://127.0.0.1:3111/<worker>`: plain React, no runtime
-`@iii-dev/console-ui` export, calling functions only through its `client` prop
-(the worker's allowlisted HTTP API). Neither imports a backend module or
-backend file.
+under `ui/`, the public page under `web/`, generated outputs under
+`dist/`. The ADE page, `ui/WorkerPage.tsx`, is the worker's admin: built from
+`@iii-dev/console-ui` components, with the iii `Wordmark` in its header,
+Settings (it saves through the internal `<worker>::set-greeting`), Test and
+Endpoints, and an **Open public page** link built from `web_url` (else
+`web_path`) of `<worker>::info`; it calls functions through `host.iii`. The
+public page, `web/App.tsx`, is what users open at
+`http://127.0.0.1:3111/<worker>`: plain React with its own design
+(`web/app.css`), no runtime `@iii-dev/console-ui` export, calling functions
+only through its `client` prop (the worker's allowlisted HTTP API, which
+leaves out admin functions). Neither imports a backend module or backend file.
 
 The Backend Engineer owns package/dependency files, both TypeScript configs,
 `pnpm-workspace.yaml`, `scripts/dev.mjs`, `ui/build.mjs`, initial UI shell,
@@ -58,13 +60,13 @@ not durable engine registrations. Both asset paths start with the worker
 name; every stylesheet selector is scoped under `[data-iii-ui="<worker>"]`.
 React, `@iii-dev/console-ui` and `lucide-react` remain external in the console
 assets, which `ui/build.mjs` builds with the shared `buildWorkerUi` driver, not
-hand-rolled esbuild; only the standalone bundle uses esbuild directly.
+hand-rolled esbuild; only the public page's bundle uses esbuild directly.
 Installed public types are the authority for host methods and components;
 portable workers use the public npm package (`@iii-dev/console-ui@0.2.0` or
 later) rather than monorepo links.
 
-The Frontend Engineer owns `ui/WorkerPage.tsx`, `ui/App.tsx`, `ui/page.tsx`,
-`ui/styles.css`, `ui/src/**` and `web/tokens.css`: the two pages, plus pages,
+The Frontend Engineer owns `ui/WorkerPage.tsx`, `ui/page.tsx`, `ui/styles.css`,
+`ui/src/**`, `web/App.tsx` and `web/app.css`: the two pages, plus pages,
 renderers and configuration forms against registered contracts.
 `@iii-dev/console-ui` components belong only in the console-only surfaces
 `page.tsx` registers, the ADE page included.

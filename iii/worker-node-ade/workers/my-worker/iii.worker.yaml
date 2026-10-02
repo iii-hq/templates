@@ -5,7 +5,7 @@ deploy: bundle
 manifest: package.json
 license: Apache-2.0
 tags: [example, node, console-ui]
-description: Example worker — my-worker::hello, configuration, a my-worker:hello trigger type, a console page in the ADE and a plainer page over HTTP.
+description: Example worker — my-worker::hello, configuration, a my-worker:hello trigger type, a public page over HTTP and an admin page in the ADE.
 
 # Host development is the default: worker-compose.yaml runs `pnpm dev`.
 # runtime:

@@ -2,7 +2,7 @@
   "name": "my-worker",
   "version": "0.1.0",
   "private": true,
-  "description": "Example iii worker: one function, configuration, its own trigger type, a console page in the ADE and a plainer page over HTTP",
+  "description": "Example iii worker: one function, configuration, its own trigger type, a public page over HTTP and an admin page in the ADE",
   "type": "module",
   "engines": {
     "node": ">=22"

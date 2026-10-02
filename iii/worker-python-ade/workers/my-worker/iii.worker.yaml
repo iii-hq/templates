@@ -5,7 +5,7 @@ deploy: bundle
 manifest: pyproject.toml
 license: Apache-2.0
 tags: [example, python, console-ui]
-description: Example Python worker — my-worker::hello, settings, a trigger type, a console page in the ADE and a plainer page over HTTP.
+description: Example Python worker — my-worker::hello, settings, a trigger type, a public page over HTTP and an admin page in the ADE.
 
 # Host development is the default. A VM run starts without the pages unless pnpm
 # is available in the guest (the VM copy excludes dist/, and the image has no

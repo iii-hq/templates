@@ -1,6 +1,6 @@
 # my-worker
 
-A Node/TypeScript worker project with one function, `my-worker::hello`, and a page that calls it in two places: inside the ADE, built from the console's own components (`workers/my-worker/ui/WorkerPage.tsx`), and as a plainer standalone page at `http://127.0.0.1:3111/my-worker` (`ui/App.tsx`), served by the `http` worker.
+A Node/TypeScript worker project with one function, `my-worker::hello`, and two pages for it: the public page users open at `http://127.0.0.1:3111/my-worker` (`workers/my-worker/web/App.tsx`), served by the `http` worker, and the worker's admin in the ADE, built from the console's own components (`workers/my-worker/ui/WorkerPage.tsx`).
 
 ## Prerequisites
 
@@ -30,14 +30,14 @@ Expected response:
 { "message": "Hello, World!" }
 ```
 
-## Open the page
+## Open the pages
 
-- **ADE:** uncomment the `ade` container in `worker-compose.yaml` and restart Compose, then open `http://127.0.0.1:3113` and pick the `my-worker` page. Alone, it is at `http://127.0.0.1:3113/#/worker/my-worker/my-worker`. The page uses the console's components and calls the worker through the console's own connection, not over HTTP. **Open outside console** opens the standalone page in a new tab at `http://<console host>:3111/my-worker`, or at the worker's `III_HTTP_URL` plus `/my-worker` when that environment variable is set (`my-worker::info` returns it as `web_url`). While the `http` worker listens on `127.0.0.1`, that answers only from this machine. To open it from another device, use an SSH tunnel (`ssh -L 3111:127.0.0.1:3111 <host>`) or set `III_HTTP_URL` to an address that reaches it, and never expose port 3111 on an untrusted network.
-- **Browser:** `http://127.0.0.1:3111/my-worker`. A plainer version of the same call, in plain React: it calls the worker through `POST /my-worker/api/hello`.
+- **Public page:** `http://127.0.0.1:3111/my-worker`. What a user opens, with its own design in plain React: the worker's name on top and a card that asks for a name and shows the greeting large. It calls the worker through `POST /my-worker/api/hello`.
+- **Admin, in the ADE:** uncomment the `ade` container in `worker-compose.yaml` and restart Compose, then open `http://127.0.0.1:3113` and pick the `my-worker` page. Alone, it is at `http://127.0.0.1:3113/#/worker/my-worker/my-worker`. The page is the worker's admin: it edits the greeting (Settings), tries `my-worker::hello` (Test) and lists the endpoints. It uses the console's components and calls the worker through the console's own connection, not over HTTP. **Open public page** opens the public page in a new tab at `http://<console host>:3111/my-worker`, or at the worker's `III_HTTP_URL` plus `/my-worker` when that environment variable is set (`my-worker::info` returns it as `web_url`). While the `http` worker listens on `127.0.0.1`, that answers only from this machine. To open it from another device, use an SSH tunnel (`ssh -L 3111:127.0.0.1:3111 <host>`) or set `III_HTTP_URL` to an address that reaches it, and never expose port 3111 on an untrusted network.
 
 ## Change the greeting
 
-The greeting is a `configuration` entry with id `my-worker`. The worker seeds it with `Hello` on its first start and reloads it on every update:
+The greeting is a `configuration` entry with id `my-worker`. The worker seeds it with `Hello` on its first start and reloads it on every update. Edit it in the ADE page's Settings (Save calls the internal `my-worker::set-greeting`), or from a terminal:
 
 ```sh
 iii trigger configuration::set --json '{"id":"my-worker","value":{"greeting":"Hi"}}'
@@ -45,7 +45,7 @@ iii trigger configuration::set --json '{"id":"my-worker","value":{"greeting":"Hi
 
 ## Security
 
-Port 3111 has no authentication: any program on this machine can load the page and call the functions it exposes. The worker answers only from allowlists (two asset names, and the functions in `API_FUNCTIONS` in `src/web.ts`). Keep the `http` worker on `127.0.0.1` and never expose port 3111 through a public proxy or tunnel.
+Port 3111 has no authentication: any program on this machine can load the page and call the functions it exposes. The worker answers only from allowlists (two asset names, and the functions in `API_FUNCTIONS` in `src/web.ts`: `hello`, not `my-worker::set-greeting`, so only the ADE changes the greeting). Keep the `http` worker on `127.0.0.1` and never expose port 3111 through a public proxy or tunnel.
 
 ## Tests, types and build
 

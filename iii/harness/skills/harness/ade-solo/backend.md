@@ -21,8 +21,8 @@ sections the work needs, each when you reach the step it shapes:
 
 | Work | Read |
 | --- | --- |
-| New worker | Choose project identifiers once; Scaffold a new worker; Project shape; Node SDK rules; ADE page and standalone page; Declare the worker with `compose::add`; Validation checklist |
-| Workspace already ships the worker's package and compose entry | Node SDK rules (with Namespaces); Worker-side asset delivery; ADE page and standalone page when it has `ui/App.tsx`; skip the Scaffold a new worker, Project shape and `compose::add` sections |
+| New worker | Choose project identifiers once; Scaffold a new worker; Project shape; Node SDK rules; Public page and ADE admin page; Declare the worker with `compose::add`; Validation checklist |
+| Workspace already ships the worker's package and compose entry | Node SDK rules (with Namespaces); Worker-side asset delivery; Public page and ADE admin page when it has `web/App.tsx`; skip the Scaffold a new worker, Project shape and `compose::add` sections |
 | New or changed function | Node SDK rules (Namespaces when crossing one or when you start the worker yourself) |
 | Own trigger type, live updates | Live updates (own trigger type) |
 | Operator settings | Configuration, plus `harness/iii-node/configuration` whole (about 6 KB) |
@@ -56,10 +56,11 @@ call writes the whole package into `workers/<worker-name>`:
 `coder::scaffold-worker { "template": "worker-node-ade", "name": "<worker-name>" }`
 
 It holds the backend with configuration and its own trigger type, the asset
-content function and its two Message-path triggers, the ADE page, the
-standalone page and its HTTP API, `<worker-name>::info`, tests, `iii.worker.yaml`
-and the dev loop. Its `ui/WorkerPage.tsx` and `ui/App.tsx` are the shells that
-prove build and delivery; the real pages belong to the Frontend phase.
+content function and its two Message-path triggers, the ADE admin page, the
+public page and its HTTP API, `<worker-name>::info` and `<worker-name>::set-greeting`,
+tests, `iii.worker.yaml` and the dev loop. Its `ui/WorkerPage.tsx` and
+`web/App.tsx` are the shells that prove build and delivery; the real pages
+belong to the Frontend phase.
 
 Declare the returned `compose` object through `compose::add`, with
 `start_after` the console container and every `requires` container that

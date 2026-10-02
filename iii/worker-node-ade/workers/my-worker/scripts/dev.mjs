@@ -1,4 +1,4 @@
-// `pnpm dev` (what Compose runs): build the ADE assets and the standalone page
+// `pnpm dev` (what Compose runs): build the ADE assets and the public page
 // once, keep rebuilding them on save, and run the worker under `node --watch`
 // so it restarts when src/ or dist/ui/ changes. A restart re-registers the ADE
 // assets with new content; dist/web is read per request and needs none.
