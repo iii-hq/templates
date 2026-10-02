@@ -51,9 +51,10 @@ First decide which of the two shapes the workspace is in, and record it in
 ### A new worker
 
 Scaffold it, never hand-write it (`iii-node` › Scaffold a new worker). One
-call writes the whole package into `workers/<worker-name>`:
+call writes the whole package into `workers/<worker-name>` and adds it to
+the stack, under a `compose-operation` wake on an `operation_id` you pick:
 
-`coder::scaffold-worker { "template": "worker-node-ade", "name": "<worker-name>" }`
+`coder::scaffold-worker { "template": "worker-node-ade", "name": "<worker-name>", "operation_id": "<operation id>", "start_after": ["<console container>"] }`
 
 It holds the backend with configuration and its own trigger type, the asset
 content function and its two Message-path triggers, the ADE admin page, the
@@ -62,11 +63,11 @@ tests, `iii.worker.yaml` and the dev loop. Its `ui/WorkerPage.tsx` and
 `web/App.tsx` are the shells that prove build and delivery; the real pages
 belong to the Frontend phase.
 
-Declare the returned `compose` object through `compose::add`, with
-`start_after` the console container and every `requires` container that
-`compose::status` does not list, under a `compose-operation` wake, exactly
-as the manual's section says. The `requires` containers (`http`) come with
-the template and need no separate agreement. Never edit
+The scaffold adds the worker with every `requires` container the stack
+lacks (`http`), which come with the template and need no separate
+agreement. When its result has a `start_error`, or a note that it was not
+started, declare it yourself: `compose::add` with `compose_add` whole and
+the same `operation_id`, exactly as the manual's section says. Never edit
 `worker-compose.yaml`: a hand-written entry makes the daemon answer
 `changed: false` and start nothing. Before domain code, a real
 `<worker-name>::hello` call answers.

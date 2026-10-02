@@ -70,17 +70,17 @@ Do not copy an example name into generated code, and replace every angle-bracket
 
 Never hand-write a new worker's package. The `ide` worker copies the `worker-node-ade` template from `iii-hq/templates`, which holds everything this file describes (Project shape).
 
-1. `coder::list-templates {}` lists the templates it can scaffold. Confirm `worker-node-ade` is among them. When `source.warning` is set, the list came from a stale cache: call it once more with `{ "refresh": true }` before you conclude a template is missing. Read `compose::status` too: when it already lists a container named `<worker-name>`, pick another name now, because `compose::add` would repoint that container to the new folder.
-2. Scaffold the package:
+1. `coder::list-templates {}` lists the templates it can scaffold. Confirm `worker-node-ade` is among them. When `source.warning` is set, the list came from a stale cache: call it once more with `{ "refresh": true }` before you conclude a template is missing.
+2. Register the `compose-operation` wake on an `operation_id` you pick (Declare the worker with `compose::add` describes it), then scaffold and start the package in one call:
 
    ```json
-   coder::scaffold-worker { "template": "worker-node-ade", "name": "<worker-name>" }
+   coder::scaffold-worker { "template": "worker-node-ade", "name": "<worker-name>", "operation_id": "<operation id>", "start_after": ["<console container>"] }
    ```
 
-   It lands in `workers/<worker-name>`, relative to the session root; pass `directory` only when the architecture names another folder, and end it with `/<worker-name>`. The result is `{ directory, files, compose, requires, next_steps }`: `directory` and every `files[].path` are absolute, `compose` is the container object for step 3, and `requires` lists the containers the worker needs (`http`). `next_steps` are written for people; follow this section instead, and never restart the project to start the worker.
+   It writes the files into `workers/<worker-name>`, relative to the session root, then adds the worker to the stack in the same call: `compose::add` with the worker, its `start_after` and every `requires` container the stack lacks (`http`). Pass `directory` only when the architecture names another folder, and end it with `/<worker-name>`. The result is `{ directory, files, compose, compose_add, requires, operation_id, started, next_steps }`: `directory` and every `files[].path` are absolute, and the wake fires when `operation_id` ends. `next_steps` are written for people; follow this section instead, and never restart the project to start the worker.
 
-   The call writes every file or none. It refuses an invalid name, an unknown template, a folder whose last segment is not the name, a folder outside the session's writable roots, and a folder that exists and is not empty. Never delete a folder to retry: when it already holds this worker, edit it in place; otherwise choose another parent folder or name and say why. When the templates are unavailable (no cache and no network), report it and stop.
-3. Declare it: `compose::add` with the returned `compose`, `start_after` the console container, and every `requires` container that `compose::status` does not list (Declare the worker with `compose::add`).
+   The call writes every file or none. It refuses an invalid name, an unknown template, a folder whose last segment is not the name, a folder outside the session's writable roots, a folder that exists and is not empty, and (C235, before any write) a name the stack already has a container for. Never delete a folder to retry: when it already holds this worker, edit it in place; otherwise choose another parent folder or name and say why. When the templates are unavailable (no cache and no network), report it and stop.
+3. When the result has a `start_error`, or a note that it was not started (its `compose::add` needs approval, for one), the files are written but the worker is not in the stack: declare it yourself, `compose::add` with `compose_add` whole and the step 2 `operation_id` (Declare the worker with `compose::add`).
 
 If `engine::functions::info` reports `coder::scaffold-worker` as not available, the project's `ide` worker predates it: tell the user it needs an update and stop. Do not hand-write the package instead.
 
