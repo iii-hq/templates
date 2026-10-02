@@ -1,6 +1,6 @@
 # my-worker
 
-A Python worker project. `workers/my-worker` registers `my-worker::hello`, keeps its settings in the `my-worker` configuration, provides the `my-worker:hello` trigger type, and shows one page in two places: inside the ADE, and at http://127.0.0.1:3111/my-worker through the `http` worker.
+A Python worker project. `workers/my-worker` registers `my-worker::hello`, keeps its settings in the `my-worker` configuration, provides the `my-worker:hello` trigger type, and shows one page in two places: inside the ADE, built from the console's own components, and as a plainer standalone page at http://127.0.0.1:3111/my-worker through the `http` worker.
 
 ## Prerequisites
 
@@ -40,10 +40,10 @@ Expected response:
 
 ## Open the page
 
-- **Browser:** `http://127.0.0.1:3111/my-worker`. The page calls the worker through `POST /my-worker/api/hello`.
-- **ADE:** uncomment the `ade` container in `worker-compose.yaml` and restart Compose, then open `http://127.0.0.1:3113` and pick the `my-worker` page. Alone, it is at `http://127.0.0.1:3113/#/worker/my-worker/my-worker`. Inside the ADE the page calls the worker through the console's own connection, not over HTTP.
+- **ADE:** uncomment the `ade` container in `worker-compose.yaml` and restart Compose, then open `http://127.0.0.1:3113` and pick the `my-worker` page. Alone, it is at `http://127.0.0.1:3113/#/worker/my-worker/my-worker`. The page uses the console's components and calls the worker through the console's own connection, not over HTTP. **Open outside console** opens the standalone page in a new tab. Its address is `my-worker::info`'s `web_url`: the worker's `III_HTTP_URL` environment variable (default `http://127.0.0.1:3111`) plus `/my-worker`. Set it when the `http` worker is reachable somewhere else.
+- **Browser:** `http://127.0.0.1:3111/my-worker`. A plainer version of the same call, in plain React: it calls the worker through `POST /my-worker/api/hello`.
 
-Both show the same screen, `ui/App.tsx`. How it works, how to edit it and how to run the tests: `workers/my-worker/README.md`.
+The ADE page is `ui/WorkerPage.tsx`; the standalone page is `ui/App.tsx`. How it works, how to edit it and how to run the tests: `workers/my-worker/README.md`.
 
 ## Security
 
