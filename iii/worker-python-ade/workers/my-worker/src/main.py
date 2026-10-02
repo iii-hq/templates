@@ -4,6 +4,7 @@ shown in the ADE and at http://127.0.0.1:3111/my-worker through the http worker.
 from __future__ import annotations
 
 import asyncio
+import os
 import signal
 import threading
 from pathlib import Path
@@ -13,6 +14,7 @@ from iii import InitOptions, TriggerAction, register_worker
 from iii.triggers import TriggerConfig, TriggerHandler
 
 NAME = "my-worker"
+HTTP_URL = "http://127.0.0.1:3111"
 # Written by `pnpm build` in ui/: dist/ui is the ADE page, dist/web the standalone one.
 DIST = Path(__file__).resolve().parent.parent / "dist"
 
@@ -31,6 +33,11 @@ HELLO_RESPONSE = {
     "properties": {"message": {"type": "string"}},
     "required": ["message"],
 }
+INFO_RESPONSE = {
+    "type": "object",
+    "properties": {"web_url": {"type": "string"}, "greeting": {"type": "string"}},
+    "required": ["web_url", "greeting"],
+}
 ANY_OBJECT = {"type": "object"}
 
 # The HTTP routes take `:file` and `:fn` straight from the URL (`..` included),
@@ -44,6 +51,12 @@ NOT_FOUND = {"status_code": 404, "headers": JSON_HEADERS, "body": {"error": "not
 def build_greeting(greeting: str, name: str) -> dict[str, str]:
     """Pure domain logic, testable without an engine."""
     return {"message": f"{greeting}, {name}!"}
+
+
+def web_url(base: str | None = None) -> str:
+    """Where the standalone page answers: the http worker's base URL (III_HTTP_URL,
+    default http://127.0.0.1:3111) plus this worker's route."""
+    return f"{(base or HTTP_URL).rstrip('/')}/{NAME}"
 
 
 class HelloTriggers(TriggerHandler):
@@ -111,6 +124,9 @@ def register(iii: Any, dist: Path = DIST) -> None:
         await hello_triggers.emit(iii, {"name": name, **result})
         return result
 
+    def info(_payload: dict[str, Any]) -> dict[str, str]:
+        return {"web_url": web_url(os.environ.get("III_HTTP_URL")), "greeting": settings["greeting"]}
+
     def config_changed(event: dict[str, Any]) -> dict[str, bool]:
         settings.update(event.get("new_value") or {})
         return {"ok": True}
@@ -172,6 +188,14 @@ def register(iii: Any, dist: Path = DIST) -> None:
             },
         },
         hello_triggers,
+    )
+    iii.register_function(
+        f"{NAME}::info",
+        info,
+        description="Where the standalone page answers, and the configured greeting.",
+        metadata={"internal": True},
+        request_format=ANY_OBJECT,
+        response_format=INFO_RESPONSE,
     )
     iii.register_function(
         f"{NAME}::config-changed",

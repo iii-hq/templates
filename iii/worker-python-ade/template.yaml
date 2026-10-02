@@ -44,6 +44,7 @@ files:
   - workers/my-worker/tests/test_main.py
   - workers/my-worker/tests/test_web.py
   - workers/my-worker/ui/App.tsx
+  - workers/my-worker/ui/WorkerPage.tsx
   - workers/my-worker/ui/build.mjs
   - workers/my-worker/ui/client.ts
   - workers/my-worker/ui/package.json

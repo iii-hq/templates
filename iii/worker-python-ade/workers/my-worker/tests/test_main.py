@@ -9,7 +9,7 @@ import pytest
 from iii.triggers import TriggerConfig
 
 import src.main
-from src.main import NAME, SETTINGS_SCHEMA, build_greeting, register
+from src.main import NAME, SETTINGS_SCHEMA, build_greeting, register, web_url
 
 
 def hello(bus, payload):
@@ -28,6 +28,23 @@ def fired(bus):
 
 def test_build_greeting():
     assert build_greeting("Hello", "World") == {"message": "Hello, World!"}
+
+
+def test_web_url():
+    assert web_url() == f"http://127.0.0.1:3111/{NAME}"
+    assert web_url("") == f"http://127.0.0.1:3111/{NAME}"
+    assert web_url("https://iii.example.com/") == f"https://iii.example.com/{NAME}"
+    assert web_url("http://10.0.0.5:3111") == f"http://10.0.0.5:3111/{NAME}"
+
+
+def test_info_gives_the_page_url_and_the_live_greeting(bus, dist, monkeypatch):
+    monkeypatch.delenv("III_HTTP_URL", raising=False)
+    register(bus, dist)
+    info = bus.functions[f"{NAME}::info"]
+    assert info({}) == {"web_url": f"http://127.0.0.1:3111/{NAME}", "greeting": "Hello"}
+    monkeypatch.setenv("III_HTTP_URL", "https://iii.example.com/")
+    bus.functions[f"{NAME}::config-changed"]({"new_value": {"greeting": "Hey"}})
+    assert info({}) == {"web_url": f"https://iii.example.com/{NAME}", "greeting": "Hey"}
 
 
 def test_settings_are_ensured_then_read(bus, dist):
