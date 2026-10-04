@@ -29,7 +29,7 @@ An iii worker with one function and two pages: the public page users open in a b
 | `web/client.ts` | The `Client` type and `httpClient` (public page, `fetch`) |
 | `web/main.tsx`, `web/index.html` | Public page entry and its HTML |
 | `ui/build.mjs` | Builds `dist/ui` (admin) and `dist/web` (public) |
-| `scripts/dev.mjs` | `pnpm dev`: build, watch, and restart the worker on change; a crash ends it |
+| `scripts/dev.mjs` | `pnpm dev`: build, rebuild on save, and restart the worker on change; a crash ends it |
 
 ## Expose another function to the page
 

@@ -51,7 +51,7 @@ The Backend Engineer owns package/dependency files, both TypeScript configs,
 `pnpm-workspace.yaml`, `scripts/dev.mjs`, `ui/build.mjs`, initial UI shell,
 `iii.worker.yaml`, the asset content function, `src/web.ts` with its
 allowlists, and the Compose declaration.
-`pnpm dev` builds and watches both halves; a UI edit changes
+`pnpm dev` builds both halves and rebuilds them on save; a UI edit changes
 asset hashes and hot-reloads the open console. Declare through `compose::add`
 under a wake, never by editing `worker-compose.yaml` or restarting the stack.
 

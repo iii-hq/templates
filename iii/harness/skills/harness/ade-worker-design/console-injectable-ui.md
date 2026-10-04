@@ -713,7 +713,8 @@ purpose-written labels, grouping, defaults, and reload semantics.
 
 ## The dev loop (hot reload)
 
-Rebuild-on-save stays in the build tool; re-registration stays in the worker.
+Rebuild-on-save lives in the dev script (`scripts/dev.mjs` re-runs the one-shot
+`ui/build.mjs` on save); re-registration stays in the worker.
 In the portable layout `pnpm dev` (`scripts/dev.mjs`, from `iii-node`) runs
 both: a save under `ui/` rewrites `dist/ui/`, restarts the worker, and the
 worker re-registers the same asset paths with new content hashes. Every open
