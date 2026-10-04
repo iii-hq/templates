@@ -16,7 +16,7 @@ In terminal 1, from the project root, start Compose in the foreground:
 iii compose --up
 ```
 
-Compose runs `pnpm install` (`pre_run`) in `workers/my-worker`, then `pnpm dev`. The dev loop builds the page, rebuilds it on every save, and restarts the worker when `src/` or the ADE assets change.
+Compose runs `pnpm install` (`pre_run`) in `workers/my-worker`, then `node scripts/dev.mjs`, the dev loop `pnpm dev` runs. It builds the page, rebuilds it on every save, and restarts the worker when `src/` or the ADE assets change. A crash ends the loop: `restart: on-failure` retries it with backoff, then Compose marks the worker `failed`.
 
 In terminal 2, also from the project root, call the worker:
 

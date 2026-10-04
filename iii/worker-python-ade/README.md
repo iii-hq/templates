@@ -24,7 +24,7 @@ Before starting `my-worker`, Compose runs its `scripts.pre_run` from `workers/my
 
 If the hook fails, the worker does not start; read the hook error before retrying. Compose also starts the `http` worker, which serves the page.
 
-`run` is `sh scripts/start.sh` too: it repeats these steps (a no-op once done), then starts the worker under `watchfiles`. A compose entry without `pre_run`, such as a bare `compose::add worker=<dir>`, therefore starts as well: the worker bootstraps itself on its first start, only slower, and that bootstrap counts against Compose's `startup_timeout` (60s by default; this template's `worker-compose.yaml` sets 360s). Under `run`, a failing `pnpm install` or build only warns and the worker starts without the pages; `--prepare` fails instead.
+`run` is `sh scripts/start.sh` too: it repeats these steps (a no-op once done), then starts the worker under `scripts/dev.py`, which restarts it on save and ends when it crashes, so `restart: on-failure` retries it. A compose entry without `pre_run`, such as a bare `compose::add worker=<dir>`, therefore starts as well: the worker bootstraps itself on its first start, only slower, and that bootstrap counts against Compose's `startup_timeout` (60s by default; this template's `worker-compose.yaml` sets 360s). Under `run`, a failing `pnpm install` or build only warns and the worker starts without the pages; `--prepare` fails instead.
 
 ## Call the worker
 

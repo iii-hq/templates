@@ -15,9 +15,12 @@ containers:
   # Host development. Hooks run from the worker directory. scripts/start.sh
   # reuses a private venv, installs the worker into it, then builds the page
   # into dist/ (dist/ui for the ADE, dist/web for http://127.0.0.1:3111/my-worker).
-  # pre_run does that up front; without it, the first start does it.
+  # pre_run does that up front; without it, the first start does it. A crash
+  # ends the worker, and `restart: on-failure` retries with backoff before
+  # `failed`.
   my-worker:
     worker: path://./workers/my-worker
+    restart: on-failure
     scripts:
       pre_run: "sh scripts/start.sh --prepare"
       pre_run_timeout: 5m

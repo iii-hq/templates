@@ -371,12 +371,12 @@ During development, rebuilding `dist/ui` restarts the worker, which re-registers
 
 ## Development loop
 
-`pnpm dev` runs `scripts/dev.mjs`, and the scaffold's compose entry runs it as the container's `run` script: it is what gives the worker hot reload under compose. Keep it working when you edit the package. Do not replace it with a single watcher; it must:
+`pnpm dev` runs `scripts/dev.mjs`, and the scaffold's compose entry runs it as the container's `run` script (`node scripts/dev.mjs`, with `restart: on-failure`): it is what gives the worker hot reload under compose. Keep it working when you edit the package. Do not replace it with a single watcher; it must:
 
 1. build the ADE assets and the public page once before starting anything else;
 2. rebuild them on every `ui/` and `web/` edit, so TSX and CSS changes rewrite `dist/`;
 3. run the worker with reload, so a `src/` edit or a rebuilt `dist/ui` restarts it;
-4. terminate all children if any watcher fails;
+4. terminate all children and exit with the worker's code when the worker exits on its own or any watcher fails, so Compose sees the crash (not `node --watch`, which waits for the next edit while the container still looks running);
 5. forward `SIGINT`/`SIGTERM` and escalate only after a short grace period.
 
 This enables injectable UI hot development: an edit changes `dist/ui`, the worker restarts, reconnects and re-registers the same asset paths with new content, and the Console hot-swaps the asset. The Console itself is not rebuilt. The public page shows a rebuild on its next browser reload.
@@ -416,13 +416,13 @@ Never write the worker's entry into `worker-compose.yaml` by hand. A running dae
 
    - `compose.worker` is already the absolute path of the scaffolded folder, which `compose::add` accepts; pass it unchanged. The container key is the folder's last segment, `<worker-name>`; `compose::status` shows it.
    - `start_after` names the container that runs the console in this compose file (`ade` in the harness template; `compose::status` lists the real keys), so the console's UI provider exists before the worker registers its assets.
-   - Keep `compose.scripts` as returned: `pre_run` installs the dependencies and `run` starts the dev loop (`pnpm dev`), which gives the worker hot reload under compose.
+   - Keep `compose.scripts` and `restart` as returned: `pre_run` installs the dependencies, `run` starts the dev loop (`node scripts/dev.mjs`), which gives the worker hot reload under compose, and `restart: on-failure` retries a crash.
    - Declare a missing `http` with that object, the same form the templates use, so it reads its `http` configuration. A `requires` container the stack already declares is not added again.
    - The response `{ operation_id, requested, status }` is an acceptance, not readiness.
 
 3. Read `compose::operation { "operation_id": "add-issue-board-7f3a" }` once. If `last_event.terminal` is true, unregister the wake and read the result; otherwise end the turn and let the terminal event wake you. Do not poll.
 
-4. On the terminal event, confirm: `compose::status` shows the worker's container and every added `requires` container `ready`, `engine::workers::info { "name": "<worker-name>" }` lists its functions and trigger types, and, before you replace the example, `<worker-name>::hello` answers a real call. On `failed`, `compose::logs { "container": "<container key>", "tail": 100 }` has the real error. The container runs the worker's own install and start scripts, so the first run installs dependencies and restarts once or twice while the dev loop writes `dist/`; that is expected.
+4. On the terminal event, confirm: `compose::status` shows the worker's container and every added `requires` container `ready`, `engine::workers::info { "name": "<worker-name>" }` lists its functions and trigger types, and, before you replace the example, `<worker-name>::hello` answers a real call. On `failed`, `compose::logs { "container": "<container key>", "tail": 100 }` has the real error. `restart: on-failure` also retries a failed start, so a worker that never registers reaches `failed` only after its retries. Later, a crash ends the dev loop: Compose retries it (`restarting`), and each retry runs the files as they are then, so a fix saved meanwhile is picked up; after five quick failures it is `failed`: fix the code, then `compose::restart { "container": "<container key>" }`. The container runs the worker's own install and start scripts, so the first run installs dependencies and restarts once or twice while the dev loop writes `dist/`; that is expected.
 
 A container that is already declared is left as it is by `compose::add`; if it is stopped, `compose::up { "container": "<container key>" }` starts it. A dependency added later is `pnpm add <package>` in the worker directory; the running loop picks it up on the next rebuild. Never restart the whole project: the harness is a container of it and goes down mid-turn.
 
@@ -458,7 +458,7 @@ evidence only while it remains applicable; broaden checks if impact is unclear.
 - No example project name or repository-specific absolute path leaked into identifiers, scripts, or documentation.
 - `pnpm install` succeeds and the lockfile resolves `@iii-dev/console-ui` from npm at `0.2.0`, not through `file:`, `link:`, or `workspace:`.
 - `pnpm typecheck`, `pnpm test`, and `pnpm build` pass.
-- `pnpm dev` builds all outputs before starting watchers and shuts down cleanly.
+- `pnpm dev` builds all outputs before starting watchers, shuts down cleanly, and exits when the worker crashes.
 - The worker appears in the engine with every intended function and trigger type.
 - A worker-provided trigger type forwards every subscription's metadata (`binding.metadata`, or the config's `metadata` field) on every `iii.trigger`, and its description names that field.
 - Every public function exposes accurate descriptions and request/response schemas.

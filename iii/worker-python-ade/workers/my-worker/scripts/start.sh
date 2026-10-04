@@ -38,4 +38,4 @@ fi
 if [ "${1:-}" = --prepare ]; then
   exit 0
 fi
-exec "$PY" -m watchfiles "$PY src/main.py"
+exec "$PY" scripts/dev.py

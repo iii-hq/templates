@@ -13,13 +13,16 @@ engine:
 
 containers:
   # Host development. pre_run installs local node_modules before each start;
-  # `pnpm dev` builds the page, then restarts the worker on every save.
+  # scripts/dev.mjs (what `pnpm dev` runs, started without pnpm staying
+  # resident) builds the page, then restarts the worker on every save. A crash
+  # ends it, and `restart: on-failure` retries with backoff before `failed`.
   my-worker:
     worker: path://./workers/my-worker
+    restart: on-failure
     scripts:
       pre_run: pnpm install
       pre_run_timeout: 5m
-      run: pnpm dev
+      run: node scripts/dev.mjs
 
   # Serves the public page on http://127.0.0.1:3111/my-worker.
   # No auth: never expose port 3111 through a public proxy or tunnel.

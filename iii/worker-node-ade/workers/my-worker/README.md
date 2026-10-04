@@ -29,7 +29,7 @@ An iii worker with one function and two pages: the public page users open in a b
 | `web/client.ts` | The `Client` type and `httpClient` (public page, `fetch`) |
 | `web/main.tsx`, `web/index.html` | Public page entry and its HTML |
 | `ui/build.mjs` | Builds `dist/ui` (admin) and `dist/web` (public) |
-| `scripts/dev.mjs` | `pnpm dev`: build, watch, and restart the worker on change |
+| `scripts/dev.mjs` | `pnpm dev`: build, watch, and restart the worker on change; a crash ends it |
 
 ## Expose another function to the page
 
@@ -40,7 +40,7 @@ An iii worker with one function and two pages: the public page users open in a b
 ## Commands
 
 ```sh
-pnpm dev        # what Compose runs
+pnpm dev        # the dev loop Compose runs (as node scripts/dev.mjs)
 pnpm start      # build, then run once: what a plain `compose::add` of this folder runs
 pnpm test       # node --test, no engine needed
 pnpm typecheck

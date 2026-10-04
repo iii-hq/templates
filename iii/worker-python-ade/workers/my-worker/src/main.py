@@ -307,11 +307,18 @@ def main() -> None:
             worker_name=NAME, worker_description=f"{NAME}: hello, settings, a public page and an ADE admin page."
         )
     )
-    register(iii)
+    try:
+        register(iii)
+    except BaseException:
+        # The SDK's non-daemon thread would keep the process alive with no
+        # functions; shut it down so the error ends the process and the dev
+        # loop and Compose see the crash.
+        iii.shutdown()
+        raise
     print(f"{NAME} started: http://127.0.0.1:3111/{NAME}", flush=True)
     # The SDK runs its event loop in a non-daemon thread, so the process outlives
-    # main() and does not exit on SIGINT. Wait for SIGINT (watchfiles, on every save)
-    # or SIGTERM (Compose, on stop), then disconnect and let the process end.
+    # main() and does not exit on SIGINT. Wait for SIGTERM (scripts/dev.py on every
+    # save, Compose on stop) or SIGINT (Ctrl-C), then disconnect and let the process end.
     stop = threading.Event()
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: stop.set())

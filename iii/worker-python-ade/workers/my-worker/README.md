@@ -16,7 +16,7 @@ A Python worker with two pages: the public page users open over HTTP, with its o
 
 ## Prerequisites
 
-Python 3.11 or newer, Node 22 or newer and pnpm 10 or newer. `scripts/start.sh` creates `.venv`, installs the worker, builds the page when `dist/ui/page.js` is missing and starts the worker under `watchfiles`. Compose's `scripts.pre_run` runs it with `--prepare` before the start; a bare `compose::add worker=<dir>` has no `pre_run`, so the worker bootstraps itself on its first start, only slower, and that bootstrap counts against Compose's `startup_timeout` (60s by default; this template's `worker-compose.yaml` sets 360s). Without pnpm the worker still starts, and the pages stay unavailable until `ui/` is built.
+Python 3.11 or newer, Node 22 or newer and pnpm 10 or newer. `scripts/start.sh` creates `.venv`, installs the worker, builds the page when `dist/ui/page.js` is missing and starts the worker under `scripts/dev.py`, which restarts it on save and exits when it crashes. Compose's `scripts.pre_run` runs it with `--prepare` before the start; a bare `compose::add worker=<dir>` has no `pre_run`, so the worker bootstraps itself on its first start, only slower, and that bootstrap counts against Compose's `startup_timeout` (60s by default; this template's `worker-compose.yaml` sets 360s). Without pnpm the worker still starts, and the pages stay unavailable until `ui/` is built.
 
 ## How the pages work
 
@@ -32,7 +32,7 @@ Two screens call the same worker:
 
 ## Edit
 
-- `src/main.py`: `watchfiles` restarts the worker on save.
+- `src/main.py`: `scripts/dev.py` restarts the worker on save. A crash ends it, and Compose's `restart: on-failure` retries.
 - `ui/` or `web/`: run `pnpm build` in `ui/`. The new `dist/` restarts the worker, which registers the page again.
 
 ## Tests

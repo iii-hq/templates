@@ -40,6 +40,7 @@ files:
   - workers/my-worker/README.md
   - workers/my-worker/iii.worker.yaml
   - workers/my-worker/pyproject.toml
+  - workers/my-worker/scripts/dev.py
   - workers/my-worker/scripts/start.sh
   - workers/my-worker/src/__init__.py
   - workers/my-worker/src/main.py
