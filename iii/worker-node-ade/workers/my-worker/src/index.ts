@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url'
 import { registerWorker, TriggerAction } from 'iii-sdk'
 import type { RegisterFunctionFormat } from 'iii-sdk/protocol'
 import type { TriggerConfig } from 'iii-sdk/trigger'
-import { greetee, hello, normalizeGreeting, type HelloInput, type HelloOutput } from './hello.js'
+import { greetee, hello, normalizeGreeting, storedGreeting, type HelloInput, type HelloOutput } from './hello.js'
 import { uiContent } from './ui-assets.js'
 import { WEB_PATH, webHandlers, webUrl } from './web.js'
 
@@ -31,7 +31,7 @@ async function loadConfig() {
     namespace: 'default',
     payload: { id: 'my-worker' },
   })
-  greeting = value?.greeting || 'Hello'
+  greeting = storedGreeting(value)
   return { greeting }
 }
 

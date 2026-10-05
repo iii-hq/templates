@@ -22,9 +22,14 @@ if [ "$PY" = .venv/bin/python ] && ! [ .venv/.installed -nt pyproject.toml ]; th
   touch .venv/.installed
 fi
 
-# Build the page (dist/ui for the ADE, dist/web for HTTP) when it is missing.
-# --prepare fails when the build does; a bare run warns and starts without pages.
-if [ ! -f dist/ui/page.js ]; then
+# Build the pages (dist/ui for the ADE, dist/web for HTTP) when any output is
+# missing. --prepare fails when the build does; a bare run warns and starts
+# without pages.
+missing=
+for output in dist/ui/page.js dist/ui/styles.css dist/web/index.html dist/web/app.js dist/web/styles.css; do
+  [ -f "$output" ] || missing=1
+done
+if [ -n "$missing" ]; then
   if ! command -v pnpm >/dev/null 2>&1; then
     echo "pnpm not found: the ADE and HTTP pages stay unavailable until ui/ is built" >&2
   elif ! (cd ui && pnpm install && pnpm build); then

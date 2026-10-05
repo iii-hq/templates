@@ -439,7 +439,7 @@ instead of repeating discovery. Each engineer performs only its assigned side.
    implementation references belong to the Frontend Engineer.
 3. Inspect the destination project's Compose shape, existing workers and coding conventions; reuse a registered capability instead of scaffolding a duplicate.
 4. Scaffold the package with `coder::scaffold-worker` (Scaffold a new worker).
-5. Declare it through `compose::add` under a `compose-operation` wake, with its `requires` containers, then confirm with `compose::status`, `engine::workers::info` and a real `<worker-name>::hello` call.
+5. The scaffold already added it to the stack: on its `compose-operation` wake, confirm with `compose::status`, `engine::workers::info` and a real `<worker-name>::hello` call. Only when the result has a `start_error` or says it was not started, declare it through `compose::add` with its `requires` containers first (Scaffold a new worker, step 3).
 6. Replace the example `hello` with the domain (keep `info`: the ADE page's **Open public page** reads it; keep or replace `set-greeting` with the domain's own admin writes): backend modules, functions with complete contracts, tests, and the API allowlist in `src/web.ts` for the functions the public page calls.
 7. Add configuration integration if needed.
 8. Leave `ui/WorkerPage.tsx` and `web/App.tsx` building against the new functions (`host.iii` and `client`). The Frontend Engineer builds the admin page and the other ADE-only surfaces from console components, and the public page with its own design in `web/app.css`, after the backend/delivery contracts are verified.

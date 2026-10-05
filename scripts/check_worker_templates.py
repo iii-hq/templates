@@ -12,7 +12,7 @@ block, this asserts:
 
   * worker.dir, worker.name and worker.compose are set;
   * worker.dir is an existing directory inside the template, without `..`;
-  * worker.name appears in worker.dir;
+  * worker.name is the last segment of worker.dir;
   * every `files:` entry is relative without `..` and exists, and at least
     one sits under worker.dir;
   * every `files:` entry is copied by `iii project init`: its file name matches
@@ -128,8 +128,8 @@ def check(root: Path) -> tuple[list[str], list[str]]:
         wdir, name, compose = worker["dir"], worker["name"], worker["compose"]
         if unsafe(wdir) or not (root / tid / wdir).is_dir():
             errors.append(f"{where}: worker.dir {wdir} must be an existing directory inside the template, without '..'")
-        if name not in wdir:
-            errors.append(f"{where}: worker.name {name} must appear in worker.dir {wdir}")
+        if Path(wdir).name != name:
+            errors.append(f"{where}: worker.name {name} must be the last segment of worker.dir {wdir}")
         files = block_list(top_level_block(text, "files"))
         own_patterns = language_patterns(text)
         patterns = {lang: root_patterns.get(lang, []) + own_patterns.get(lang, []) for lang in LANGUAGES}

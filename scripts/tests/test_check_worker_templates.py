@@ -159,7 +159,11 @@ class CheckWorkerTemplatesTest(unittest.TestCase):
 
     def test_name_token_not_in_dir(self) -> None:
         self.edit("  name: hello-node", "  name: my-worker")
-        self.assert_error("worker.name my-worker must appear in worker.dir workers/hello-node")
+        self.assert_error("worker.name my-worker must be the last segment of worker.dir workers/hello-node")
+
+    def test_name_only_a_substring_of_the_dir_segment(self) -> None:
+        self.edit("  name: hello-node", "  name: hello")
+        self.assert_error("worker.name hello must be the last segment of worker.dir workers/hello-node")
 
     def test_missing_key(self) -> None:
         self.edit("  compose: hello-node\n", "")

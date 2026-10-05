@@ -83,6 +83,19 @@ def test_settings_update_changes_the_greeting(bus, dist):
     assert hello(bus, {}) == {"message": "Hey, World!"}
 
 
+@pytest.mark.parametrize("stored", [{"greeting": ""}, {"greeting": "   "}, {}, None])
+def test_an_empty_stored_greeting_falls_back_to_the_default(bus, dist, stored):
+    bus.settings = stored
+    register(bus, dist)
+    assert hello(bus, {"name": "Ada"}) == {"message": "Hello, Ada!"}
+    (binding,) = [trigger for trigger in bus.triggers if trigger["type"] == "configuration"]
+    bus.functions[binding["function_id"]]({"new_value": {"greeting": " Hey "}})
+    assert hello(bus, {}) == {"message": "Hey, World!"}
+    for bad in ({"greeting": ""}, "not a value", None):
+        bus.functions[binding["function_id"]]({"new_value": bad})
+        assert hello(bus, {}) == {"message": "Hello, World!"}
+
+
 def test_set_greeting_saves_it_in_the_default_namespace_and_greets_with_it(bus, dist):
     register(bus, dist)
     result = asyncio.run(bus.functions[f"{NAME}::set-greeting"]({"greeting": "  Olá "}))

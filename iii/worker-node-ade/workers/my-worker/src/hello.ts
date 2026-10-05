@@ -16,6 +16,15 @@ export function normalizeGreeting(input: unknown): string {
   return greeting
 }
 
+/** The greeting in a stored configuration value; Hello when it is missing or invalid. */
+export function storedGreeting(value: unknown): string {
+  try {
+    return normalizeGreeting((value as { greeting?: unknown } | null | undefined)?.greeting)
+  } catch {
+    return 'Hello'
+  }
+}
+
 export function hello(input: HelloInput, greeting = 'Hello'): HelloOutput {
   return { message: `${greeting}, ${greetee(input)}!` }
 }

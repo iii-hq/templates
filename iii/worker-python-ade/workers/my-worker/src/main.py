@@ -22,7 +22,7 @@ DEFAULT_SETTINGS = {"greeting": "Hello"}
 GREETING_MAX = 40
 SETTINGS_SCHEMA = {
     "type": "object",
-    "properties": {"greeting": {"type": "string", "description": "Word said before the name"}},
+    "properties": {"greeting": {"type": "string", "minLength": 1, "description": "Word said before the name"}},
     "required": ["greeting"],
 }
 HELLO_REQUEST = {
@@ -76,6 +76,14 @@ def normalize_greeting(value: Any) -> str:
     if len(greeting) > GREETING_MAX:
         raise ValueError(f"greeting must be at most {GREETING_MAX} characters")
     return greeting
+
+
+def stored_greeting(value: Any) -> str:
+    """The greeting in a stored configuration value; the default when it is missing or invalid."""
+    try:
+        return normalize_greeting(value.get("greeting") if isinstance(value, dict) else None)
+    except ValueError:
+        return DEFAULT_SETTINGS["greeting"]
 
 
 def web_url(base: str | None = None) -> str | None:
@@ -136,7 +144,7 @@ def load_settings(iii: Any) -> dict[str, Any]:
             "initial_value": DEFAULT_SETTINGS,
         },
     )
-    return {**DEFAULT_SETTINGS, **(call("configuration::get", {"id": NAME})["value"] or {})}
+    return {"greeting": stored_greeting(call("configuration::get", {"id": NAME})["value"])}
 
 
 def register(iii: Any, dist: Path = DIST) -> None:
@@ -172,7 +180,7 @@ def register(iii: Any, dist: Path = DIST) -> None:
         return {"greeting": greeting}
 
     def config_changed(event: dict[str, Any]) -> dict[str, bool]:
-        settings.update(event.get("new_value") or {})
+        settings["greeting"] = stored_greeting(event.get("new_value"))
         return {"ok": True}
 
     ui_assets = {

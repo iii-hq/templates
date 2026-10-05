@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { greetee, hello, normalizeGreeting } from '../src/hello.js'
+import { greetee, hello, normalizeGreeting, storedGreeting } from '../src/hello.js'
 
 describe('normalizeGreeting', () => {
   it('trims a greeting', () => {
@@ -11,6 +11,18 @@ describe('normalizeGreeting', () => {
     assert.throws(() => normalizeGreeting('   '), /must not be empty/)
     assert.throws(() => normalizeGreeting(undefined), /must not be empty/)
     assert.throws(() => normalizeGreeting('x'.repeat(41)), /at most 40/)
+  })
+})
+
+describe('storedGreeting', () => {
+  it('uses a valid stored greeting, trimmed', () => {
+    assert.equal(storedGreeting({ greeting: ' Hey ' }), 'Hey')
+  })
+
+  it('falls back to Hello for a missing or invalid one', () => {
+    for (const value of [null, undefined, {}, { greeting: '' }, { greeting: '   ' }, { greeting: 'x'.repeat(41) }, 'bad']) {
+      assert.equal(storedGreeting(value), 'Hello')
+    }
   })
 })
 

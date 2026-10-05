@@ -71,6 +71,7 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
   const [calling, setCalling] = useState(false)
   const [tried, setTried] = useState<Outcome | null>(null)
   const [browser, setBrowser] = useState(false)
+  const [opening, setOpening] = useState<Outcome | null>(null)
 
   const loadInfo = useCallback(() => {
     host.iii.trigger<Info>('my-worker::info', {}).then(setInfo, () => setInfo(null))
@@ -122,15 +123,27 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
     info && (info.web_url ?? `http://${window.location.hostname}:${HTTP_WORKER_PORT}${info.web_path}`)
 
   // Opens the public page in the browser worker's console page. Without a
-  // browser worker, on a modified click, or when no tab starts, the link opens
-  // a new browser tab as usual.
+  // browser worker, or on a modified click, the link opens a new browser tab as
+  // usual. When the browser worker cannot start a tab, the page says so and
+  // later clicks open a new tab: a window.open after the failed call would no
+  // longer count as the click and the popup blocker would stop it.
   function openInBrowser(event: MouseEvent<HTMLAnchorElement>) {
     if (!browser || !info || !publicHref || event.metaKey || event.ctrlKey || event.shiftKey) return
     event.preventDefault()
     const url = info.web_url ?? `http://127.0.0.1:${HTTP_WORKER_PORT}${info.web_path}`
     host.iii.trigger<{ session_id: string }>(BROWSER_START, { url, preview: false }).then(
-      ({ session_id }) => host.panels?.open({ pageId: 'browser', context: { sessionId: session_id } }),
-      () => window.open(publicHref, '_blank', 'noreferrer'),
+      ({ session_id }) => {
+        setOpening(null)
+        host.panels?.open({ pageId: 'browser', context: { sessionId: session_id } })
+      },
+      (error) => {
+        setBrowser(false)
+        setOpening({
+          kind: 'error',
+          headline: 'The browser worker could not open the public page',
+          detail: `${errorMessage(error)}. Open public page now opens it in a new tab.`,
+        })
+      },
     )
   }
 
@@ -163,6 +176,7 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
       <PageMain>
         <div className="my-worker-scroll">
           <div className="my-worker-column">
+            <Outcome outcome={opening} />
             <SettingsSection title="Settings" description="What people see on the public page.">
               <div className="my-worker-stack">
                 <form onSubmit={save}>

@@ -20,7 +20,7 @@ Before starting `my-worker`, Compose runs its `scripts.pre_run` from `workers/my
 
 1. It creates the private `.venv` when it is missing;
 2. it installs the worker into it with `pip install -e .` when `pyproject.toml` changed since the last install;
-3. when `dist/ui/page.js` is missing, it runs `pnpm install && pnpm build` in `ui/`, which writes `dist/ui` (the ADE page) and `dist/web` (the page served over HTTP). Without pnpm it warns and goes on; the pages stay unavailable until `ui/` is built.
+3. when any page output in `dist/` is missing, it runs `pnpm install && pnpm build` in `ui/`, which writes `dist/ui` (the ADE page) and `dist/web` (the page served over HTTP). Without pnpm it warns and goes on; the pages stay unavailable until `ui/` is built.
 
 If the hook fails, the worker does not start; read the hook error before retrying. Compose also starts the `http` worker, which serves the page.
 
