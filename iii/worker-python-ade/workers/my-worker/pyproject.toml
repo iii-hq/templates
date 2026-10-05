@@ -1,0 +1,33 @@
+[project]
+name = "my-worker"
+version = "0.1.0"
+description = "Example Python worker: my-worker::hello, settings, a trigger type, a public page over HTTP and an admin page in the ADE."
+requires-python = ">=3.11"
+dependencies = [
+    "iii-sdk==0.24.2",
+    "watchfiles",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Single-module worker: the entry point is src/main.py rather than a
+# package. Tell hatchling to build exactly that directory so
+# `pip install -e .` succeeds.
+[tool.hatch.build.targets.wheel]
+only-include = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]

@@ -16,15 +16,27 @@ Composition recipes for record-shaped UIs: `patterns`.
 > worker is one Node package outside the `iii-hq/workers` monorepo. Its
 > `package.json`, `ui/build.mjs`, `ui/tsconfig.json`, `scripts/dev.mjs` and
 > the Node asset delivery are the Backend Engineer's boilerplate from
-> `iii-node`; the Frontend Engineer edits `ui/page.tsx`, `ui/styles.css` and
-> `ui/src/**`. `@iii-dev/console-ui` is installed from npm at **0.2.0 or
-> later** — the release that ships the `/hooks` and `/format` subpaths,
-> `build-worker-ui` and `lint-worker-ui` — and its types are read from
-> `node_modules/@iii-dev/console-ui/` (`index.d.ts`, `hooks.d.mts`,
-> `format.d.mts`). Monorepo paths this document names (`packages/console-ui`,
-> `ade/web`, `state/`, `browser/`, `cron/`) are upstream examples, not files
-> of this project: consult one only for a specific unresolved convention and
-> never block on it.
+> `iii-node`; the Frontend Engineer edits `ui/WorkerPage.tsx`, `ui/page.tsx`,
+> `ui/styles.css`, `ui/src/**`, `web/App.tsx` and `web/app.css`.
+> The shared components this document requires (§1's example, the Definition
+> of done) apply to `ui/WorkerPage.tsx`, `page.tsx` and the console-only
+> surfaces it registers. `ui/WorkerPage.tsx` is the ADE page, the worker's
+> admin (Settings, Test, Endpoints): it has the iii `Wordmark` as its header
+> icon, calls the worker through `host.iii` and shows **Open public page** from
+> `<worker>::info`'s `web_url` (else `web_path` on the console's host).
+> `web/App.tsx` is the public page users open at
+> `http://127.0.0.1:3111/<worker>`, in its own design (`web/app.css`, not
+> console-linted): it reaches the backend through its `client` prop and
+> imports nothing from `@iii-dev/console-ui` at runtime, because those
+> components exist only in the ADE (`iii-node` › Public page and ADE admin
+> page). `@iii-dev/console-ui` is
+> installed from npm at **0.2.0 or later** — the release that ships the
+> `/hooks` and `/format` subpaths, `build-worker-ui` and `lint-worker-ui` —
+> and its types are read from `node_modules/@iii-dev/console-ui/`
+> (`index.d.ts`, `hooks.d.mts`, `format.d.mts`). Monorepo paths this document
+> names (`packages/console-ui`, `ade/web`, `state/`, `browser/`, `cron/`) are
+> upstream examples, not files of this project: consult one only for a
+> specific unresolved convention and never block on it.
 
 ## How it works
 
@@ -41,19 +53,21 @@ Registration is deployment; disconnect is teardown.
 <worker>/
   ui/
     page.tsx      # the script asset — default-exports setup(host)
+    WorkerPage.tsx # scaffold: the ADE page (the worker's admin), built from console-ui components
     styles.css    # the style asset — every rule scoped
     build.mjs     # buildWorkerUi({ scope, root: import.meta.dirname, outdir: '../dist/ui' })
     tsconfig.json
     src/          # page, renderers, config form, widgets
+  web/            # scaffold: the public page users open (App.tsx, app.css), plain React, not part of the ADE
   src/
     ui.ts         # Node delivery: one content function + one trigger per asset
   dist/ui/        # page.js + styles.css — the bytes the worker serves
 ```
 
 `@iii-dev/console-ui`'s root is types-only at build time; the console serves
-its runtime from the running SPA. The scaffold's `pnpm build:ui` type-checks
-and runs `ui/build.mjs`; `pnpm dev` (`scripts/dev.mjs`) is the hot reload for
-both halves (The dev loop, below).
+its runtime from the running SPA. The scaffold's `pnpm build` runs
+`ui/build.mjs` and `pnpm typecheck` type-checks both halves; `pnpm dev`
+(`scripts/dev.mjs`) is the hot reload for both halves (The dev loop, below).
 
 ## Authoring workflow
 
@@ -446,7 +460,8 @@ attribute** — the console mounts each render inside
 
 `buildWorkerUi` (`@iii-dev/console-ui/build-worker-ui`, typed in
 `build-worker-ui.d.mts`) is the one esbuild driver. In the portable layout
-`ui/build.mjs` is the whole call, run from the package root by `pnpm build:ui`:
+`ui/build.mjs` makes this call, then bundles the public page from `web/`; `pnpm build`
+runs it from the package root:
 
 ```js
 import { buildWorkerUi } from '@iii-dev/console-ui/build-worker-ui'
@@ -698,7 +713,8 @@ purpose-written labels, grouping, defaults, and reload semantics.
 
 ## The dev loop (hot reload)
 
-Rebuild-on-save stays in the build tool; re-registration stays in the worker.
+Rebuild-on-save lives in the dev script (`scripts/dev.mjs` re-runs the one-shot
+`ui/build.mjs` on save); re-registration stays in the worker.
 In the portable layout `pnpm dev` (`scripts/dev.mjs`, from `iii-node`) runs
 both: a save under `ui/` rewrites `dist/ui/`, restarts the worker, and the
 worker re-registers the same asset paths with new content hashes. Every open
@@ -735,10 +751,11 @@ The manifest is authoritative; its `warnings` must be empty.
 
 Validate all four layers; a green build alone is not enough.
 
-1. **Static:** `pnpm build:ui` — type-check, scoped and token-checked
-   assets, lint clean (strict where enabled), no bundled React, editor or
-   ANSI parser (`dist/ui/page.js` keeps bare `react`, `@iii-dev/console-ui`
-   and `lucide-react` imports; release builds are minified).
+1. **Static:** `pnpm typecheck` and `pnpm build` — type-check, scoped and
+   token-checked assets, lint clean (strict where enabled), no bundled React,
+   editor or ANSI parser (`dist/ui/page.js` keeps bare `react`,
+   `@iii-dev/console-ui` and `lucide-react` imports; release builds are
+   minified).
 2. **Embedding:** the worker's asset tests — accepted paths, an ESM export,
    the built CSS scope (esbuild may omit selector quotes and whitespace).
 3. **Delivery:** boot engine + console + worker; manifest paths, hashes, no

@@ -8,6 +8,14 @@ requires:
   - typescript
 optional: []
 
+# Scaffoldable by the IDE (coder::scaffold-worker): copies the files: entries
+# under `dir`, replacing `name` in paths and contents; `compose` is the
+# container key in worker-compose.yaml. `iii project init` ignores this block.
+worker:
+  dir: workers/hello-node
+  name: hello-node
+  compose: hello-node
+
 # Explicit list of files to copy (shared_files from root are added automatically)
 files:
   - README.md

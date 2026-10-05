@@ -1,0 +1,37 @@
+# Project workers for the iii engine.
+# Docs: https://iii.dev/docs/next/using-iii/compose
+#
+# Start with:
+#
+#   iii compose --up
+#
+namespace: default
+startup_timeout: 360s
+
+engine:
+  url: ws://127.0.0.1:49134
+
+containers:
+  # Host development. pre_run installs local node_modules before each start;
+  # scripts/dev.mjs (what `pnpm dev` runs, started without pnpm staying
+  # resident) builds the page, then restarts the worker on every save. A crash
+  # ends it, and `restart: on-failure` retries with backoff before `failed`.
+  my-worker:
+    worker: path://./workers/my-worker
+    restart: on-failure
+    scripts:
+      pre_run: pnpm install
+      pre_run_timeout: 5m
+      run: node scripts/dev.mjs
+
+  # Serves the public page on http://127.0.0.1:3111/my-worker.
+  # No auth: never expose port 3111 through a public proxy or tunnel.
+  http:
+    worker: package://http
+    version: latest
+    config_name: http
+
+  # The ADE on http://127.0.0.1:3113 shows a console-native page that links to it.
+  # ade:
+  #   worker: package://ade
+  #   version: latest

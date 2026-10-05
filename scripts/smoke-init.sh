@@ -48,9 +48,24 @@ assert_no_active_base_image() {
   fi
 }
 
+# Every file under a template dir is listed under its files:, so
+# `iii project init` and coder::scaffold-worker copy all of it.
+assert_all_files_listed() {
+  local dir="$1"
+  local listed path
+  listed="$(sed -n '/^files:/,/^[^ ]/s/^  - //p' "$dir/template.yaml")"
+  while IFS= read -r path; do
+    if ! grep -qxF "${path#"$dir"/}" <<<"$listed"; then
+      echo "error: $path is not listed under files: in $dir/template.yaml" >&2
+      exit 1
+    fi
+  done < <(find "$dir" -type f ! -name template.yaml | sort)
+}
+
 static_template_checks() {
   local python="$TEMPLATE_DIR/worker-python"
   local node="$TEMPLATE_DIR/worker-node"
+  local node_ade="$TEMPLATE_DIR/worker-node-ade"
 
   for expected in \
     README.md worker-compose.yaml \
@@ -105,18 +120,66 @@ static_template_checks() {
   assert_not_contains "$python/README.md" "starting in a VM"
   assert_not_contains "$node/README.md" "starting in a VM"
   assert_not_contains "$node/template.yaml" "the VM reloads"
+  assert_contains "$python/template.yaml" '  dir: workers/hello-python'
+  assert_contains "$node/template.yaml" '  dir: workers/hello-node'
 
-  if find "$python" "$node" -type d \( -name .venv -o -name venv -o -name node_modules -o -name __pycache__ -o -name dist \) -print -quit | grep -q .; then
+  # worker-node-ade. check_worker_templates.py (below) checks its worker:
+  # block and that every files: entry exists; these check the rest.
+  assert_contains "$TEMPLATE_DIR/template.yaml" "  - worker-node-ade"
+  assert_all_files_listed "$node_ade"
+  assert_contains "$node_ade/worker-compose.yaml" "    worker: package://http"
+  assert_contains "$node_ade/workers/my-worker/package.json" '"@iii-dev/console-ui": "0.2.0"'
+  assert_contains "$node_ade/README.md" "http://127.0.0.1:3111/my-worker"
+  assert_contains "$node_ade/README.md" "never expose port 3111"
+  assert_no_active_base_image "$node_ade/workers/my-worker/iii.worker.yaml"
+
+  if find "$python" "$node" "$node_ade" -type d \( -name .venv -o -name venv -o -name node_modules -o -name __pycache__ -o -name dist \) -print -quit | grep -q .; then
     echo "error: generated dependency or build directory found in new templates" >&2
     exit 1
   fi
-  if find "$python" "$node" -type f \( -name '*.pyc' -o -name '*.pyo' \) -print -quit | grep -q .; then
+  if find "$python" "$node" "$node_ade" -type f \( -name '*.pyc' -o -name '*.pyo' \) -print -quit | grep -q .; then
     echo "error: Python bytecode found in new templates" >&2
     exit 1
   fi
+
+  # Every worker: block (what coder::scaffold-worker copies) points at real
+  # files and a real compose container.
+  python3 "$ROOT_DIR/scripts/check_worker_templates.py" --root "$TEMPLATE_DIR"
+  PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s "$ROOT_DIR/scripts/tests"
 }
 
 static_template_checks
+
+# worker-python-ade: coder::scaffold-worker and iii project init copy only the
+# files: entries, so every file the template ships must be listed, and nothing
+# generated (.venv, node_modules, dist, caches) may ship. The page (ui/, web/)
+# is a copy of worker-node-ade's, apart from ui/'s package manifest.
+static_python_ade_checks() {
+  local ade="$TEMPLATE_DIR/worker-python-ade"
+  local node_ade="$TEMPLATE_DIR/worker-node-ade"
+  assert_file "$ade/template.yaml"
+  assert_contains "$TEMPLATE_DIR/template.yaml" "  - worker-python-ade"
+  assert_all_files_listed "$ade"
+  assert_no_active_base_image "$ade/workers/my-worker/iii.worker.yaml"
+  assert_contains "$ade/workers/my-worker/iii.worker.yaml" "#   base_image: docker.io/iiidev/python:latest"
+  assert_contains "$ade/workers/my-worker/pyproject.toml" '"iii-sdk=='
+  assert_contains "$ade/workers/my-worker/ui/package.json" '"@iii-dev/console-ui": "0.2.0"'
+  assert_file "$ade/workers/my-worker/scripts/start.sh"
+  sh -n "$ade/workers/my-worker/scripts/start.sh"
+  assert_contains "$ade/workers/my-worker/scripts/start.sh" '(cd ui && pnpm install && pnpm build)'
+  assert_contains "$ade/worker-compose.yaml" '      pre_run: "sh scripts/start.sh --prepare"'
+  assert_contains "$ade/worker-compose.yaml" '      run: "sh scripts/start.sh"'
+  assert_contains "$ade/template.yaml" "  requires: [http]"
+  if ! diff -rq --exclude=package.json --exclude=pnpm-workspace.yaml --exclude=node_modules --exclude=dist \
+    "$node_ade/workers/my-worker/ui" "$ade/workers/my-worker/ui" ||
+    ! diff -rq --exclude=node_modules --exclude=dist \
+      "$node_ade/workers/my-worker/web" "$ade/workers/my-worker/web"; then
+    echo "error: worker-python-ade ui/ or web/ drifted from worker-node-ade" >&2
+    exit 1
+  fi
+}
+static_python_ade_checks
+
 if [[ "${1:-}" == "--static-only" ]]; then
   echo "static template checks passed"
   exit 0
@@ -463,6 +526,33 @@ assert_contains "$WORKER_NODE_DIR/worker-compose.yaml" "path://./workers/hello-n
   npm run build
   npm test
 )
+
+# Init an -ade template, then check the copy: every listed file arrived (the
+# template's language_files override keeps .mjs, .css, .html and
+# pnpm-workspace.yaml, which the root list would drop), compose points at the
+# worker by path, and the shipped file resolves (path worker plus http package).
+smoke_ade_template() {
+  local id="$1"
+  local dir="$TMP_DIR/$id-test"
+  local listed worker
+  echo "Testing iii project init --template $id"
+  (
+    cd "$TMP_DIR"
+    iii project init "$id-test" -t "$id" --skip-iii --template-dir "$TEMPLATE_DIR" </dev/null
+  )
+  while IFS= read -r listed; do
+    assert_file "$dir/$listed"
+  done < <(sed -n '/^files:/,/^[^ ]/s/^  - //p' "$TEMPLATE_DIR/$id/template.yaml")
+  worker="$(sed -n 's/^  dir: //p' "$TEMPLATE_DIR/$id/template.yaml")"
+  assert_contains "$dir/worker-compose.yaml" "path://./$worker"
+  (
+    cd "$dir"
+    iii compose build --file worker-compose.yaml
+  )
+}
+
+smoke_ade_template worker-node-ade
+smoke_ade_template worker-python-ade
 
 # `worker init` lives on the `iii-worker` binary, which the `iii` CLI installs
 # and manages. Override the path with III_WORKER_BIN.

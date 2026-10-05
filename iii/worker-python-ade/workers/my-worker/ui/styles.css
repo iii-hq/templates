@@ -1,0 +1,36 @@
+/* The admin page in the ADE (WorkerPage.tsx). The console components bring
+   their own look; these rules only lay them out. Every rule is scoped to
+   [data-iii-ui="my-worker"] and uses only console tokens. The public page
+   has its own stylesheet: web/app.css. */
+
+[data-iii-ui="my-worker"] .my-worker-mark {
+  width: auto;
+  height: 16px;
+  margin: 0;
+}
+
+[data-iii-ui="my-worker"] .my-worker-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+[data-iii-ui="my-worker"] .my-worker-column {
+  display: grid;
+  gap: 32px;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+[data-iii-ui="my-worker"] .my-worker-stack {
+  display: grid;
+  gap: 12px;
+}
+
+[data-iii-ui="my-worker"] .my-worker-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}

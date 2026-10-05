@@ -35,27 +35,41 @@ reference only to resolve a concrete question, not to prepare their work.
 ## Delivery contract
 
 One Node package owns backend and UI. Backend source is under `src/`, UI
-under `ui/`, generated outputs under `dist/`. UI calls functions through
-`host.iii`; it never imports backend modules or reads backend files.
+under `ui/`, the public page under `web/`, generated outputs under
+`dist/`. The ADE page, `ui/WorkerPage.tsx`, is the worker's admin: built from
+`@iii-dev/console-ui` components, with the iii `Wordmark` in its header,
+Settings (it saves through the internal `<worker>::set-greeting`), Test and
+Endpoints, and an **Open public page** link built from `web_url` (else
+`web_path`) of `<worker>::info`; it calls functions through `host.iii`. The
+public page, `web/App.tsx`, is what users open at
+`http://127.0.0.1:3111/<worker>`: plain React with its own design
+(`web/app.css`), no runtime `@iii-dev/console-ui` export, calling functions
+only through its `client` prop (the worker's allowlisted HTTP API, which
+leaves out admin functions). Neither imports a backend module or backend file.
 
 The Backend Engineer owns package/dependency files, both TypeScript configs,
 `pnpm-workspace.yaml`, `scripts/dev.mjs`, `ui/build.mjs`, initial UI shell,
-`iii.worker.yaml`, the asset content function and Compose declaration.
-`pnpm dev` builds, type-checks and watches both halves; a UI edit changes
+`iii.worker.yaml`, the asset content function, `src/web.ts` with its
+allowlists, and the Compose declaration.
+`pnpm dev` builds both halves and rebuilds them on save; a UI edit changes
 asset hashes and hot-reloads the open console. Declare through `compose::add`
 under a wake, never by editing `worker-compose.yaml` or restarting the stack.
 
 UI assets use SDK Message-path `console:script` and `console:style` triggers,
 not durable engine registrations. Both asset paths start with the worker
 name; every stylesheet selector is scoped under `[data-iii-ui="<worker>"]`.
-React, `@iii-dev/console-ui` and `lucide-react` remain external; `ui/build.mjs`
-is the shared `buildWorkerUi` driver, not hand-rolled esbuild. Installed public
-types are the authority for host methods and components; portable workers use
-the public npm package (`@iii-dev/console-ui@0.2.0` or later) rather than
-monorepo links.
+React, `@iii-dev/console-ui` and `lucide-react` remain external in the console
+assets, which `ui/build.mjs` builds with the shared `buildWorkerUi` driver, not
+hand-rolled esbuild; only the public page's bundle uses esbuild directly.
+Installed public types are the authority for host methods and components;
+portable workers use the public npm package (`@iii-dev/console-ui@0.2.0` or
+later) rather than monorepo links.
 
-The Frontend Engineer owns `ui/page.tsx`, `ui/styles.css` and `ui/src/**`:
-pages, renderers and configuration forms against registered contracts.
+The Frontend Engineer owns `ui/WorkerPage.tsx`, `ui/page.tsx`, `ui/styles.css`,
+`ui/src/**`, `web/App.tsx` and `web/app.css`: the two pages, plus pages,
+renderers and configuration forms against registered contracts.
+`@iii-dev/console-ui` components belong only in the console-only surfaces
+`page.tsx` registers, the ADE page included.
 Package, build or API gaps go back to the Backend Engineer. Existing working
 scaffolding is reused; skeleton files are created only for a new package.
 

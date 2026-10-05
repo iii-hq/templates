@@ -1,0 +1,4 @@
+# ui/ is its own pnpm project (the worker itself is Python). pnpm 10+ refuses
+# dependency build scripts until approved; esbuild needs its own.
+allowBuilds:
+  esbuild: true
