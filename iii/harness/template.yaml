@@ -10,7 +10,6 @@ optional: []
 
 # Explicit list of files to copy (shared_files from root are added automatically)
 files:
-  - .env
   - README.md
   - worker-compose.yaml
   - agents/ade-worker-builder.md

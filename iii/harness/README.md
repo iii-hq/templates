@@ -42,19 +42,19 @@ time you open it (step 3), the setup wizard opens on **Connect a model**.
 Paste the key there. The `secrets` worker stores it encrypted, and the model
 router's configuration keeps only a reference, `secret://ANTHROPIC_API_KEY`.
 
-If you prefer to keep keys in `.env`, paste the key after the matching name
-before you start:
+If you prefer to keep keys in a `.env` file, choose **Environment variable**
+in the wizard and paste the key: the `secrets` worker writes it to `.env` in
+the project folder, creating the file, and the router reads
+`env://ANTHROPIC_API_KEY` through the `secrets` worker, which reads the file
+each time the key is used, so an edit applies without a restart. A key you
+already have in `.env`, for example
 
 ```bash
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-The wizard finds it. Choose **Environment variable** to keep it in `.env`:
-the router then reads `env://ANTHROPIC_API_KEY` through the `secrets` worker,
-which reads the file each time the key is used, so an edit applies without a
-restart. Choose **Encrypted** to copy it into the secrets store instead.
-`.env` is listed in `.gitignore`, so the key stays out of git. A key exported
-in your shell profile is found too.
+or exported in your shell profile is found and offered. `.env` is listed in
+`.gitignore`, so the key stays out of git.
 
 To use another provider, or one that signs in without an API key, see
 [Other providers](#other-providers).
@@ -286,16 +286,18 @@ registers `router::*`, and `iii-directory` registers `directory::*`.
 
 ### Other providers
 
-`worker-compose.yaml` has a ready-to-uncomment block for each provider below.
-To add one:
+Any other provider worker in the registry can be added from the ADE. The setup
+wizard (**Set up the harness** in the command palette) lists them under
+**Other providers**, adds the one you pick to `worker-compose.yaml`, and
+connects its key the same way as in step 1. From a terminal:
 
-1. Uncomment its block in `worker-compose.yaml`.
-2. Run `iii trigger compose::restart` so compose re-reads
-   `worker-compose.yaml`. Add the container to the `harness` `start_after`
-   list if the harness should wait for it.
-3. For an API-key provider, connect its key in the ADE: **Configure** in the
-   model picker. Paste it to store it encrypted, or uncomment its line in
-   `.env`, paste the key there and choose **Environment variable**.
+```bash
+iii trigger compose::add worker=provider-kimi
+```
+
+then connect its key with **Configure** in the model picker. Add the container
+to the `harness` `start_after` list in `worker-compose.yaml` if the harness
+should wait for it.
 
 | Provider              | Environment variable |
 | --------------------- | -------------------- |
@@ -305,8 +307,9 @@ To add one:
 | `provider-openrouter` | `OPENROUTER_API_KEY` |
 | `provider-llamacpp`   | `LLAMACPP_API_KEY`   |
 
-Three experimental providers authenticate without an API key. They are also
-commented out in `worker-compose.yaml`.
+Three experimental providers authenticate without an API key. The setup
+wizard recommends Claude Code and Codex when you are signed in to them on this
+machine; add GitHub Copilot with `compose::add`.
 
 | Provider                  | How it authenticates |
 | ------------------------- | -------------------- |
