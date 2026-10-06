@@ -25,11 +25,15 @@ containers:
       run: node scripts/dev.mjs
 
   # Serves the public page on http://127.0.0.1:3111/my-worker.
-  # No auth: never expose port 3111 through a public proxy or tunnel.
+  # No auth: never expose port 3111 through a public proxy or tunnel. The http
+  # worker binds 0.0.0.0 unless told otherwise, so a fresh project seeds it
+  # with loopback only; an http configuration already stored is kept.
   http:
     worker: package://http
     version: latest
     config_name: http
+    config_override:
+      host: 127.0.0.1
 
   # The ADE on http://127.0.0.1:3113 shows a console-native page that links to it.
   # ade:

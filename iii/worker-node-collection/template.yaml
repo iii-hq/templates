@@ -25,7 +25,7 @@ worker:
   dir: workers/my-worker
   name: my-worker
   compose: my-worker
-  requires: [http]
+  requires: [http, state]
 
 # Explicit list of files to copy (shared_files from root are added automatically)
 files:
@@ -51,6 +51,7 @@ files:
   - workers/my-worker/test/store.test.ts
   - workers/my-worker/test/ui-assets.test.ts
   - workers/my-worker/test/web.test.ts
+  - workers/my-worker/test/client.test.ts
   - workers/my-worker/ui/WorkerPage.tsx
   - workers/my-worker/ui/build.mjs
   - workers/my-worker/ui/page.tsx

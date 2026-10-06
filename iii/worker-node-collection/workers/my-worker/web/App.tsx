@@ -6,7 +6,7 @@
 import { Check, ListChecks, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { type FormEvent, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { MODEL } from '../src/model'
-import { type Client, createApi, type DataRecord, type ListResult } from './client'
+import { type Client, createApi, type DataRecord, type ListResult, loadSequence } from './client'
 
 /** The fields this page shows: the model's title field and its `done` flag. */
 const TITLE = MODEL.titleField
@@ -24,6 +24,7 @@ const FILTERS: readonly { id: Filter; label: string }[] = [
 
 const titleOf = (record: DataRecord) => String(record[TITLE] ?? '')
 const isDone = (record: DataRecord) => record[DONE] === true
+const messageOf = (err: unknown) => (err instanceof Error ? err.message : String(err))
 
 function headlineOf(total: number, open: number): string {
   if (total === 0) return 'Nothing here yet.'
@@ -39,17 +40,25 @@ export function App({ client }: { client: Client }) {
   const [loaded, setLoaded] = useState(false)
   const [title, setTitle] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
-  const [error, setError] = useState<string | null>(null)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [pollError, setPollError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [sequence] = useState(loadSequence)
 
+  // Only the newest load applies its answer; a successful one clears the
+  // poll error. Form errors are separate and cleared by an edit or a retry.
   const load = useCallback(async () => {
+    const ticket = sequence.begin()
     try {
-      setList(await api.list())
+      const next = await api.list()
+      if (!sequence.isLatest(ticket)) return
+      setList(next)
       setLoaded(true)
+      setPollError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      if (sequence.isLatest(ticket)) setPollError(messageOf(err))
     }
-  }, [api])
+  }, [api, sequence])
 
   useEffect(() => {
     void load()
@@ -61,13 +70,13 @@ export function App({ client }: { client: Client }) {
 
   async function act(work: () => Promise<unknown>) {
     setBusy(true)
-    setError(null)
+    setFormError(null)
     try {
       await work()
       await load()
       return true
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
+      setFormError(messageOf(err))
       return false
     } finally {
       setBusy(false)
@@ -121,19 +130,27 @@ export function App({ client }: { client: Client }) {
                 maxLength={200}
                 placeholder="What needs doing?"
                 autoComplete="off"
-                onChange={(event) => setTitle(event.target.value)}
+                onChange={(event) => {
+                  setTitle(event.target.value)
+                  setFormError(null)
+                }}
               />
               <button className="button" type="submit" disabled={busy || !title.trim()} aria-busy={busy}>
                 Add
                 <Plus size={18} aria-hidden="true" />
               </button>
             </div>
-            {error ? (
+            {formError ? (
               <p className="error" role="alert">
-                Something went wrong: {error}. Try again.
+                Something went wrong: {formError}. Try again.
               </p>
             ) : null}
           </form>
+          {pollError ? (
+            <p className="error" role="status">
+              The list could not be refreshed: {pollError}. Retrying.
+            </p>
+          ) : null}
           <div className="toolbar">
             <div className="filters" role="group" aria-label="Show">
               {FILTERS.map((option) => (

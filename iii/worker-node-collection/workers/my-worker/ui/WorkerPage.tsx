@@ -21,7 +21,7 @@ import {
 import { errorMessage } from '@iii-dev/console-ui/format'
 import { useContainerNarrow, useCopyFlash, useWorkerLive } from '@iii-dev/console-ui/hooks'
 import { Check, Circle, Copy, ExternalLink, Pencil, Plus, Trash2, X } from 'lucide-react'
-import { type FormEvent, type KeyboardEvent, type MouseEvent, useCallback, useEffect, useState } from 'react'
+import { type FormEvent, Fragment, type KeyboardEvent, type MouseEvent, useCallback, useEffect, useState } from 'react'
 
 // The model as my-worker::model sends it (src/record.ts has the source types).
 type Value = string | number | boolean
@@ -143,11 +143,17 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
   }, [host])
 
   const resource = model?.resource
+  // A failed fetch keeps the empty shape (the backend may still be starting)
+  // but is reported above the list; the next successful fetch clears it.
+  const [listError, setListError] = useState<string | null>(null)
   const fetchList = useCallback(async (): Promise<List> => {
     if (!resource) return EMPTY
     try {
-      return toList(await host.iii.trigger<unknown>(`my-worker::${resource}::list`, {}))
-    } catch {
+      const list = toList(await host.iii.trigger<unknown>(`my-worker::${resource}::list`, {}))
+      setListError(null)
+      return list
+    } catch (error) {
+      setListError(errorMessage(error))
       return EMPTY
     }
   }, [host, resource])
@@ -164,6 +170,7 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
     if (resource) refresh()
   }, [resource, refresh])
   const { records, counts } = toList(data)
+  const titleShown = model ? model.listColumns.includes(model.titleField) : false
 
   async function run(headline: string, action: () => Promise<unknown>): Promise<boolean> {
     setBusy(true)
@@ -325,11 +332,12 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
               </SettingsSection>
             ) : null}
             {failure ? <StatusPanel role="alert" variant="alert" headline={failure.headline} detail={failure.detail} /> : null}
+            {listError ? <StatusPanel role="alert" variant="alert" headline="The list could not be loaded" detail={listError} /> : null}
             <SettingsSection title={model?.title ?? 'Records'} description={summary}>
               {!model || (loading && records.length === 0) ? (
                 <p className="my-worker-note">Loading…</p>
               ) : records.length === 0 ? (
-                <p className="my-worker-note">Nothing yet. Add the first one above.</p>
+                <p className="my-worker-note">{listError ? 'Not loaded yet; retrying.' : 'Nothing yet. Add the first one above.'}</p>
               ) : (
                 <div className="my-worker-table-wrap">
                   <table className="my-worker-table">
@@ -346,76 +354,83 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
                       </tr>
                     </thead>
                     <tbody>
+                      {/* The rename editor sits in the title column, or in a row of its own when listColumns leaves the title out. */}
                       {records.map((record) => {
                         const name = String(record[model.titleField] ?? record.id)
+                        const renameForm = editing && editing.id === record.id ? (
+                          <form className="my-worker-rename" onSubmit={rename} onKeyDown={cancelOnEscape}>
+                            <Input
+                              value={editing.value}
+                              onChange={(next: string) => setEditing({ id: record.id, value: next })}
+                              aria-label={`Rename ${name}`}
+                              autoComplete="off"
+                            />
+                            <IconButton label="Save" variant="ghost" type="submit" disabled={busy}>
+                              <Check aria-hidden />
+                            </IconButton>
+                            <IconButton label="Cancel" variant="ghost" onClick={() => setEditing(null)}>
+                              <X aria-hidden />
+                            </IconButton>
+                          </form>
+                        ) : null
                         return (
-                          <tr key={record.id}>
-                            {model.listColumns.map((column) => {
-                              const field = model.fields[column]
-                              const value = record[column]
-                              if (field?.type === 'boolean') {
+                          <Fragment key={record.id}>
+                            <tr>
+                              {model.listColumns.map((column) => {
+                                const field = model.fields[column]
+                                const value = record[column]
+                                if (field?.type === 'boolean') {
+                                  return (
+                                    <td key={column} className="my-worker-cell-flag">
+                                      <IconButton
+                                        label={`${field.label} for ${name}: ${value === true ? 'yes' : 'no'}. Toggle`}
+                                        variant="ghost"
+                                        aria-pressed={value === true}
+                                        disabled={busy}
+                                        onClick={() =>
+                                          void run('The record was not updated', () =>
+                                            host.iii.trigger(fn('toggle'), { id: record.id, field: column }),
+                                          )
+                                        }
+                                      >
+                                        {value === true ? <Check aria-hidden /> : <Circle aria-hidden />}
+                                      </IconButton>
+                                    </td>
+                                  )
+                                }
+                                if (column === model.titleField && renameForm) {
+                                  return <td key={column}>{renameForm}</td>
+                                }
                                 return (
-                                  <td key={column} className="my-worker-cell-flag">
-                                    <IconButton
-                                      label={`${field.label} for ${name}: ${value === true ? 'yes' : 'no'}. Toggle`}
-                                      variant="ghost"
-                                      aria-pressed={value === true}
-                                      disabled={busy}
-                                      onClick={() =>
-                                        void run('The record was not updated', () =>
-                                          host.iii.trigger(fn('toggle'), { id: record.id, field: column }),
-                                        )
-                                      }
-                                    >
-                                      {value === true ? <Check aria-hidden /> : <Circle aria-hidden />}
-                                    </IconButton>
+                                  <td key={column} className={field?.type === 'number' ? 'my-worker-cell-number' : 'my-worker-cell-text'}>
+                                    {value === undefined ? '' : String(value)}
                                   </td>
                                 )
-                              }
-                              if (column === model.titleField && editing?.id === record.id) {
-                                return (
-                                  <td key={column}>
-                                    <form className="my-worker-rename" onSubmit={rename} onKeyDown={cancelOnEscape}>
-                                      <Input
-                                        value={editing.value}
-                                        onChange={(next: string) => setEditing({ id: record.id, value: next })}
-                                        aria-label={`Rename ${name}`}
-                                        autoComplete="off"
-                                      />
-                                      <IconButton label="Save" variant="ghost" type="submit" disabled={busy}>
-                                        <Check aria-hidden />
-                                      </IconButton>
-                                      <IconButton label="Cancel" variant="ghost" onClick={() => setEditing(null)}>
-                                        <X aria-hidden />
-                                      </IconButton>
-                                    </form>
-                                  </td>
-                                )
-                              }
-                              return (
-                                <td key={column} className={field?.type === 'number' ? 'my-worker-cell-number' : 'my-worker-cell-text'}>
-                                  {value === undefined ? '' : String(value)}
-                                </td>
-                              )
-                            })}
-                            <td className="my-worker-cell-actions">
-                              <IconButton
-                                label={`Edit ${name}`}
-                                variant="ghost"
-                                onClick={() => setEditing({ id: record.id, value: String(record[model.titleField] ?? '') })}
-                              >
-                                <Pencil aria-hidden />
-                              </IconButton>
-                              <IconButton
-                                label={`Remove ${name}`}
-                                variant="ghost"
-                                disabled={busy}
-                                onClick={() => void run('The record was not removed', () => host.iii.trigger(fn('remove'), { id: record.id }))}
-                              >
-                                <Trash2 aria-hidden />
-                              </IconButton>
-                            </td>
-                          </tr>
+                              })}
+                              <td className="my-worker-cell-actions">
+                                <IconButton
+                                  label={`Edit ${name}`}
+                                  variant="ghost"
+                                  onClick={() => setEditing({ id: record.id, value: String(record[model.titleField] ?? '') })}
+                                >
+                                  <Pencil aria-hidden />
+                                </IconButton>
+                                <IconButton
+                                  label={`Remove ${name}`}
+                                  variant="ghost"
+                                  disabled={busy}
+                                  onClick={() => void run('The record was not removed', () => host.iii.trigger(fn('remove'), { id: record.id }))}
+                                >
+                                  <Trash2 aria-hidden />
+                                </IconButton>
+                              </td>
+                            </tr>
+                            {renameForm && !titleShown ? (
+                              <tr>
+                                <td colSpan={model.listColumns.length + 1}>{renameForm}</td>
+                              </tr>
+                            ) : null}
+                          </Fragment>
                         )
                       })}
                     </tbody>
