@@ -1,0 +1,9 @@
+{
+  "extends": "@iii-dev/console-ui/tsconfig.worker-ui.json",
+  "compilerOptions": {
+    // Lets ../web resolve packages from ui/node_modules, where a Python
+    // worker keeps them; a Node worker's root node_modules needs no mapping.
+    "paths": { "*": ["./node_modules/@types/*", "./node_modules/*"] }
+  },
+  "include": ["./**/*.ts", "./**/*.tsx", "../web/**/*.ts", "../web/**/*.tsx"]
+}

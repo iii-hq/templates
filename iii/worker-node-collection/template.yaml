@@ -1,0 +1,71 @@
+name: Record app with ADE page (Node)
+description: A model-driven Node/TypeScript record app - src/model.ts describes the records, and the CRUD functions, a my-worker:change trigger type and a live ADE admin page follow it; only domain actions and the public page are written per app. Ships a todo model.
+version: "0.24.2"
+min_iii_version: "0.24.2"
+
+treat_required_as_included: true
+requires:
+  - typescript
+optional: []
+
+# The root language_files would drop these: the dev and build scripts, the
+# page's HTML and CSS, and pnpm's build approvals.
+language_files:
+  common:
+    - '*.mjs'
+    - '*.css'
+    - '*.html'
+    - 'pnpm-workspace.yaml'
+
+# Scaffoldable by the IDE (coder::scaffold-worker): copies the files: entries
+# under `dir`, replacing `name` in paths and contents; `compose` is the
+# container key in worker-compose.yaml; `requires` lists the containers the
+# worker needs. `iii project init` ignores this block.
+worker:
+  dir: workers/my-worker
+  name: my-worker
+  compose: my-worker
+  requires: [http, state]
+
+# Explicit list of files to copy (shared_files from root are added automatically)
+files:
+  - README.md
+  - worker-compose.yaml
+  - workers/my-worker/README.md
+  - workers/my-worker/iii.worker.yaml
+  - workers/my-worker/package.json
+  - workers/my-worker/pnpm-workspace.yaml
+  - workers/my-worker/tsconfig.json
+  - workers/my-worker/scripts/dev.mjs
+  - workers/my-worker/src/model.ts
+  - workers/my-worker/src/record.ts
+  - workers/my-worker/src/store.ts
+  - workers/my-worker/src/functions.ts
+  - workers/my-worker/src/actions.ts
+  - workers/my-worker/src/index.ts
+  - workers/my-worker/src/ui-assets.ts
+  - workers/my-worker/src/web.ts
+  - workers/my-worker/src/routes.ts
+  - workers/my-worker/test/record.test.ts
+  - workers/my-worker/test/model.test.ts
+  - workers/my-worker/test/store.test.ts
+  - workers/my-worker/test/ui-assets.test.ts
+  - workers/my-worker/test/web.test.ts
+  - workers/my-worker/test/client.test.ts
+  - workers/my-worker/ui/WorkerPage.tsx
+  - workers/my-worker/ui/build.mjs
+  - workers/my-worker/ui/page.tsx
+  - workers/my-worker/ui/styles.css
+  - workers/my-worker/ui/tsconfig.json
+  - workers/my-worker/web/index.html
+  - workers/my-worker/web/main.tsx
+  - workers/my-worker/web/App.tsx
+  - workers/my-worker/web/app.css
+  - workers/my-worker/web/client.ts
+
+next_steps:
+  - 'In terminal 1 from the project root, start Compose: iii compose --up'
+  - 'Compose pre_run runs pnpm install; run starts scripts/dev.mjs, which builds the pages and restarts the worker on save'
+  - 'In terminal 2 from the project root, add an item: iii trigger my-worker::items::create title=First'
+  - 'Open the public page at http://127.0.0.1:3111/my-worker; the my-worker page in the ADE is its admin'
+  - 'Port 3111 has no auth: never expose it through a public proxy or tunnel'

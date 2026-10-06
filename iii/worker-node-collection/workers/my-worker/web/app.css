@@ -1,0 +1,393 @@
+/* The public page's own look: what people who use this worker see at
+   /my-worker. It is not part of the console, so it carries its own palette,
+   type and spacing; light and dark follow the visitor's system. */
+
+:root {
+  color-scheme: light dark;
+  --bg: #f6f1ea;
+  --bg-glow: rgba(214, 98, 43, 0.14);
+  --ink: #1d1712;
+  --ink-soft: #6c6158;
+  --card: #fffdfa;
+  --card-edge: rgba(29, 23, 18, 0.08);
+  --field: #f8f4ee;
+  --field-edge: rgba(29, 23, 18, 0.16);
+  --accent: #c2531c;
+  --accent-ink: #fffaf5;
+  --accent-hover: #a9461a;
+  --focus: rgba(194, 83, 28, 0.32);
+  --alert: #b42318;
+  --shadow: 0 1px 2px rgba(29, 23, 18, 0.06), 0 16px 40px -16px rgba(29, 23, 18, 0.22);
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans",
+    "Liberation Sans", Arial, sans-serif;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15110e;
+    --bg-glow: rgba(240, 132, 74, 0.12);
+    --ink: #f3ece4;
+    --ink-soft: #a89c90;
+    --card: #1e1914;
+    --card-edge: rgba(243, 236, 228, 0.08);
+    --field: #15110e;
+    --field-edge: rgba(243, 236, 228, 0.16);
+    --accent: #f0844a;
+    --accent-ink: #1a0f08;
+    --accent-hover: #f4996a;
+    --focus: rgba(240, 132, 74, 0.38);
+    --alert: #ff8a80;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 20px 48px -20px rgba(0, 0, 0, 0.7);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(60rem 28rem at 50% -8rem, var(--bg-glow), transparent 70%), var(--bg);
+  color: var(--ink);
+  font: 16px/1.5 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.page {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100vh;
+}
+
+.top {
+  padding: 20px 24px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.main {
+  display: grid;
+  place-items: center;
+  padding: 16px 16px 48px;
+}
+
+.card {
+  width: min(100%, 560px);
+  padding: 44px 40px 40px;
+  border: 1px solid var(--card-edge);
+  border-radius: 24px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.headline {
+  margin: 0;
+  font-size: clamp(2.25rem, 1.5rem + 3vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+/* The one authored moment: a new headline settles into place. */
+.headline-new {
+  animation: headline-arrive 600ms var(--ease-out) both;
+}
+
+@keyframes headline-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.lede {
+  margin: 12px 0 0;
+  color: var(--ink-soft);
+  font-size: 1.0625rem;
+}
+
+.form {
+  margin-top: 36px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.input {
+  /* auto, not 0: in the stacked phone row a zero basis collapses the height. */
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 52px;
+  padding: 0 16px;
+  border: 1px solid var(--field-edge);
+  border-radius: 14px;
+  background: var(--field);
+  color: inherit;
+  font: inherit;
+  caret-color: var(--accent);
+  transition:
+    border-color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out);
+}
+
+.input::placeholder {
+  color: var(--ink-soft);
+  opacity: 0.7;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--focus);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 52px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 150ms var(--ease-out),
+    transform 150ms var(--ease-out);
+}
+
+.button:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--focus);
+}
+
+.button:disabled {
+  opacity: 0.7;
+  cursor: progress;
+}
+
+.error {
+  margin: 12px 0 0;
+  color: var(--alert);
+  font-size: 0.9375rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.filters {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--field);
+}
+
+.filter,
+.link,
+.toggle,
+.remove {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.filter {
+  padding: 6px 14px;
+  border-radius: 9px;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.filter[aria-pressed="true"] {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 1px 2px var(--card-edge);
+}
+
+.link {
+  padding: 6px 4px;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.link:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.items {
+  display: grid;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  border-bottom: 1px solid var(--card-edge);
+}
+
+.item:last-child {
+  border-bottom: 0;
+}
+
+.toggle {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--field-edge);
+  border-radius: 50%;
+  color: transparent;
+}
+
+.toggle:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.item-done .toggle {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.item-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.item-done .item-title {
+  color: var(--ink-soft);
+  text-decoration: line-through;
+}
+
+.remove {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--ink-soft);
+}
+
+.remove:hover:not(:disabled) {
+  background: var(--field);
+  color: var(--alert);
+}
+
+.filter:focus-visible,
+.link:focus-visible,
+.toggle:focus-visible,
+.remove:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--focus);
+}
+
+.empty {
+  margin: 20px 0 0;
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.foot {
+  padding: 20px 24px 28px;
+  color: var(--ink-soft);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 32px 20px 24px;
+    border-radius: 20px;
+  }
+
+  .row {
+    flex-direction: column;
+  }
+
+  .button {
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .headline-new {
+    animation: none;
+  }
+
+  .input,
+  .button {
+    transition: none;
+  }
+}

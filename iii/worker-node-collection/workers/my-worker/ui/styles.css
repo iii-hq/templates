@@ -1,0 +1,137 @@
+/* The admin page in the ADE (WorkerPage.tsx). The console components bring
+   their own look; these rules only lay them out. Every rule is scoped to
+   [data-iii-ui="my-worker"] and uses only console tokens. The public page
+   has its own stylesheet: web/app.css. */
+
+[data-iii-ui="my-worker"] .my-worker-mark {
+  width: auto;
+  height: 16px;
+  margin: 0;
+}
+
+[data-iii-ui="my-worker"] .my-worker-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  container-type: inline-size;
+}
+
+[data-iii-ui="my-worker"] .my-worker-column {
+  display: grid;
+  gap: 32px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+[data-iii-ui="my-worker"] .my-worker-stack {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+[data-iii-ui="my-worker"] .my-worker-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+[data-iii-ui="my-worker"] .my-worker-table-wrap {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+[data-iii-ui="my-worker"] .my-worker-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  color: var(--color-ink);
+}
+
+[data-iii-ui="my-worker"] .my-worker-table th {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--color-rule-strong);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  color: var(--color-ink-faint);
+}
+
+[data-iii-ui="my-worker"] .my-worker-table td {
+  height: 44px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--color-rule);
+  vertical-align: middle;
+}
+
+[data-iii-ui="my-worker"] .my-worker-table tr:last-child td {
+  border-bottom: none;
+}
+
+[data-iii-ui="my-worker"] .my-worker-cell-text {
+  max-width: 320px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+[data-iii-ui="my-worker"] .my-worker-cell-number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-iii-ui="my-worker"] .my-worker-cell-flag {
+  width: 44px;
+}
+
+[data-iii-ui="my-worker"] .my-worker-cell-actions {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+[data-iii-ui="my-worker"] .my-worker-rename {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+[data-iii-ui="my-worker"] .my-worker-rename > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+[data-iii-ui="my-worker"] .my-worker-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+[data-iii-ui="my-worker"] .my-worker-note {
+  margin: 0;
+  padding: 14px 2px;
+  font-size: 14px;
+  color: var(--color-ink-faint);
+}
+
+[data-iii-ui="my-worker"] .my-worker-value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+[data-iii-ui="my-worker"] .my-worker-table :focus-visible {
+  outline: 2px solid var(--color-rule-focus);
+  outline-offset: 1px;
+}
+
+/* The page lives in a resizable pane, so narrow means a narrow container. */
+@container (max-width: 480px) {
+  [data-iii-ui="my-worker"] .my-worker-cell-text {
+    max-width: 160px;
+  }
+}
