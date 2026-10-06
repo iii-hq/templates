@@ -15,7 +15,9 @@ export const PUBLIC_ACTIONS: readonly string[] = ['toggle']
     (registerRoutes in src/routes.ts) registers each with an http trigger. The
     first segment must be static (`go/:slug`, not `:slug`); `api/...` and a
     one-segment GET (the asset route `:file`) are refused at startup, as are
-    two routes that match the same URLs. The template ships none. Example, a
+    two routes that match the same URLs. A route answers with what its handler
+    builds: pass records through stripPrivate (src/web.ts) to keep private
+    fields out. The template ships none. Example, a
     short link that redirects (with the links::visit action below):
 
       export const PUBLIC_ROUTES: readonly PublicRoute<ActionContext>[] = [

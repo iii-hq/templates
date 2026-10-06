@@ -48,6 +48,11 @@ describe('checkModel', () => {
     assert.equal(checkModel(TEST_MODEL), TEST_MODEL)
   })
 
+  it('accepts private on any field, including a required unique one', () => {
+    const model = { ...TEST_MODEL, fields: { ...TEST_MODEL.fields, code: { type: 'string', label: 'Code', required: true, unique: true, private: true }, pages: { type: 'number', label: 'Pages', private: false } } } satisfies Model
+    assert.equal(checkModel(model), model)
+  })
+
   it('rejects each broken rule', () => {
     const broken = (patch: Partial<Model>) => () => checkModel({ ...TEST_MODEL, ...patch })
     assert.throws(broken({ fields: { ...TEST_MODEL.fields, size: { type: 'date' as 'string', label: 'Size' } } }), /unknown type/)
@@ -58,6 +63,7 @@ describe('checkModel', () => {
     assert.throws(broken({ fields: { ...TEST_MODEL.fields, pages: { type: 'number', label: 'Pages', unique: true } } }), /unique is only valid on a string/)
     assert.throws(broken({ sort: [{ field: 'nope' }] }), /sort field/)
     assert.throws(broken({ resource: 'Bad Name' }), /kebab-case/)
+    assert.throws(broken({ fields: { ...TEST_MODEL.fields, code: { type: 'string', label: 'Code', private: 'yes' as unknown as boolean } } }), /private must be true or false/)
   })
 })
 
@@ -105,6 +111,17 @@ describe('createRecord', () => {
     assert.throws(() => createRecord(TEST_MODEL, existing, { name: 'b', code: ' ab ' }, 1, 'b'), /Code must be unique/)
     assert.throws(() => createRecord(TEST_MODEL, existing, { name: 'b' }, 1, 'a'), /already exists/)
     assert.equal(createRecord(TEST_MODEL, existing, { name: 'b' }, 1, 'b').records.length, 2)
+  })
+
+  it('names a unique clash on a private field without its value', () => {
+    const model = { ...TEST_MODEL, fields: { ...TEST_MODEL.fields, code: { type: 'string', label: 'Code', unique: true, private: true } } } satisfies Model
+    const existing = [make({ id: 'a', code: 'secret-AB' })]
+    assert.throws(
+      () => createRecord(model, existing, { name: 'b', code: 'SECRET-ab' }, 1, 'b'),
+      (error: Error) => error.message === 'Code is already used' && !/secret/i.test(error.message),
+    )
+    assert.throws(() => updateRecord(model, [...existing, make({ id: 'b', code: 'x1' })], 'b', { code: 'secret-ab' }, 2), /^Error: Code is already used$/)
+    assert.throws(() => createRecord(TEST_MODEL, existing, { name: 'b', code: 'secret-ab' }, 1, 'b'), /"secret-ab" is already used/)
   })
 })
 

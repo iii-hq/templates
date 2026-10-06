@@ -33,6 +33,7 @@ type Field = {
   min?: number
   max?: number
   unique?: boolean
+  private?: boolean
 }
 type Model = {
   resource: string
@@ -99,6 +100,7 @@ function hintOf(field: Field): string {
   const parts: string[] = [field.type === 'string' ? 'Text' : field.type === 'number' ? 'Number' : 'Yes or no']
   if (field.required) parts.push('required')
   if (field.unique) parts.push('unique')
+  if (field.private) parts.push('private: left out of the public API')
   const unit = field.type === 'string' ? ' characters' : ''
   if (field.min !== undefined && field.max !== undefined) parts.push(`${field.min} to ${field.max}${unit}`)
   else if (field.max !== undefined) parts.push(`at most ${field.max}${unit}`)
@@ -346,6 +348,7 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
                         {model.listColumns.map((column) => (
                           <th key={column} scope="col">
                             {model.fields[column]?.label ?? column}
+                            {model.fields[column]?.private ? <span className="my-worker-private"> · private</span> : null}
                           </th>
                         ))}
                         <th scope="col">
