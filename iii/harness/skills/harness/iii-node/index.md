@@ -17,12 +17,12 @@ Use this skill to create or restructure a Node.js/TypeScript iii worker, especia
 Read the relevant references before implementing:
 
 - [`configuration.md`](./configuration.md) — bundled beside this file: schema-validated configuration registration, reads, updates, and reactive triggers.
-- The UI half lives in the `ade-worker-design` skill (`directory::skills::get { "id": "harness/ade-worker-design/<name>" }`) and belongs to the Frontend Engineer role:
+- The UI half lives in the `ade-worker-design` skill (`directory::skills::get { "id": "harness/ade-worker-design/<name>" }`):
   - `console-injectable-ui` — the complete injectable UI contract, host APIs, asset registration, hot reload, responsiveness, and validation requirements.
   - `console-design` — the Console visual system, component grammar, tokens, typography, spacing, and interaction rules.
   - `patterns` — concrete recipes for record-shaped UIs: boards with lanes and drag-and-drop, a record screen that opens as its own pane, activity timelines with threaded comments, creation modals, chat cards for agent calls, settings forms, and live updates.
 
-This file still owns the worker-side half of an injectable UI — the build script, the asset content function and its triggers, the dev watchers — because those ship inside the worker package. The pages, renderers, forms and styles themselves are the Frontend Engineer's work; when a task needs them, name the gap in your result rather than improvising markup here.
+This file still owns the worker-side half of an injectable UI — the build script, the asset content function and its triggers, the dev watchers — because those ship inside the worker package. The pages, renderers, forms and styles themselves follow `ade-worker-design`: fetch the part a task needs rather than improvising markup from this file.
 
 ### Precedence for this Node scaffold
 
@@ -253,16 +253,21 @@ import type { TriggerConfig } from 'iii-sdk/trigger'
 type ChangeConfig = { record_id?: string; events?: string[]; metadata?: unknown }
 const subscribers = new Map<string, TriggerConfig<ChangeConfig>>()
 
-/** A subscription's metadata: declared in the config, or on the binding itself. */
+const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v)
+
+/** A subscription's metadata: the binding's own, overlaid by the config's (config wins on shared keys). */
 function subscriptionMetadata(binding: TriggerConfig<ChangeConfig>): unknown {
-  return binding.config.metadata ?? binding.metadata
+  const own = binding.metadata
+  const declared = binding.config.metadata
+  if (!isObject(declared)) return own // absent or non-object config metadata never replaces the binding's own
+  return isObject(own) ? { ...own, ...declared } : declared
 }
 
 iii.registerTriggerType<ChangeConfig>(
   {
     id: '<worker-name>:change',
     description:
-      'Fires after every mutation. Config: { record_id?, events?, metadata? } — metadata rides along to the invoked handler.',
+      'Fires after every mutation. Config: { record_id?, events?, metadata? } — an object metadata rides along to the invoked handler.',
   },
   {
     registerTrigger: async (binding) => {
@@ -292,7 +297,7 @@ function emit(event: Record<string, unknown>) {
 
 Emit from the store after each persisted mutation and include the **whole record** in the payload so consumers can upsert without a round trip. The UI side of this contract is in the designer's `console-injectable-ui` (`host.iii` → live data) and `patterns` §8.
 
-**Every trigger type the worker provides must carry trigger metadata.** A registration's `metadata` arrives at the provider as `binding.metadata` (`TriggerConfig.metadata`) and must come back out on every `iii.trigger` as `metadata`; the bound handler receives it as its **second argument**, a channel separate from the payload, and a fan-out that omits it silently drops it. Because the top-level `metadata` slot also carries the harness's own control fields (`{ payload, event_into }`) for call-to-function bindings, also accept a `metadata` field inside the trigger's config, name it in the trigger type's `description`, and forward whichever the subscriber set (config first). Never merge metadata into the payload.
+**Every trigger type the worker provides must carry trigger metadata.** A registration's `metadata` arrives at the provider as `binding.metadata` (`TriggerConfig.metadata`) and must come back out on every `iii.trigger` as `metadata`; the bound handler receives it as its **second argument**, a channel separate from the payload, and a fan-out that omits it silently drops it. Because the top-level `metadata` slot also carries the harness's own control fields (`{ payload, event_into }`) for call-to-function bindings, also accept an object `metadata` field inside the trigger's config (ignore any other value), name it in the trigger type's `description`, and forward both, merged: the binding's own `metadata` overlaid by the config's (config wins on shared keys). Never let one replace the other. The binding's own metadata carries the harness's wake fields, so dropping it means a session wake bound with a config `metadata` never fires. Never merge metadata into the payload.
 
 ## Public page and ADE admin page
 
@@ -428,29 +433,29 @@ A container that is already declared is left as it is by `compose::add`; if it i
 
 ## Implementation order
 
-This is the sequence for a new worker across both engineering roles. For an
-existing worker, apply only affected steps and prerequisites; preserve its
-working scaffolding and implemented UI. Use the spec's `Project context`
-instead of repeating discovery. Each engineer performs only its assigned side.
+This is the sequence for a new worker. For an existing worker, apply only
+affected steps and prerequisites; preserve its working scaffolding and
+implemented UI. Reuse what the session already observed instead of repeating
+discovery.
 
 1. Resolve all project identifiers and paths; the worker name passes the name rule.
 2. Use this file for backend/delivery work; fetch only references needed by
-   the assigned change. Preloaded bodies need no second fetch. UI
-   implementation references belong to the Frontend Engineer.
+   the change. Preloaded bodies need no second fetch. UI implementation
+   references are in `ade-worker-design`.
 3. Inspect the destination project's Compose shape, existing workers and coding conventions; reuse a registered capability instead of scaffolding a duplicate.
 4. Scaffold the package with `coder::scaffold-worker` (Scaffold a new worker).
 5. The scaffold already added it to the stack: on its `compose-operation` wake, confirm with `compose::status`, `engine::workers::info` and a real `<worker-name>::hello` call. Only when the result has a `start_error` or says it was not started, declare it through `compose::add` with its `requires` containers first (Scaffold a new worker, step 3).
 6. Replace the example `hello` with the domain (keep `info`: the ADE page's **Open public page** reads it; keep or replace `set-greeting` with the domain's own admin writes): backend modules, functions with complete contracts, tests, and the API allowlist in `src/web.ts` for the functions the public page calls.
 7. Add configuration integration if needed.
-8. Leave `ui/WorkerPage.tsx` and `web/App.tsx` building against the new functions (`host.iii` and `client`). The Frontend Engineer builds the admin page and the other ADE-only surfaces from console components, and the public page with its own design in `web/app.css`, after the backend/delivery contracts are verified.
-9. Verify the assigned side: backend checks static builds, runtime registration, asset delivery, the HTTP allowlists and hot reload; frontend checks real rendering in the ADE through the `browser` worker and at the public URL. The Tech Lead independently checks contracts and integration before the Builder performs user acceptance.
+8. Leave `ui/WorkerPage.tsx` and `web/App.tsx` building against the new functions (`host.iii` and `client`). Then build the admin page and the other ADE-only surfaces from console components, and the public page with its own design in `web/app.css`, after the backend/delivery contracts are verified.
+9. Verify both sides: backend checks static builds, runtime registration, asset delivery, the HTTP allowlists and hot reload; frontend checks real rendering in the ADE through the `browser` worker and at the public URL.
 
 ## Validation checklist
 
-These checks cover the complete delivery. The Backend Engineer owns service,
-configuration, package and asset checks; the Frontend Engineer owns rendered
-UI, interaction and accessibility checks. A backend shell is not a finished
-screen. Report the evidence for your assigned checks and hand off the rest.
+These checks cover the complete delivery: service, configuration, package
+and asset checks, then rendered UI, interaction and accessibility checks. A
+backend shell is not a finished screen. Report the evidence for the checks you
+ran, and name the ones you did not run.
 For corrections, rerun affected checks and dependencies, retaining earlier
 evidence only while it remains applicable; broaden checks if impact is unclear.
 
@@ -460,7 +465,7 @@ evidence only while it remains applicable; broaden checks if impact is unclear.
 - `pnpm typecheck`, `pnpm test`, and `pnpm build` pass.
 - `pnpm dev` builds all outputs before starting watchers, shuts down cleanly, and exits when the worker crashes.
 - The worker appears in the engine with every intended function and trigger type.
-- A worker-provided trigger type forwards every subscription's metadata (`binding.metadata`, or the config's `metadata` field) on every `iii.trigger`, and its description names that field.
+- A worker-provided trigger type forwards every subscription's metadata (`binding.metadata` overlaid by the config's object `metadata` field) on every `iii.trigger`, and its description names that field.
 - Every public function exposes accurate descriptions and request/response schemas.
 - Configuration registration, read, update, and reload behavior work without erasing existing or unknown values.
 - `dist/ui/page.js` and `dist/ui/styles.css` are non-empty; `react`, `@iii-dev/console-ui` and `lucide-react` stay bare imports (release builds are minified, so expect `from"react"`), and the build's scope, token and lint checks passed.

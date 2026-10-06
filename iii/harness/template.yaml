@@ -14,11 +14,6 @@ files:
   - worker-compose.yaml
   - agents/ade-worker-builder.md
   - agents/agent-profile-creator.md
-  - skills/harness/ade-solo/accept.md
-  - skills/harness/ade-solo/architect.md
-  - skills/harness/ade-solo/backend.md
-  - skills/harness/ade-solo/frontend.md
-  - skills/harness/ade-solo/plan.md
   - skills/harness/ade-worker-design/console-design.md
   - skills/harness/ade-worker-design/console-injectable-ui.md
   - skills/harness/ade-worker-design/index.md
@@ -42,4 +37,4 @@ files:
 next_steps:
   - 'Have an API key for one AI provider ready: the setup wizard in the ADE connects it on the first visit, encrypted or kept in .env (README.md, step 1)'
   - 'Run: iii compose --up (leave it running), then open the ADE at http://127.0.0.1:3113 (README.md, step 3, if that address does not answer)'
-  - 'Start a conversation with "Create a tool in the ADE" and send the first-tool example from README.md, step 5. You do not need to create a custom agent first'
+  - 'Start a conversation with "Create an app or tool" and send the first-app example from README.md, step 5, or describe your own in one line. You do not need to create a custom agent first'
