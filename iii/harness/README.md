@@ -12,6 +12,7 @@ When you start a new conversation in the ADE, choose one of these:
 | Choice | Use it to |
 | --- | --- |
 | **Create a tool in the ADE** | Create a tool that runs inside the ADE, with its own screens and forms, powered by a worker. Only for tools inside the ADE: not for standalone websites, apps or backend-only services. |
+| **Build an app from a template** | Describe an app in one line and get a running worker in one conversation: it starts from a ready-made template, opens a live admin panel in the ADE within seconds, then shapes the data, actions and public page to your request. |
 | **Create a custom agent** | Create a reusable agent with instructions and skills for a specific task. Once saved, it becomes a choice here too. |
 | **Default** | Ask general questions and get help with development tasks in your project. |
 
@@ -170,7 +171,7 @@ You do not need anything below to use the ADE.
 
 ### Agents in this template
 
-`agents/` ships two profiles, the two choices described above. The tool
+`agents/` ships three profiles, the three choices described above. The tool
 builder holds the architect, backend and frontend roles itself, one phase
 at a time, so no hidden specialist profiles are needed. **Default** and the
 other built-in profiles come from the `iii-directory` worker, not from this
@@ -185,7 +186,7 @@ on both. Display names can change; the profile id (the file name) is what
 `extends`, saved sessions and `harness::send { options: { agent: "<id>" } }`
 use.
 
-The two gallery profiles also set `composer_placeholder`: the example request
+The three gallery profiles also set `composer_placeholder`: the example request
 the ADE shows in the empty message box while that profile is selected. It is
 never sent, never added to the prompt and not inherited through `extends`
 (at most 200 characters of plain text). `iii-directory` versions without the
@@ -195,13 +196,15 @@ field ignore it.
 default                           built-in, shown as Default
 └── iii-minimal                   built-in hidden alias of default
     ├── ade-worker-builder        Create a tool in the ADE: plans, builds and verifies the tool with you in one conversation
-    └── agent-profile-creator     Create a custom agent: plans a new profile with you and writes it beside these
+    ├── agent-profile-creator     Create a custom agent: plans a new profile with you and writes it beside these
+    └── ide-worker-app-builder    Build an app from a template: scaffolds a worker, opens its panel, reshapes it into your app
 ```
 
 | Profile id | Shown as | Role |
 | --- | --- | --- |
 | `ade-worker-builder` | Create a tool in the ADE | Builds tools inside the ADE only, alone and in phases: plans the tool with you until its spec is unambiguous (`specs/<worker>.md`), writes the architecture, builds the Node worker and its injected UI, and accepts it only after exercising every criterion in the running ADE. Loads each phase's playbook (`skills/harness/ade-solo/…`) only when it enters that phase. |
 | `agent-profile-creator` | Create a custom agent | Plans a new profile with you, using the existing ones as the reference, and writes `agents/<id>.md`. |
+| `ide-worker-app-builder` | Build an app from a template | Scaffolds the `worker-node-collection` template with `coder::scaffold-worker` and opens its panel in the ADE, then, in one session and without a spec, edits the model, the domain actions and the public page into the app you asked for and verifies it with real calls and the rendered pages. |
 
 ### Orchestration
 
