@@ -1,0 +1,19 @@
+iii: v1
+name: my-worker
+language: javascript
+deploy: bundle
+manifest: package.json
+license: Apache-2.0
+tags: [example, node, console-ui, records]
+# Scaffolded from the worker-node-collection template (Record app with ADE page (Node)).
+description: Model-driven record app — src/model.ts drives my-worker::<resource>::list|get|create|update|remove, a my-worker:change trigger type and the ADE admin page; a public page over HTTP.
+
+# Host development is the default: worker-compose.yaml runs scripts/dev.mjs (`pnpm dev`).
+# runtime:
+#   base_image: docker.io/iiidev/node:latest
+
+scripts:
+  # Compose skips these in host mode. They are the portable bundle recipe.
+  # `pnpm start` builds the page first, so install needs no build of its own.
+  install: "pnpm install"
+  start: "pnpm start"

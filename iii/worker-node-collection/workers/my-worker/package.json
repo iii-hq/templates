@@ -1,0 +1,33 @@
+{
+  "name": "my-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Model-driven record app on iii: src/model.ts drives CRUD functions, a change trigger type and the ADE admin page; a public page over HTTP",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node ui/build.mjs",
+    "dev": "node scripts/dev.mjs",
+    "start": "pnpm build && tsx src/index.ts",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p ui/tsconfig.json"
+  },
+  "dependencies": {
+    "iii-sdk": "^0.24.2",
+    "tsx": "^4.19.0"
+  },
+  "devDependencies": {
+    "@iii-dev/console-ui": "0.2.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "esbuild": "^0.25.0",
+    "lucide-react": "^1.16.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.2"
+  },
+  "license": "Apache-2.0"
+}

@@ -68,9 +68,24 @@ iii.registerTriggerType<HelloTriggerConfig>(
   },
 )
 
+/** The metadata a handler receives: the binding's own, with the config's
+    `metadata` laid over it (config first on every shared key). Merged, not
+    replaced: a session wake routes on its binding metadata, so dropping it
+    would lose the delivery. */
+function metadataFor(binding: { config?: HelloTriggerConfig | null; metadata?: unknown }): Record<string, unknown> | undefined {
+  const own = isRecord(binding.metadata) ? binding.metadata : undefined
+  const fromConfig = isRecord(binding.config?.metadata) ? binding.config.metadata : undefined
+  if (!own && !fromConfig) return undefined
+  return { ...own, ...fromConfig }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 function emitHello(event: { name: string } & HelloOutput) {
   for (const binding of subscribers.values()) {
-    const metadata = binding.config?.metadata ?? binding.metadata
+    const metadata = metadataFor(binding)
     iii
       .trigger({
         function_id: binding.function_id,
