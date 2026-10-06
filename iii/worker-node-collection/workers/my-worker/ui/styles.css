@@ -56,6 +56,10 @@
   color: var(--color-ink-faint);
 }
 
+[data-iii-ui="my-worker"] .my-worker-private {
+  font-weight: 400;
+}
+
 [data-iii-ui="my-worker"] .my-worker-table td {
   height: 44px;
   padding: 4px 8px;

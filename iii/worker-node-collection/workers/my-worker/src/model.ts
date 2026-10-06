@@ -2,7 +2,8 @@
 // the tests all read this; editing it is the whole backend change.
 //   resource   -> my-worker::<resource>::list|get|create|update|remove and the state key
 //   fields     -> string | number | boolean, with label, required?, default?,
-//                 min?, max? (string: trimmed length; number: value), unique? (string)
+//                 min?, max? (string: trimmed length; number: value), unique? (string),
+//                 private? (left out of the public HTTP API; admin and engine callers see it)
 //   id, created_at and updated_at are added to every record and are reserved.
 import type { Model } from './record.js'
 

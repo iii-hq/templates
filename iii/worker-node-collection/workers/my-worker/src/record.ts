@@ -16,6 +16,10 @@ export type Field = {
   readonly max?: number
   /** string only: compared trimmed and case-insensitively. */
   readonly unique?: boolean
+  /** Left out of every `record` and `records` the public HTTP API returns
+      (src/web.ts); engine callers and the admin page still see it. The public
+      page can still submit it. Use it for emails, phone numbers and the like. */
+  readonly private?: boolean
 }
 
 export type SortKey = { readonly field: string; readonly dir?: 'asc' | 'desc' }
@@ -56,6 +60,7 @@ export function checkModel(model: Model): Model {
     if (!TYPES.includes(field.type)) throw new Error(`field "${name}" has unknown type "${String(field.type)}" (use string, number or boolean)`)
     if (field.unique && field.type !== 'string') throw new Error(`field "${name}": unique is only valid on a string field`)
     if (field.default !== undefined && typeof field.default !== field.type) throw new Error(`field "${name}": default must be a ${field.type}`)
+    if (field.private !== undefined && typeof field.private !== 'boolean') throw new Error(`field "${name}": private must be true or false`)
   }
   if (!names.includes(model.titleField)) throw new Error(`model.titleField "${model.titleField}" is not a field`)
   if (model.fields[model.titleField].type !== 'string') throw new Error(`model.titleField "${model.titleField}" must be a string field`)
@@ -120,7 +125,10 @@ function checkUnique(model: Model, records: readonly DataRecord[], values: Recor
     if (!field.unique || typeof values[name] !== 'string' || values[name] === '') continue
     const wanted = String(values[name]).trim().toLowerCase()
     const clash = records.find((record) => record.id !== selfId && typeof record[name] === 'string' && String(record[name]).trim().toLowerCase() === wanted)
-    if (clash) throw new Error(`${field.label || name} must be unique: "${values[name]}" is already used`)
+    if (!clash) continue
+    // A private value is never echoed: the message reaches HTTP callers.
+    if (field.private) throw new Error(`${field.label || name} is already used`)
+    throw new Error(`${field.label || name} must be unique: "${values[name]}" is already used`)
   }
 }
 
@@ -204,6 +212,13 @@ export function sortRecords(model: Model, records: readonly DataRecord[]): DataR
     }
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
   })
+}
+
+/** Names of the fields marked `private`, in model order. */
+export function privateFields(model: Model): string[] {
+  return entries(model)
+    .filter(([, field]) => field.private === true)
+    .map(([name]) => name)
 }
 
 export function booleanFields(model: Model): string[] {

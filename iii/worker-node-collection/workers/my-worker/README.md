@@ -18,7 +18,7 @@ export const MODEL = {
 } as const satisfies Model
 ```
 
-- Field types: `string`, `number`, `boolean`. Options: `label`, `required?`, `default?`, `min?`/`max?` (string: trimmed length; number: value), `unique?` (string only, compared trimmed and case-insensitively).
+- Field types: `string`, `number`, `boolean`. Options: `label`, `required?`, `default?`, `min?`/`max?` (string: trimmed length; number: value), `unique?` (string only, compared trimmed and case-insensitively), `private?` (left out of every `record`/`records` the public HTTP API returns; the admin page and engine callers still see it, and a unique clash on it never echoes the value).
 - Every record also has `id` (uuid), `created_at` and `updated_at` (epoch ms). These names are reserved.
 - `checkModel` (`src/record.ts`) rejects a broken model at startup and in `test/model.test.ts`.
 
@@ -58,6 +58,7 @@ export const MODEL = {
 ## Make it your app
 
 1. **Edit `src/model.ts`:** the resource, the fields, the list columns and the sort. That is the whole backend and the admin.
+   - Mark fields like emails or phone numbers `private: true`: the public HTTP API leaves them out of every response, while the admin page still shows them.
 2. **Optionally add domain actions in `src/actions.ts`** (a commented `links::visit` shows the shape) and list the public ones in `PUBLIC_ACTIONS`.
    - Need your own URL (a short link, a webhook)? Add it to `PUBLIC_ROUTES` in `src/actions.ts`: `{ method, path, handler }` answers on `/my-worker/<path>` (e.g. `GET go/:slug` returning `redirect(url)` from `src/routes.ts`). The first segment must be static; `api/...`, a one-segment GET and duplicates are refused at startup.
 3. **Write the public page** in `web/App.tsx` and `web/app.css`, calling the worker through `createApi(client)` from `web/client.ts`.
