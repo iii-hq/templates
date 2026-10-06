@@ -27,7 +27,7 @@ You need:
 
 - The iii CLI: `curl -fsSL https://install.iii.dev/iii/main/install.sh | sh`
 - A project created from this template: `iii project init <name> -t harness`
-- An API key for one of the AI providers below
+- An API key for one AI provider, such as Anthropic, OpenAI or DeepSeek
 - To create apps and tools: Node.js 22 or later and pnpm 10 or later. They
   are Node.js workers that are built in your project folder.
 
@@ -35,11 +35,13 @@ Run every command below from the project folder.
 
 ### 1. Configure one AI provider
 
-This project enables three model providers: Anthropic, OpenAI and DeepSeek.
-You need a key for only one of them, and you connect it in the ADE: the first
-time you open it (step 3), the setup wizard opens on **Connect a model**.
-Paste the key there. The `secrets` worker stores it encrypted, and the model
-router's configuration keeps only a reference, `secret://ANTHROPIC_API_KEY`.
+The project starts without a model provider: you add the one you have a key
+for in the ADE. The first time you open it (step 3), the setup wizard opens
+on **Connect a model**. Choose the provider (Anthropic, OpenAI, OpenRouter,
+DeepSeek, xAI, Kimi or Z.AI) and paste its key. The wizard adds the
+provider's worker to `worker-compose.yaml`, the `secrets` worker stores the
+key encrypted, and the model router's configuration keeps only a reference,
+`secret://ANTHROPIC_API_KEY`.
 
 If you prefer to keep keys in a `.env` file, choose **Environment variable**
 in the wizard and paste the key: the `secrets` worker writes it to `.env` in
@@ -55,8 +57,8 @@ ANTHROPIC_API_KEY=sk-ant-...
 or exported in your shell profile is found and offered. `.env` is listed in
 `.gitignore`, so the key stays out of git.
 
-To use another provider, or one that signs in without an API key, see
-[Other providers](#other-providers).
+For the full list, or a provider that signs in without an API key, see
+[Model providers](#model-providers).
 
 ### 2. Start the project
 
@@ -265,27 +267,28 @@ them into `~/.iii/compose/packages`; later starts use that cache.
 | `state`, `queue`, `cron`, `session-manager`, `iii-directory` | Services the harness depends on: storage, queues, schedules, conversation history, and the directory of agents, skills and functions |
 | `llm-router` | Routes model calls and resolves provider credentials through `secrets` |
 | `secrets` | Keeps provider keys: encrypted (`secret://NAME`), or read from `.env` on every use (`env://NAME`) |
-| `provider-anthropic`, `provider-openai` | Model providers. The harness waits for both, so both run even if you use only one key |
-| `provider-deepseek` | Model provider enabled by default; its key is optional |
 | `context-manager` | Summarizes long conversations (`/compact`) |
 | `harness` | The agent turn loop |
 | `ade` | The ADE web UI and its `/ws` connection to the engine |
 | `ide` | Files and commands for agents and the ADE |
 | `browser` | Chromium sessions and page fetches that agents use to verify their work |
 
+No model provider is listed: the setup wizard adds the one you connect
+(`provider-<name>`), see [Model providers](#model-providers).
+
 Container names are not always function namespaces: `ade` registers
 `console::*`, `ide` registers `shell::*` and `coder::*`, `llm-router`
 registers `router::*`, and `iii-directory` registers `directory::*`.
 
-### Other providers
+### Model providers
 
-Any other provider worker in the registry can be added from the ADE. The setup
-wizard (**Set up the harness** in the command palette) lists them under
-**Other providers**, adds the one you pick to `worker-compose.yaml`, and
-connects its key the same way as in step 1. From a terminal:
+Any provider worker in the registry can be added from the ADE. The setup
+wizard (**Set up the harness** in the command palette) lists the providers,
+adds the one you pick to `worker-compose.yaml`, and connects its key the same
+way as in step 1. From a terminal:
 
 ```bash
-iii trigger compose::add worker=provider-kimi
+iii trigger compose::add worker=provider-anthropic
 ```
 
 then connect its key with **Configure** in the model picker. Add the container
@@ -294,6 +297,9 @@ should wait for it.
 
 | Provider              | Environment variable |
 | --------------------- | -------------------- |
+| `provider-anthropic`  | `ANTHROPIC_API_KEY`  |
+| `provider-openai`     | `OPENAI_API_KEY`     |
+| `provider-deepseek`   | `DEEPSEEK_API_KEY`   |
 | `provider-kimi`       | `MOONSHOT_API_KEY`   |
 | `provider-xai`        | `XAI_API_KEY`        |
 | `provider-zai`        | `ZAI_API_KEY`        |

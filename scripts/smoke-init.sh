@@ -464,6 +464,10 @@ if ! grep -qx '.env' "$HARNESS_DIR/.gitignore"; then
   exit 1
 fi
 
+# No model provider ships with the harness: the ADE's setup wizard adds the
+# one the user connects.
+assert_not_contains "$HARNESS_DIR/worker-compose.yaml" "package://provider-"
+
 # The printed next steps lead to the gallery choice, not to hidden profiles.
 assert_contains "$TMP_DIR/harness-init.log" "Create an app or tool"
 if grep -Eq 'Tech Lead|engineers' "$TMP_DIR/harness-init.log"; then

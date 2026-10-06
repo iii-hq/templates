@@ -28,35 +28,13 @@ containers:
 
   # Keeps provider keys for llm-router: pasted in the ADE and stored
   # encrypted (secret://NAME), or kept in ./.env and read from there each
-  # time they are used (env://NAME). Connect a key in the ADE: the setup
-  # wizard on the first visit, or Configure in the model picker.
+  # time they are used (env://NAME).
+  #
+  # No model provider is declared here. On the first visit, the ADE's setup
+  # wizard adds the provider you choose (compose::add) and connects its key.
   secrets:
     worker: package://secrets
     version: "latest"
-
-  provider-anthropic:
-    worker: package://provider-anthropic
-    version: "latest"
-    start_after:
-      - llm-router
-      - state
-
-  provider-openai:
-    worker: package://provider-openai
-    version: "latest"
-    start_after:
-      - llm-router
-      - state
-    environment:
-      RUST_LOG: info
-
-  # Enabled by default; its key is optional.
-  provider-deepseek:            # DEEPSEEK_API_KEY
-    worker: package://provider-deepseek
-    version: "latest"
-    start_after:
-      - llm-router
-      - state
 
   context-manager:
     worker: package://context-manager
@@ -88,8 +66,6 @@ containers:
       - queue
       - session-manager
       - llm-router
-      - provider-openai
-      - provider-anthropic
       - context-manager
       - iii-directory
       - cron
