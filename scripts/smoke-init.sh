@@ -452,13 +452,13 @@ for skill in (skills.group(1).split(",") if skills else []):
 PYEOF
 done
 
-# Provider keys are read from .env, which ships without values and stays out
-# of git.
-assert_contains "$HARNESS_DIR/worker-compose.yaml" "env_file: [./.env]"
-if grep -Eq '^[A-Za-z_][A-Za-z0-9_]*=.+' "$HARNESS_DIR/.env"; then
-  echo "FAIL: harness .env ships a credential value" >&2
-  exit 1
-fi
+# Provider keys are connected through the secrets worker, encrypted or as
+# env:// references to .env. No container reads .env by itself, and the
+# template ships none: secrets creates it when a key is kept there, and it
+# stays out of git.
+assert_contains "$HARNESS_DIR/worker-compose.yaml" "worker: package://secrets"
+assert_not_contains "$HARNESS_DIR/worker-compose.yaml" "env_file:"
+assert_absent "$HARNESS_DIR/.env"
 if ! grep -qx '.env' "$HARNESS_DIR/.gitignore"; then
   echo "FAIL: harness .gitignore does not ignore .env" >&2
   exit 1
