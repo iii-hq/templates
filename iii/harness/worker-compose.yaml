@@ -23,12 +23,16 @@ containers:
     version: "latest"
     start_after:
       - state
-    # Every provider key resolves in the router's process, not in the provider
-    # worker, and is read from ./.env. When you uncomment a provider below,
-    # uncomment its key in ./.env too.
-    env_file: [./.env]
     environment:
       RUST_LOG: info
+
+  # Keeps provider keys for llm-router: pasted in the ADE and stored
+  # encrypted (secret://NAME), or kept in ./.env and read from there each
+  # time they are used (env://NAME). Connect a key in the ADE: the setup
+  # wizard on the first visit, or Configure in the model picker.
+  secrets:
+    worker: package://secrets
+    version: "latest"
 
   provider-anthropic:
     worker: package://provider-anthropic
@@ -46,85 +50,13 @@ containers:
     environment:
       RUST_LOG: info
 
-  # Enabled by default; its key in ./.env is optional.
+  # Enabled by default; its key is optional.
   provider-deepseek:            # DEEPSEEK_API_KEY
     worker: package://provider-deepseek
     version: "latest"
     start_after:
       - llm-router
       - state
-
-  # Additional providers. Uncomment a block, uncomment its key in ./.env, and
-  # run `iii trigger compose::restart` so compose re-reads this file.
-  # llm-router reads every provider key from ./.env through its `env_file`; a
-  # key exported in the shell does not reach it. Add the container to the
-  # `harness` start_after list below if the harness should wait for it.
-
-  #  provider-kimi:                # MOONSHOT_API_KEY, not KIMI_API_KEY
-  #    worker: package://provider-kimi
-  #    version: "latest"
-  #    start_after:
-  #      - llm-router
-  #      - state
-
-  #  provider-xai:                 # XAI_API_KEY
-  #    worker: package://provider-xai
-  #    version: "latest"
-  #    start_after:
-  #      - llm-router
-  #      - state
-
-  #  provider-zai:                 # ZAI_API_KEY
-  #    worker: package://provider-zai
-  #    version: "latest"
-  #    start_after:
-  #      - llm-router
-  #      - state
-
-  #  provider-openrouter:          # OPENROUTER_API_KEY
-  #    worker: package://provider-openrouter
-  #    version: "latest"
-  #    start_after:
-  #      - llm-router
-  #      - state
-
-  #  provider-llamacpp:            # LLAMACPP_API_KEY
-  #    worker: package://provider-llamacpp
-  #    version: "latest"
-  #    start_after:
-  #      - llm-router
-  #      - state
-
-  # Providers that need no API key (experimental):
-  #   provider-openai-codex    reads ~/.codex/auth.json, written by the Codex CLI
-  #                            when you sign in there.
-  #   provider-claude-code     reads ~/.claude/.credentials.json, written by the
-  #                            Claude Code CLI when you sign in there.
-  #   provider-github-copilot  runs a GitHub device flow. Run
-  #                            iii trigger provider::github-copilot::login::start,
-  #                            enter the user_code at the verification URL, then
-  #                            iii trigger provider::github-copilot::login::poll.
-
-  #  provider-openai-codex:
-  #    worker: package://provider-openai-codex
-  #    version: "latest"
-  #    start_after:
-  #      - llm-router
-  #      - state
-
-  #  provider-claude-code:
-  #    worker: package://provider-claude-code
-  #    version: "latest"
-  #    start_after:
-  #      - llm-router
-  #      - state
-
-  #  provider-github-copilot:
-  #    worker: package://provider-github-copilot
-  #    version: "latest"
-  #    start_after:
-  #      - llm-router
-  #      - state
 
   context-manager:
     worker: package://context-manager
