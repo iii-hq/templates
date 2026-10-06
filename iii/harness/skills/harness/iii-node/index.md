@@ -259,16 +259,15 @@ const isObject = (v: unknown): v is Record<string, unknown> => !!v && typeof v =
 function subscriptionMetadata(binding: TriggerConfig<ChangeConfig>): unknown {
   const own = binding.metadata
   const declared = binding.config.metadata
-  if (declared === undefined) return own
-  if (own === undefined) return declared
-  return isObject(own) && isObject(declared) ? { ...own, ...declared } : declared
+  if (!isObject(declared)) return own // absent or non-object config metadata never replaces the binding's own
+  return isObject(own) ? { ...own, ...declared } : declared
 }
 
 iii.registerTriggerType<ChangeConfig>(
   {
     id: '<worker-name>:change',
     description:
-      'Fires after every mutation. Config: { record_id?, events?, metadata? } — metadata rides along to the invoked handler.',
+      'Fires after every mutation. Config: { record_id?, events?, metadata? } — an object metadata rides along to the invoked handler.',
   },
   {
     registerTrigger: async (binding) => {
@@ -298,7 +297,7 @@ function emit(event: Record<string, unknown>) {
 
 Emit from the store after each persisted mutation and include the **whole record** in the payload so consumers can upsert without a round trip. The UI side of this contract is in the designer's `console-injectable-ui` (`host.iii` → live data) and `patterns` §8.
 
-**Every trigger type the worker provides must carry trigger metadata.** A registration's `metadata` arrives at the provider as `binding.metadata` (`TriggerConfig.metadata`) and must come back out on every `iii.trigger` as `metadata`; the bound handler receives it as its **second argument**, a channel separate from the payload, and a fan-out that omits it silently drops it. Because the top-level `metadata` slot also carries the harness's own control fields (`{ payload, event_into }`) for call-to-function bindings, also accept a `metadata` field inside the trigger's config, name it in the trigger type's `description`, and forward both, merged: the binding's own `metadata` overlaid by the config's (config wins on shared keys). Never let one replace the other. The binding's own metadata carries the harness's wake fields, so dropping it means a session wake bound with a config `metadata` never fires. Never merge metadata into the payload.
+**Every trigger type the worker provides must carry trigger metadata.** A registration's `metadata` arrives at the provider as `binding.metadata` (`TriggerConfig.metadata`) and must come back out on every `iii.trigger` as `metadata`; the bound handler receives it as its **second argument**, a channel separate from the payload, and a fan-out that omits it silently drops it. Because the top-level `metadata` slot also carries the harness's own control fields (`{ payload, event_into }`) for call-to-function bindings, also accept an object `metadata` field inside the trigger's config (ignore any other value), name it in the trigger type's `description`, and forward both, merged: the binding's own `metadata` overlaid by the config's (config wins on shared keys). Never let one replace the other. The binding's own metadata carries the harness's wake fields, so dropping it means a session wake bound with a config `metadata` never fires. Never merge metadata into the payload.
 
 ## Public page and ADE admin page
 
@@ -466,7 +465,7 @@ evidence only while it remains applicable; broaden checks if impact is unclear.
 - `pnpm typecheck`, `pnpm test`, and `pnpm build` pass.
 - `pnpm dev` builds all outputs before starting watchers, shuts down cleanly, and exits when the worker crashes.
 - The worker appears in the engine with every intended function and trigger type.
-- A worker-provided trigger type forwards every subscription's metadata (`binding.metadata`, or the config's `metadata` field) on every `iii.trigger`, and its description names that field.
+- A worker-provided trigger type forwards every subscription's metadata (`binding.metadata` overlaid by the config's object `metadata` field) on every `iii.trigger`, and its description names that field.
 - Every public function exposes accurate descriptions and request/response schemas.
 - Configuration registration, read, update, and reload behavior work without erasing existing or unknown values.
 - `dist/ui/page.js` and `dist/ui/styles.css` are non-empty; `react`, `@iii-dev/console-ui` and `lucide-react` stay bare imports (release builds are minified, so expect `from"react"`), and the build's scope, token and lint checks passed.
