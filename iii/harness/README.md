@@ -37,19 +37,24 @@ Run every command below from the project folder.
 ### 1. Configure one AI provider
 
 This project enables three model providers: Anthropic, OpenAI and DeepSeek.
-You need a key for only one of them. Open `.env` and paste the key after the
-matching name, for example:
+You need a key for only one of them, and you connect it in the ADE: the first
+time you open it (step 3), the setup wizard opens on **Connect a model**.
+Paste the key there. The `secrets` worker stores it encrypted, and the model
+router's configuration keeps only a reference, `secret://ANTHROPIC_API_KEY`.
+
+If you prefer to keep keys in `.env`, paste the key after the matching name
+before you start:
 
 ```bash
 ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-Leave the other lines empty. `.env` is listed in `.gitignore`, so the key
-stays out of git.
-
-Put the key in `.env`, not in a shell `export`. `worker-compose.yaml` passes
-`.env` to the model router and does not pass variables exported in your
-shell, so an exported key does not reach it.
+The wizard finds it. Choose **Environment variable** to keep it in `.env`:
+the router then reads `env://ANTHROPIC_API_KEY` through the `secrets` worker,
+which reads the file each time the key is used, so an edit applies without a
+restart. Choose **Encrypted** to copy it into the secrets store instead.
+`.env` is listed in `.gitignore`, so the key stays out of git. A key exported
+in your shell profile is found too.
 
 To use another provider, or one that signs in without an API key, see
 [Other providers](#other-providers).
@@ -72,16 +77,13 @@ with `iii compose`, then bring the project up with:
 iii trigger compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000
 ```
 
-If you edit `.env` while the project is running, restart the model router so
-it reads the change:
-
-```bash
-iii trigger compose::restart worker=llm-router
-```
+Edits to `.env` apply while the project runs: the `secrets` worker reads the
+file each time a key is used, so nothing needs a restart.
 
 ### 3. Open the ADE
 
-Open **http://127.0.0.1:3113**, the ADE's default address.
+Open **http://127.0.0.1:3113**, the ADE's default address. On the first
+visit the setup wizard opens: connect the provider from step 1 there.
 
 If nothing answers there, the ADE may be using another port: after its first
 start it keeps the port in its configuration entry. Compose names that entry
@@ -157,8 +159,8 @@ need no external services or extra accounts.
 
 | Problem | What to do |
 | --- | --- |
-| The model picker shows no models, or the ADE asks you to configure a provider | Check that one key in `.env` is filled in, then run `iii trigger compose::restart worker=llm-router`. `iii trigger router::provider::list` shows which providers report `configured: true`. |
-| A key exported in your shell is ignored | Put it in `.env` instead (step 1). |
+| The model picker shows no models, or the ADE asks you to configure a provider | Connect a key in the ADE (step 1): **Set up the harness** in the command palette (`Ctrl+K`), or **Configure** in the model picker. `iii trigger router::provider::list` shows which providers report `configured: true`, and `credential_error` says why a key does not resolve. |
+| A key in `.env` or exported in your shell is not used | Nothing reads them by themselves: connect the provider in the ADE (step 1), which finds them. |
 | The selected model fails or is unavailable | Choose another model in the model picker next to the message box. `iii trigger router::models::list` lists the models your configured providers offer. |
 | The agent works in the wrong folder | Select the folder name next to the message box and choose your project folder before sending (step 4). |
 | http://127.0.0.1:3113 does not open | Keep `iii compose --up` running and find the ADE's actual address (step 3). |
@@ -268,7 +270,8 @@ them into `~/.iii/compose/packages`; later starts use that cache.
 | Container | Why it is here |
 | --- | --- |
 | `state`, `queue`, `cron`, `session-manager`, `iii-directory` | Services the harness depends on: storage, queues, schedules, conversation history, and the directory of agents, skills and functions |
-| `llm-router` | Routes model calls and resolves provider credentials; reads `.env` |
+| `llm-router` | Routes model calls and resolves provider credentials through `secrets` |
+| `secrets` | Keeps provider keys: encrypted (`secret://NAME`), or read from `.env` on every use (`env://NAME`) |
 | `provider-anthropic`, `provider-openai` | Model providers. The harness waits for both, so both run even if you use only one key |
 | `provider-deepseek` | Model provider enabled by default; its key is optional |
 | `context-manager` | Summarizes long conversations (`/compact`) |
@@ -287,10 +290,12 @@ registers `router::*`, and `iii-directory` registers `directory::*`.
 To add one:
 
 1. Uncomment its block in `worker-compose.yaml`.
-2. For an API-key provider, uncomment its line in `.env` and paste the key.
-3. Run `iii trigger compose::restart` so compose re-reads
+2. Run `iii trigger compose::restart` so compose re-reads
    `worker-compose.yaml`. Add the container to the `harness` `start_after`
    list if the harness should wait for it.
+3. For an API-key provider, connect its key in the ADE: **Configure** in the
+   model picker. Paste it to store it encrypted, or uncomment its line in
+   `.env`, paste the key there and choose **Environment variable**.
 
 | Provider              | Environment variable |
 | --------------------- | -------------------- |
