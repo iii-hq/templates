@@ -1,9 +1,9 @@
 # Build with agents in the ADE (Agentic Development Environment)
 
 This template starts the iii engine, AI agents, and the ADE: the workspace
-where you chat with agents and use the tools they build. Start with a small
-tool inside the ADE, create a reusable agent, or use Default for general work
-in your project.
+where you chat with agents and use the apps and tools they build. Start with a
+small app or tool, create a reusable agent, or use Default for general work in
+your project.
 
 ## What you can do
 
@@ -11,14 +11,12 @@ When you start a new conversation in the ADE, choose one of these:
 
 | Choice | Use it to |
 | --- | --- |
-| **Create a tool in the ADE** | Create a tool that runs inside the ADE, with its own screens and forms, powered by a worker. Only for tools inside the ADE: not for standalone websites, apps or backend-only services. |
-| **Build an app from a template** | Describe an app in one line and get a running worker in one conversation: it starts from a ready-made template, opens a live admin panel in the ADE within seconds, then shapes the data, actions and public page to your request. |
+| **Create an app or tool** | Describe an app or a tool in one line and get a running worker in one conversation: it starts from a ready-made template, opens a live admin panel in the ADE as soon as the worker starts, then shapes the data, actions and public page to your request. It builds one list of records with text, number and yes/no fields, plus actions and a public page; for anything else, use Default. |
 | **Create a custom agent** | Create a reusable agent with instructions and skills for a specific task. Once saved, it becomes a choice here too. |
 | **Default** | Ask general questions and get help with development tasks in your project. |
 
-You do not need to create a custom agent before using the ADE. **Create a
-tool in the ADE** plans, builds and verifies the tool for you in the same
-conversation.
+You do not need to create a custom agent before using the ADE. **Create an
+app or tool** builds and verifies it for you in the same conversation.
 
 > **Default** is the built-in general agent. `iii-directory` versions that
 > predate it list the same agent as `iii-minimal`.
@@ -30,8 +28,8 @@ You need:
 - The iii CLI: `curl -fsSL https://install.iii.dev/iii/main/install.sh | sh`
 - A project created from this template: `iii project init <name> -t harness`
 - An API key for one of the AI providers below
-- To create tools in the ADE: Node.js 22 or later and pnpm 10 or later. The
-  tools are Node.js workers that are built in your project folder.
+- To create apps and tools: Node.js 22 or later and pnpm 10 or later. They
+  are Node.js workers that are built in your project folder.
 
 Run every command below from the project folder.
 
@@ -111,37 +109,39 @@ folder before you send.
 The working directory is where agents start, not a sandbox: it does not stop
 an agent from running commands or changing files elsewhere on your machine.
 
-### 5. Try your first tool
+### 5. Try your first app
 
-Select **Create a tool in the ADE** and send this message:
+Select **Create an app or tool** and send this message:
 
 ```text
-Create a small task list inside the ADE. I want to add a task with a title, mark it as done, and keep my tasks after refreshing the page. Use this project's existing capabilities where possible. Do not connect to external services.
+Build an expense tracker. Each expense has a description, an amount, a category, and whether it was reimbursed. Show the total still to be reimbursed.
 ```
 
 ### 6. Know what happens next
 
-1. **Clarify.** The agent may ask one or two short questions. A clear request
-   like this one needs few or none.
-2. **Confirm the plan.** It shows a short plan: what the tool does, where it
-   appears in the ADE, what is kept after a refresh, what is out of scope,
-   and the checks it will run. It saves the details to
-   `specs/<tool-name>.md`. Nothing is built until you confirm. If the tool
-   needs something the project does not already have, the plan says so and
-   asks you first.
-3. **Build.** After you confirm, it builds the tool itself, one step at a
-   time: the design, the worker and its screens. The tool's worker is
-   created inside your project folder and added to `worker-compose.yaml`.
-4. **Verify.** It checks each point of the plan in the running ADE, in a
-   browser session you can watch.
-5. **Open the result.** It finishes with a link to the new page, the result
-   of each check, and a short list of the files it created.
+1. **Start.** The agent names the worker, creates it from the
+   `worker-node-collection` template inside your project folder, and adds it
+   to `worker-compose.yaml`. The first app also adds an `http` container,
+   which serves public pages on `http://127.0.0.1:3111` without
+   authentication: never expose port 3111 through a public proxy or tunnel.
+   It writes a plan of at most five lines and marks
+   its guesses `Assumed:`. It does not ask questions first: it builds exactly
+   what you asked for, and nothing more.
+2. **Open the panel.** As soon as the worker starts, its admin panel opens
+   in the ADE (the first app also installs its packages, which takes longer). It becomes your app as soon as the agent saves the data model.
+3. **Build.** It shapes the data, adds any actions the request needs (each
+   with its own tests) and rewrites the public page.
+4. **Verify.** It runs the type check, the tests and the build, creates a few
+   demo records with real calls, and opens the public page at
+   `http://127.0.0.1:3111/<name>` in a browser session you can watch.
+5. **Read the report.** It finishes with what it verified, what it assumed
+   and what it did not verify.
 
-For this example, expect a plan for a single page inside the ADE where you
-can add a task with a non-empty title, mark it as done, and still see your
-tasks and their status after refreshing the page. It should keep the tasks
-with a capability this project already runs, such as the `state` worker, and
-need no external services or extra accounts.
+For this example, expect an `expense-tracker` worker whose admin panel lists
+expenses with those four fields, and a public page where you can add an
+expense, mark it as reimbursed and see the total still to be reimbursed.
+Records are kept in the `state` worker this project already runs, so they
+survive a refresh and need no external services or extra accounts.
 
 ## Other paths
 
@@ -151,8 +151,8 @@ need no external services or extra accounts.
   profile file before saving anything, then writes `agents/<id>.md`. The new
   agent appears in the new-conversation gallery without a restart.
 - **Default.** Use it for everything else: questions about iii or this
-  project, code changes, debugging, or work outside the ADE such as a
-  standalone app.
+  project, code changes, debugging, or anything the other choices do not
+  cover.
 
 ## Troubleshooting
 
@@ -163,7 +163,7 @@ need no external services or extra accounts.
 | The selected model fails or is unavailable | Choose another model in the model picker next to the message box. `iii trigger router::models::list` lists the models your configured providers offer. |
 | The agent works in the wrong folder | Select the folder name next to the message box and choose your project folder before sending (step 4). |
 | http://127.0.0.1:3113 does not open | Keep `iii compose --up` running and find the ADE's actual address (step 3). |
-| Building a tool fails while installing packages | Check that Node.js 22+ and pnpm 10+ are installed and on your `PATH`. |
+| Building an app or tool fails while installing packages | Check that Node.js 22+ and pnpm 10+ are installed and on your `PATH`. |
 
 ## Advanced reference
 
@@ -171,11 +171,10 @@ You do not need anything below to use the ADE.
 
 ### Agents in this template
 
-`agents/` ships three profiles, the three choices described above. The tool
-builder holds the architect, backend and frontend roles itself, one phase
-at a time, so no hidden specialist profiles are needed. **Default** and the
-other built-in profiles come from the `iii-directory` worker, not from this
-folder.
+`agents/` ships two profiles, the first two choices described above. The
+app builder does the whole job itself in one session, so no hidden
+specialist profiles are needed. **Default** and the other built-in profiles
+come from the `iii-directory` worker, not from this folder.
 
 Every profile here extends `iii-minimal` and preloads its skills from
 `skills/harness/…`; the harness freezes both into every session that runs as
@@ -186,7 +185,7 @@ on both. Display names can change; the profile id (the file name) is what
 `extends`, saved sessions and `harness::send { options: { agent: "<id>" } }`
 use.
 
-The three gallery profiles also set `composer_placeholder`: the example request
+The two gallery profiles also set `composer_placeholder`: the example request
 the ADE shows in the empty message box while that profile is selected. It is
 never sent, never added to the prompt and not inherited through `extends`
 (at most 200 characters of plain text). `iii-directory` versions without the
@@ -195,20 +194,18 @@ field ignore it.
 ```text
 default                           built-in, shown as Default
 └── iii-minimal                   built-in hidden alias of default
-    ├── ade-worker-builder        Create a tool in the ADE: plans, builds and verifies the tool with you in one conversation
-    ├── agent-profile-creator     Create a custom agent: plans a new profile with you and writes it beside these
-    └── ide-worker-app-builder    Build an app from a template: scaffolds a worker, opens its panel, reshapes it into your app
+    ├── ade-worker-builder        Create an app or tool: scaffolds a worker, opens its panel, reshapes it into your app
+    └── agent-profile-creator     Create a custom agent: plans a new profile with you and writes it beside these
 ```
 
 | Profile id | Shown as | Role |
 | --- | --- | --- |
-| `ade-worker-builder` | Create a tool in the ADE | Builds tools inside the ADE only, alone and in phases: plans the tool with you until its spec is unambiguous (`specs/<worker>.md`), writes the architecture, builds the Node worker and its injected UI, and accepts it only after exercising every criterion in the running ADE. Loads each phase's playbook (`skills/harness/ade-solo/…`) only when it enters that phase. |
+| `ade-worker-builder` | Create an app or tool | Scaffolds the `worker-node-collection` template with `coder::scaffold-worker` and opens its panel in the ADE, then, in one session, edits the model, the domain actions and the public page into the app you asked for and verifies it with real calls and the rendered pages. |
 | `agent-profile-creator` | Create a custom agent | Plans a new profile with you, using the existing ones as the reference, and writes `agents/<id>.md`. |
-| `ide-worker-app-builder` | Build an app from a template | Scaffolds the `worker-node-collection` template with `coder::scaffold-worker` and opens its panel in the ADE, then, in one session and without a spec, edits the model, the domain actions and the public page into the app you asked for and verifies it with real calls and the rendered pages. |
 
 ### Orchestration
 
-The tool builder does not orchestrate: it crosses its phases itself.
+The app builder does not orchestrate: it does the whole job in one session.
 `agent-profile-creator` uses orchestration for reference checks, and so can
 any profile you create that dispatches other agents. There is no board and
 no message bus between agents: orchestration is the `harness/orchestration`
@@ -233,26 +230,19 @@ skill, two wires with one direction each:
 
 ### Context and verification
 
-The tool builder preloads `harness/ade-solo/plan` and
-`harness/ade-worker-design/planning`, and fetches each later phase's
-playbook (`harness/ade-solo/architect`, `backend`, `frontend`, `accept`)
-only when it enters that phase. Each playbook names the manual sections the
-phase may read, so no manual is loaded whole or ahead of time. A phase
-counts as done in the spec's `Progress` only when its playbook was fetched
-in that session and its gate checks ran; the line names the playbook. The
-spec's `Project context` carries source paths and observed facts, so later
-phases and turns investigate only gaps and changed facts. Browser contracts
-are loaded when verification begins; shorter function preload lists do not
-narrow inherited permissions.
+The app builder preloads `harness/iii-node/index` and the contracts of the
+functions it calls. It reads only five template files, the ones it may
+change (`src/model.ts`, `src/actions.ts`, `web/client.ts`, `web/App.tsx` and
+`web/app.css`), and adds `test/actions.test.ts` for new actions: the rest of the `worker-node-collection` template is generic
+and adapts to the model. Shorter function preload lists do not narrow
+inherited permissions.
 
-The builder verifies every phase against the running system: functions
-answer real calls, the UI passes static, delivery, rendering and evidence
-checks, and each acceptance criterion is observed once in the running ADE.
-Accept reuses the observations the build phases recorded against the
-current assets and observes only what is missing or changed, in one short
-browser run. Corrections rerun affected checks and their dependencies;
-earlier evidence is reused only while it remains applicable. Detailed
-observations go to `specs/<worker>.evidence.md`.
+It verifies against the running system: the type check, the tests and the
+build pass, every function it reports as verified answered a real call, and a
+browser snapshot of the public page shows
+the demo records. A public route of the app's own is proven on its URL with
+its own method. Its last message separates what it verified, what it assumed
+and what it did not verify.
 
 ### Models and skills
 

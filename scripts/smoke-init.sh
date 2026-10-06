@@ -421,7 +421,7 @@ assert_file "$HARNESS_DIR/.gitignore"
 # The two gallery profiles keep their ids (the file names) and show what they
 # are for. A single builder does the whole job, so the former specialist
 # profiles are no longer shipped.
-assert_contains "$HARNESS_DIR/agents/ade-worker-builder.md" "name: Create a tool in the ADE"
+assert_contains "$HARNESS_DIR/agents/ade-worker-builder.md" "name: Create an app or tool"
 assert_contains "$HARNESS_DIR/agents/agent-profile-creator.md" "name: Create a custom agent"
 for profile in tech-lead backend-engineer frontend-engineer; do
   assert_absent "$HARNESS_DIR/agents/$profile.md"
@@ -465,7 +465,7 @@ if ! grep -qx '.env' "$HARNESS_DIR/.gitignore"; then
 fi
 
 # The printed next steps lead to the gallery choice, not to hidden profiles.
-assert_contains "$TMP_DIR/harness-init.log" "Create a tool in the ADE"
+assert_contains "$TMP_DIR/harness-init.log" "Create an app or tool"
 if grep -Eq 'Tech Lead|engineers' "$TMP_DIR/harness-init.log"; then
   echo "FAIL: harness next steps name hidden profiles" >&2
   exit 1

@@ -17,12 +17,12 @@ Use this skill to create or restructure a Node.js/TypeScript iii worker, especia
 Read the relevant references before implementing:
 
 - [`configuration.md`](./configuration.md) — bundled beside this file: schema-validated configuration registration, reads, updates, and reactive triggers.
-- The UI half lives in the `ade-worker-design` skill (`directory::skills::get { "id": "harness/ade-worker-design/<name>" }`) and belongs to the Frontend Engineer role:
+- The UI half lives in the `ade-worker-design` skill (`directory::skills::get { "id": "harness/ade-worker-design/<name>" }`):
   - `console-injectable-ui` — the complete injectable UI contract, host APIs, asset registration, hot reload, responsiveness, and validation requirements.
   - `console-design` — the Console visual system, component grammar, tokens, typography, spacing, and interaction rules.
   - `patterns` — concrete recipes for record-shaped UIs: boards with lanes and drag-and-drop, a record screen that opens as its own pane, activity timelines with threaded comments, creation modals, chat cards for agent calls, settings forms, and live updates.
 
-This file still owns the worker-side half of an injectable UI — the build script, the asset content function and its triggers, the dev watchers — because those ship inside the worker package. The pages, renderers, forms and styles themselves are the Frontend Engineer's work; when a task needs them, name the gap in your result rather than improvising markup here.
+This file still owns the worker-side half of an injectable UI — the build script, the asset content function and its triggers, the dev watchers — because those ship inside the worker package. The pages, renderers, forms and styles themselves follow `ade-worker-design`: fetch the part a task needs rather than improvising markup from this file.
 
 ### Precedence for this Node scaffold
 
@@ -433,29 +433,29 @@ A container that is already declared is left as it is by `compose::add`; if it i
 
 ## Implementation order
 
-This is the sequence for a new worker across both engineering roles. For an
-existing worker, apply only affected steps and prerequisites; preserve its
-working scaffolding and implemented UI. Use the spec's `Project context`
-instead of repeating discovery. Each engineer performs only its assigned side.
+This is the sequence for a new worker. For an existing worker, apply only
+affected steps and prerequisites; preserve its working scaffolding and
+implemented UI. Reuse what the session already observed instead of repeating
+discovery.
 
 1. Resolve all project identifiers and paths; the worker name passes the name rule.
 2. Use this file for backend/delivery work; fetch only references needed by
-   the assigned change. Preloaded bodies need no second fetch. UI
-   implementation references belong to the Frontend Engineer.
+   the change. Preloaded bodies need no second fetch. UI implementation
+   references are in `ade-worker-design`.
 3. Inspect the destination project's Compose shape, existing workers and coding conventions; reuse a registered capability instead of scaffolding a duplicate.
 4. Scaffold the package with `coder::scaffold-worker` (Scaffold a new worker).
 5. The scaffold already added it to the stack: on its `compose-operation` wake, confirm with `compose::status`, `engine::workers::info` and a real `<worker-name>::hello` call. Only when the result has a `start_error` or says it was not started, declare it through `compose::add` with its `requires` containers first (Scaffold a new worker, step 3).
 6. Replace the example `hello` with the domain (keep `info`: the ADE page's **Open public page** reads it; keep or replace `set-greeting` with the domain's own admin writes): backend modules, functions with complete contracts, tests, and the API allowlist in `src/web.ts` for the functions the public page calls.
 7. Add configuration integration if needed.
-8. Leave `ui/WorkerPage.tsx` and `web/App.tsx` building against the new functions (`host.iii` and `client`). The Frontend Engineer builds the admin page and the other ADE-only surfaces from console components, and the public page with its own design in `web/app.css`, after the backend/delivery contracts are verified.
-9. Verify the assigned side: backend checks static builds, runtime registration, asset delivery, the HTTP allowlists and hot reload; frontend checks real rendering in the ADE through the `browser` worker and at the public URL. The Tech Lead independently checks contracts and integration before the Builder performs user acceptance.
+8. Leave `ui/WorkerPage.tsx` and `web/App.tsx` building against the new functions (`host.iii` and `client`). Then build the admin page and the other ADE-only surfaces from console components, and the public page with its own design in `web/app.css`, after the backend/delivery contracts are verified.
+9. Verify both sides: backend checks static builds, runtime registration, asset delivery, the HTTP allowlists and hot reload; frontend checks real rendering in the ADE through the `browser` worker and at the public URL.
 
 ## Validation checklist
 
-These checks cover the complete delivery. The Backend Engineer owns service,
-configuration, package and asset checks; the Frontend Engineer owns rendered
-UI, interaction and accessibility checks. A backend shell is not a finished
-screen. Report the evidence for your assigned checks and hand off the rest.
+These checks cover the complete delivery: service, configuration, package
+and asset checks, then rendered UI, interaction and accessibility checks. A
+backend shell is not a finished screen. Report the evidence for the checks you
+ran, and name the ones you did not run.
 For corrections, rerun affected checks and dependencies, retaining earlier
 evidence only while it remains applicable; broaden checks if impact is unclear.
 
