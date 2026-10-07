@@ -178,6 +178,29 @@ survive a refresh and need no external services or extra accounts.
   project, code changes, debugging, or anything the other choices do not
   cover.
 
+## Mention items in chat
+
+Point an agent at something your project already holds instead of pasting
+ids. In the message box:
+
+- type `@` and a few letters to search every worker that offers mentions,
+  one group per worker;
+- or type `@session` (or another worker's name) and press **Tab** to search
+  only that worker, for example a past conversation by its title.
+
+The item becomes a pill: hover it for a preview, click it to open it (a
+conversation, a trace in the traces screen, a worker's page). This project
+offers `@session` (conversations) and `@trace` (the engine's traces) out of
+the box; workers you add can offer their own, such as `@kanban` tickets
+(`compose::add worker=kanban`). Agents can write mentions in their replies
+too, and the ADE shows them the same way.
+
+The agent receives each mention you write with a one-line summary of the
+item and the call that reads it in full, once Judge is set up (see
+[Judge](#judge)); without it, the agent finds the item through function
+search. An agent building an app or tool can make its records mentionable;
+the `harness/iii-node` skill (Chat mentions) shows how.
+
 ## Troubleshooting
 
 | Problem | What to do |
@@ -384,9 +407,11 @@ only for that, instead of spending the main model's tokens on them:
 | Function search | Picks the right function among everything your project registers, instead of putting every schema in the prompt |
 | Argument repair | Fixes a malformed tool call before it fails, without another round trip to the model |
 | Browser automation | Chooses which element of a page an agent should act on |
+| Chat mentions | Hands the agent a one-line summary of each item you mention (`@session(id=…)`, `@kanban(id=…)`) and the call that reads it in full; no model is involved (see [Mention items in chat](#mention-items-in-chat)) |
 
 Without Judge everything still works: function search falls back to
-keyword matching, and a broken tool call goes back to the main model.
+keyword matching, a broken tool call goes back to the main model, and the
+agent looks a mentioned item up itself.
 
 Set it up in the setup wizard's **Judge** step, or later with **Set up the
 harness** in the command palette (`Ctrl+K`). Choose who answers:

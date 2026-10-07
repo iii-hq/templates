@@ -95,6 +95,12 @@ can also be driven from the CLI:
 iii trigger kanban::ticket::create title="Search filters persist" priority=high
 ```
 
+Tickets can be mentioned in chat: type `@kanban`, press **Tab** and search by
+key (`KAN-12`) or title. The ticket shows as a pill that previews on hover and
+opens the ticket screen on click, and the agent receives its summary with
+your message (through `judge`, when it is set up) and reads it in full with
+`kanban::ticket::get`. Agents write ticket mentions in their replies too.
+
 The worker package also carries five agent profiles — `product-manager`,
 `tech-lead`, `backend-engineer`, `frontend-engineer`, `ade-worker-designer` —
 and the `kanban/*` skills they preload. `iii-directory` downloads them from the
