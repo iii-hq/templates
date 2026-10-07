@@ -8,7 +8,7 @@ color: teal
 extends: default
 reasoning_effort: medium
 skills: [harness/iii-node/index]
-functions: ["coder::scaffold-worker", "console::workspace::open", "compose::status", "compose::add", "compose::operation", "compose::logs", "compose::restart", "engine::register_trigger", "engine::workers::info", "shell::exec", "coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "browser::sessions::start", "browser::snapshot", "browser::sessions::list", "browser::sessions::stop"]
+functions: ["coder::scaffold-worker", "console::workspace::open", "compose::status", "compose::add", "compose::operation", "compose::logs", "compose::restart", "engine::register_trigger", "engine::workers::info", "shell::exec", "coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "browser::sessions::start", "browser::snapshot", "browser::sessions::list", "browser::sessions::stop", "http::status"]
 ---
 
 # Create an app or tool
@@ -73,13 +73,14 @@ The model first, so the panel becomes the app on the first save. Then the domain
 6. **Real calls plus demo data, in one turn.** Make 2–3 real `create` calls with realistic records and a final `list` call. The panel fills in live.
 7. **Show it, in one turn.**
    - Make one real action or update on a demo record, with an id from step 6.
-   - Call `console::workspace::open { "screen": "ext:<name>" }`.
-   - Call `browser::sessions::start { "url": "http://127.0.0.1:3111/<name>" }`.
+   - Call `console::workspace::open { "screen": "ext:<name>" }` and `http::status {}`. Its `url` is where this project's public pages answer (`http://127.0.0.1:3111` unless the project moved the port); call it `<base>` below. Never assume 3111: another project on this machine may own that port. Only an `http` worker too old to have `http::status` (function not found) falls back to `http://127.0.0.1:3111`.
+   - Call `browser::sessions::start { "url": "<base>/<name>" }`.
    - In the next turn, `browser::snapshot`, then `browser::sessions::stop` on that session.
-   - If start fails with `tab limit reached`, list the sessions, stop one old `127.0.0.1:3111` tab, and start again.
+   - If start fails with `tab limit reached`, list the sessions, stop one old `<base>` tab, and start again.
+   - If `http::status` reports no `url` or a `last_reload_error`, the `http` container is not serving: read `compose::logs { "container": "http", "tail": 60 }` and report it under "not verified" (for example `Address in use`: another project owns the port, see the README's "Ports and network access").
    - If you added a `PUBLIC_ROUTES` entry, prove it on its URL with its own method. `browser::sessions::start` opens its url with a `GET` only.
-     - For a `GET` route, start a second session on the route's URL (for example `http://127.0.0.1:3111/<name>/go/<slug>`). The `url` that `browser::sessions::start` returns, or a snapshot, shows where it led. Stop that session.
-     - For a `POST` route, send the declared body: `shell::exec { "command": "curl", "args": ["-sS", "-i", "-X", "POST", "-H", "content-type: application/json", "-d", "<json body>", "http://127.0.0.1:3111/<name>/<path>"] }`, and read the status and body.
+     - For a `GET` route, start a second session on the route's URL (for example `<base>/<name>/go/<slug>`). The `url` that `browser::sessions::start` returns, or a snapshot, shows where it led. Stop that session.
+     - For a `POST` route, send the declared body: `shell::exec { "command": "curl", "args": ["-sS", "-i", "-X", "POST", "-H", "content-type: application/json", "-d", "<json body>", "<base>/<name>/<path>"] }`, and read the status and body.
      - Then confirm the side effect with a real call (for example, the click count went up).
 8. **Report**, then stop. List only calls that actually ran and what they returned. A function you did not call goes under "not verified".
 
@@ -112,5 +113,5 @@ The model first, so the panel becomes the app on the first save. Then the domain
 - typecheck, test and build pass.
 - If you added an action, `test/actions.test.ts` exists and its tests are among those that passed.
 - If you added a route, a request with its own method on its URL showed the expected result: a browser session for a `GET` (the redirect target or the response body), `curl` for a `POST` (the status and response body).
-- The panel `ext:<name>` shows the app, and the `browser::snapshot` of `http://127.0.0.1:3111/<name>` shows the demo records.
+- The panel `ext:<name>` shows the app, and the `browser::snapshot` of `<base>/<name>` shows the demo records.
 - Your last message, at most ten lines, says what you verified, what you assumed and what you did not verify.
