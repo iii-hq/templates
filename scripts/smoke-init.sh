@@ -468,6 +468,31 @@ fi
 # one the user connects.
 assert_not_contains "$HARNESS_DIR/worker-compose.yaml" "package://provider-"
 
+# The setup wizard's example prompts ship with the project, and every one
+# names a profile the template or iii-directory serves.
+assert_file "$HARNESS_DIR/onboarding.yaml"
+python3 - "$HARNESS_DIR/onboarding.yaml" "$HARNESS_DIR/agents" <<'PYEOF'
+import os
+import re
+import sys
+
+path, agents_dir = sys.argv[1], sys.argv[2]
+text = open(path).read()
+entries = re.split(r"^  - ", text.split("\nprompts:\n", 1)[1], flags=re.M)[1:]
+if not entries:
+    sys.exit(f"FAIL: {path} lists no prompts")
+for entry in entries:
+    title = re.search(r"^title: (.+)$", entry, re.M)
+    agent = re.search(r"^    agent: (\S+)$", entry, re.M)
+    if not title or not agent or not re.search(r"^    prompt: ", entry, re.M):
+        sys.exit(f"FAIL: {path} has a prompt without a title, agent or prompt")
+    if not re.search(r"^      - \{ provider: \S+, model: \S+", entry, re.M):
+        sys.exit(f"FAIL: {path}: {title.group(1)} lists no models")
+    name = agent.group(1)
+    if name != "default" and not os.path.isfile(os.path.join(agents_dir, name + ".md")):
+        sys.exit(f"FAIL: {path}: {title.group(1)} uses missing agent {name}")
+PYEOF
+
 # The printed next steps lead to the gallery choice, not to hidden profiles.
 assert_contains "$TMP_DIR/harness-init.log" "Create an app or tool"
 if grep -Eq 'Tech Lead|engineers' "$TMP_DIR/harness-init.log"; then

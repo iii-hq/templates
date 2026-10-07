@@ -132,6 +132,11 @@ Select **Create an app or tool** and send this message:
 Build an expense tracker. Each expense has a description, an amount, a category, and whether it was reimbursed. Show the total still to be reimbursed.
 ```
 
+The setup wizard's last step offers this message too, with a few other
+examples: select one and a new conversation opens with the message ready to
+send, its agent selected, and a model this machine has. See
+[Example prompts](#example-prompts) to change them.
+
 ### 6. Know what happens next
 
 1. **Start.** The agent names the worker, creates it from the
@@ -223,6 +228,38 @@ default                           built-in, shown as Default
 | --- | --- | --- |
 | `ade-worker-builder` | Create an app or tool | Scaffolds the `worker-node-collection` template with `coder::scaffold-worker` and opens its panel in the ADE, then, in one session, edits the model, the domain actions and the public page into the app you asked for and verifies it with real calls and the rendered pages. |
 | `agent-profile-creator` | Create a custom agent | Plans a new profile with you, using the existing ones as the reference, and writes `agents/<id>.md`. |
+
+### Example prompts
+
+`onboarding.yaml` lists the examples the setup wizard shows on its last
+step. Add, change or remove entries there; the ADE reads the file each time
+the step opens. Each entry has a `title`, an optional `description`, the
+`agent` profile the conversation uses (a file name in `agents/` without
+`.md`, or a built-in profile such as `default`), the `prompt` put in the
+message box, and `models` in order of preference:
+
+```yaml
+prompts:
+  - title: Build a TODO app
+    description: A todo list with notes, and a public page that counts what is still open
+    agent: ade-worker-builder
+    prompt: >-
+      Build a TODO app. Each todo has a title, notes, and whether it is done.
+      Show how many todos are still open.
+    models:
+      - { provider: claude-code, model: claude-sonnet-5-5, effort: medium }
+      - { provider: anthropic, model: claude-sonnet-5-5, effort: medium }
+      - { provider: openai, model: gpt-6.1-sol }
+```
+
+`provider` and `model` are the ids `iii trigger router::models::list`
+prints; a bare model id also matches the id a provider prefixes
+(`claude-sonnet-5-5` matches `claude-code/claude-sonnet-5-5`). The first
+model this machine has is selected, with its reasoning `effort` (`minimal`,
+`low`, `medium`, `high`, `xhigh` or `off`; leave it out to keep the model's
+default). When none is available, the conversation keeps its
+usual model. An invalid entry is skipped, and without the file the step
+shows no examples.
 
 ### Orchestration
 

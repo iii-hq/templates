@@ -8,10 +8,16 @@ requires:
   - typescript # no language is needed, workaround for old logic TODO: fix
 optional: []
 
+# The root language_files would drop it: the setup wizard's example prompts.
+language_files:
+  common:
+    - 'onboarding.yaml'
+
 # Explicit list of files to copy (shared_files from root are added automatically)
 files:
   - README.md
   - worker-compose.yaml
+  - onboarding.yaml
   - agents/ade-worker-builder.md
   - agents/agent-profile-creator.md
   - skills/harness/ade-worker-design/console-design.md

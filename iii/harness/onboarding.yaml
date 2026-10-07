@@ -1,0 +1,76 @@
+# Example prompts the ADE's setup wizard shows on its last step. Clicking one
+# opens a new chat with the prompt in the message box (you still send it),
+# its agent profile selected, and the first model in `models` that this
+# machine has. When none of them is available, the chat keeps its usual model.
+#
+# Each prompt:
+#   title        what the card says (up to 80 characters)
+#   description  one line under it (optional, up to 280 characters)
+#   agent        the agent profile the chat uses: a file name in agents/
+#                without .md, or a built-in profile such as `default`
+#   prompt       the message put in the message box
+#   models       in order of preference. `provider` is the provider's id,
+#                `model` its model id (`claude-sonnet-5-5` also matches the
+#                id `claude-code/claude-sonnet-5-5`), and `effort` the
+#                reasoning effort: minimal, low, medium, high, xhigh or off
+#                (leave it out to keep the model's default)
+#
+# The ADE reads this file each time the step opens; an invalid entry is
+# skipped, and without the file the step shows no examples.
+prompts:
+  - title: Build a TODO app
+    description: A todo list with notes, and a public page that counts what is still open
+    agent: ade-worker-builder
+    prompt: >-
+      Build a TODO app. Each todo has a title, notes, and whether it is done.
+      Show how many todos are still open.
+    models:
+      - { provider: claude-code, model: claude-sonnet-5-5, effort: medium }
+      - { provider: anthropic, model: claude-sonnet-5-5, effort: medium }
+      - { provider: openai-codex, model: gpt-6.1-sol, effort: medium }
+      - { provider: openai, model: gpt-6.1-sol, effort: medium }
+      - { provider: github-copilot, model: gpt-6.1-sol, effort: medium }
+      - { provider: openrouter, model: anthropic/claude-sonnet-5.5, effort: medium }
+      - { provider: deepseek, model: deepseek-flash }
+
+  - title: Build an expense tracker
+    description: Expenses by category, and a public page with the total still to be reimbursed
+    agent: ade-worker-builder
+    prompt: >-
+      Build an expense tracker. Each expense has a description, an amount, a
+      category, and whether it was reimbursed. Show the total still to be
+      reimbursed.
+    models:
+      - { provider: claude-code, model: claude-sonnet-5-5, effort: medium }
+      - { provider: anthropic, model: claude-sonnet-5-5, effort: medium }
+      - { provider: openai-codex, model: gpt-6.1-sol, effort: medium }
+      - { provider: openai, model: gpt-6.1-sol, effort: medium }
+      - { provider: github-copilot, model: gpt-6.1-sol, effort: medium }
+      - { provider: openrouter, model: anthropic/claude-sonnet-5.5, effort: medium }
+      - { provider: deepseek, model: deepseek-flash }
+
+  - title: Create a test reviewer agent
+    description: A reusable agent that reviews your workers and suggests tests
+    agent: agent-profile-creator
+    prompt: Create an agent that reviews my workers and suggests useful tests.
+    models:
+      - { provider: claude-code, model: claude-sonnet-5-5, effort: medium }
+      - { provider: anthropic, model: claude-sonnet-5-5, effort: medium }
+      - { provider: openai-codex, model: gpt-6.1-sol, effort: medium }
+      - { provider: openai, model: gpt-6.1-sol, effort: medium }
+      - { provider: github-copilot, model: gpt-6.1-sol, effort: medium }
+      - { provider: openrouter, model: anthropic/claude-sonnet-5.5, effort: medium }
+      - { provider: deepseek, model: deepseek-flash }
+
+  - title: Explain this project
+    description: What runs here, and what you could work on next
+    agent: default
+    prompt: Explain this project and help me decide what to work on next.
+    models:
+      - { provider: claude-code, model: claude-sonnet-5-5, effort: low }
+      - { provider: anthropic, model: claude-sonnet-5-5, effort: low }
+      - { provider: openai-codex, model: gpt-6.1-sol, effort: low }
+      - { provider: openai, model: gpt-6.1-sol, effort: low }
+      - { provider: github-copilot, model: gpt-6.1-sol, effort: low }
+      - { provider: openrouter, model: anthropic/claude-sonnet-5.5, effort: low }
+      - { provider: deepseek, model: deepseek-flash }
