@@ -39,7 +39,7 @@ Expected list response:
 ## Make it your app
 
 1. Edit `workers/my-worker/src/model.ts`: resource, fields (`string`, `number`, `boolean`), list columns, sort.
-2. Optionally add domain actions in `src/actions.ts` and list the public ones in `PUBLIC_ACTIONS`; give an action its own URL (a short link `GET go/:slug` answering `302`) with `PUBLIC_ROUTES` there.
+2. Optionally add domain actions in `src/actions.ts` and list the public ones in `PUBLIC_ACTIONS`. Trim `PUBLIC_CRUD` (ships `list`, `create` and `remove`) to the record calls the public page makes; port 3111 has no auth. Give an action its own URL (a short link `GET go/:slug` answering `302`) with `PUBLIC_ROUTES` there.
 3. Write the public page in `web/App.tsx` and `web/app.css`.
 4. Run `pnpm typecheck && pnpm test && pnpm build` in `workers/my-worker`.
 

@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { after, before, describe, it } from 'node:test'
-import { PUBLIC_ACTIONS, PUBLIC_ROUTES } from '../src/actions.js'
+import { PUBLIC_ACTIONS, PUBLIC_CRUD, PUBLIC_ROUTES } from '../src/actions.js'
 import { MODEL } from '../src/model.js'
 import { API_FUNCTIONS, checkRoutes, type HttpRequest, type PublicRoute, redirect, registerRoutes, routeId, WEB_PATH, webHandlers, webUrl } from '../src/web.js'
 
@@ -66,15 +66,32 @@ describe('web handlers', () => {
     }
   })
 
-  it('derives the public names from the model and PUBLIC_ACTIONS, each passing the request body', async () => {
+  // Port 3111 has no auth: a record call the public page does not make stays
+  // off it, so nothing bypasses a domain action's own checks (MOT-5341).
+  it('keeps get and update off the public API unless PUBLIC_CRUD lists them', async () => {
+    let called = false
+    const closed = webHandlers(dir, async () => {
+      called = true
+      return {}
+    })
+    for (const fn of ['get', 'update']) {
+      assert.deepEqual(await closed.api({ path_params: { fn }, body: { id: 'a' } }), {
+        status_code: 404,
+        headers: { 'content-type': 'application/json' },
+        body: { error: 'not found' },
+      })
+    }
+    assert.equal(called, false)
+  })
+
+  it('derives the public names from PUBLIC_CRUD and PUBLIC_ACTIONS, each passing the request body', async () => {
     const r = MODEL.resource
+    assert.deepEqual(PUBLIC_CRUD, ['list', 'create', 'remove'])
     assert.deepEqual(
       [...API_FUNCTIONS],
       [
         ['list', `${r}::list`],
-        ['get', `${r}::get`],
         ['create', `${r}::create`],
-        ['update', `${r}::update`],
         ['remove', `${r}::remove`],
         ['model', 'model'],
         ...PUBLIC_ACTIONS.map((name) => [name, `${r}::${name}`]),
