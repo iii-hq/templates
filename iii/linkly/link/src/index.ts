@@ -129,7 +129,7 @@
 //     payload: { scope: "links", key: code, value: { url } },
 //   });
 //   await worker.trigger({
-//     function_id: "publish",
+//     function_id: "iii::durable::publish",
 //     payload: { topic: "link.created", data: { code, url } },
 //   });
 //   logger.info("link created", { code, url });
@@ -291,7 +291,10 @@
 // worker.registerFunction(
 //   "link::record_click",
 //   async (payload: { code: string; clicked_at: string }) => {
-//     await worker.trigger({
+//     const { last_insert_id } = await worker.trigger<
+//       { db: string; sql: string; params: string[] },
+//       { last_insert_id: string | null }
+//     >({
 //       function_id: "database::execute",
 //       payload: {
 //         db: DB,
@@ -299,14 +302,27 @@
 //         params: [payload.code, payload.clicked_at],
 //       },
 //     });
+//     // The row is committed. Announce it, without waiting on the listeners.
 //     worker.trigger({
-//       function_id: "publish",
-//       payload: { topic: "link.clicked", data: payload },
+//       function_id: "click-streamer::broadcast",
+//       payload: { id: Number(last_insert_id), code: payload.code, clicked_at: payload.clicked_at },
 //       action: TriggerAction.Void(),
 //     });
 //     return { recorded: true };
 //   },
 // );
+
+// --- Ch. 5 | link::click_summary ---
+// worker.registerFunction("link::click_summary", async () => {
+//   const { rows } = await worker.trigger<
+//     { db: string; sql: string },
+//     { rows: Array<{ total: number; last_id: number | null }> }
+//   >({
+//     function_id: "database::query",
+//     payload: { db: DB, sql: "SELECT COUNT(*) AS total, MAX(id) AS last_id FROM clicks" },
+//   });
+//   return { total: rows[0]?.total ?? 0, last_id: rows[0]?.last_id ?? 0 };
+// });
 
 // --- Ch. 3 | http::redirect (replaces Ch. 1) ---
 // // THIS CODE WILL BE REMOVED AND REPLACED LATER WITH THE CODE FROM CHAPTER 4

@@ -65,7 +65,7 @@
 # worker.register_function("analytics::on_link_created", on_link_created)
 # worker.register_trigger(
 #     {
-#         "type": "subscribe",
+#         "type": "durable:subscriber",
 #         "function_id": "analytics::on_link_created",
 #         "config": {"topic": "link.created"},
 #     }
