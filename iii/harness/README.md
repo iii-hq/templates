@@ -140,7 +140,7 @@ send, its agent selected, and a model this machine has. See
 ### 6. Know what happens next
 
 1. **Start.** The agent names the worker, creates it from the
-   `worker-node-collection` template inside your project folder, and adds it
+   `worker-node-ade` template inside your project folder, and adds it
    to `worker-compose.yaml`. The first app also adds an `http` container,
    which serves public pages on port 3111 (`http://127.0.0.1:3111`) without
    authentication. Like the ADE, it listens on every network interface, so
@@ -226,7 +226,7 @@ default                           built-in, shown as Default
 
 | Profile id | Shown as | Role |
 | --- | --- | --- |
-| `ade-worker-builder` | Create an app or tool | Scaffolds the `worker-node-collection` template with `coder::scaffold-worker` and opens its panel in the ADE, then, in one session, edits the model, the domain actions and the public page into the app you asked for and verifies it with real calls and the rendered pages. |
+| `ade-worker-builder` | Create an app or tool | Scaffolds the `worker-node-ade` template with `coder::scaffold-worker` and opens its admin page in the ADE, then, in one session, reshapes its hello example into the app you asked for (the functions, the public page and the admin page) and verifies it with real calls and the rendered pages. |
 | `agent-profile-creator` | Create a custom agent | Plans a new profile with you, using the existing ones as the reference, and writes `agents/<id>.md`. |
 
 ### Example prompts
@@ -289,10 +289,11 @@ skill, two wires with one direction each:
 ### Context and verification
 
 The app builder preloads `harness/iii-node/index` and the contracts of the
-functions it calls. It reads only five template files, the ones it may
-change (`src/model.ts`, `src/actions.ts`, `web/client.ts`, `web/App.tsx` and
-`web/app.css`), and adds `test/actions.test.ts` for new actions: the rest of the `worker-node-collection` template is generic
-and adapts to the model. Shorter function preload lists do not narrow
+functions it calls. It reads the `worker-node-ade` files it reshapes in one
+batch (`src/index.ts`, `src/web.ts`, `src/hello.ts`, `web/App.tsx`,
+`web/app.css`, `ui/WorkerPage.tsx` and `test/web.test.ts`), replaces the
+`hello` example with a domain module and its test, and stores the app's data
+in the project's `state` worker. Shorter function preload lists do not narrow
 inherited permissions.
 
 It verifies against the running system: the type check, the tests and the

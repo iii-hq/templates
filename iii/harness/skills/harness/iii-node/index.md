@@ -152,7 +152,7 @@ Import only actual top-level SDK exports such as `registerWorker` and, when need
 
 ### Namespaces
 
-A Compose project usually runs its workers in a project namespace (`III_NAMESPACE` is set by Compose); the engine-hosted workers (`configuration`, `state`, `engine::*`) live in `default`. Consequences:
+A Compose project usually runs its workers in a project namespace (`III_NAMESPACE` is set by Compose); the engine-hosted workers (`configuration`, `engine::*`) live in `default`. Consequences:
 
 - Calls to engine-hosted functions from the worker need `namespace: 'default'` on `iii.trigger`; calls to the worker's own functions and other project workers omit it.
 - `iii.registerTrigger` for an engine-provided type (`configuration`) and for another project worker's type (`console:script`) both resolve without a `trigger_namespace`; do not set one.
@@ -396,12 +396,12 @@ Never write the worker's entry into `worker-compose.yaml` by hand. A running dae
 
 `compose::add` is asynchronous. Fetch its contract and `compose::operation`'s once (`engine::functions::info { "function_ids": ["compose::add", "compose::operation"] }`), then use this exact order:
 
-1. Arm the wake, with an operation id you choose (`add-<worker-name>-<suffix>`):
+1. Arm the wake, with a fresh operation id that starts with your session id (`<session-id>:add-<worker-name>`). Operation ids are global to Compose and never reusable, so a fixed name collides with an earlier session's operation:
 
    ```json
    engine::register_trigger {
      "trigger_type": "compose-operation",
-     "config": { "operation_id": "add-issue-board-7f3a", "terminal_only": true },
+     "config": { "operation_id": "<session-id>:add-issue-board", "terminal_only": true },
      "once": true,
      "lifecycle": { "expires_in_ms": 600000 }
    }
@@ -417,7 +417,7 @@ Never write the worker's entry into `worker-compose.yaml` by hand. A running dae
    ]
    ```
 
-   Declare them with the same operation id: `compose::add { "operation_id": "add-issue-board-7f3a", "workers": <workers> }`. For `issue-board` in a stack without `http`, `workers` holds the container object followed by `{ "worker": "package://http", "version": "latest", "config_name": "http" }`.
+   Declare them with the same operation id: `compose::add { "operation_id": "<session-id>:add-issue-board", "workers": <workers> }`. For `issue-board` in a stack without `http`, `workers` holds the container object followed by `{ "worker": "package://http", "version": "latest", "config_name": "http" }`.
 
    - `compose.worker` is already the absolute path of the scaffolded folder, which `compose::add` accepts; pass it unchanged. The container key is the folder's last segment, `<worker-name>`; `compose::status` shows it.
    - `start_after` names the container that runs the console in this compose file (`ade` in the harness template; `compose::status` lists the real keys), so the console's UI provider exists before the worker registers its assets.
@@ -425,7 +425,7 @@ Never write the worker's entry into `worker-compose.yaml` by hand. A running dae
    - Declare a missing `http` with that object, the same form the templates use, so it reads its `http` configuration. A `requires` container the stack already declares is not added again.
    - The response `{ operation_id, requested, status }` is an acceptance, not readiness.
 
-3. Read `compose::operation { "operation_id": "add-issue-board-7f3a" }` once. If `last_event.terminal` is true, unregister the wake and read the result; otherwise end the turn and let the terminal event wake you. Do not poll.
+3. Read `compose::operation { "operation_id": "<session-id>:add-issue-board" }` once. If `last_event.terminal` is true, unregister the wake and read the result; otherwise end the turn and let the terminal event wake you. Do not poll.
 
 4. On the terminal event, confirm: `compose::status` shows the worker's container and every added `requires` container `ready`, `engine::workers::info { "name": "<worker-name>" }` lists its functions and trigger types, and, before you replace the example, `<worker-name>::hello` answers a real call. On `failed`, `compose::logs { "container": "<container key>", "tail": 100 }` has the real error. `restart: on-failure` also retries a failed start, so a worker that never registers reaches `failed` only after its retries. Later, a crash ends the dev loop: Compose retries it (`restarting`), and each retry runs the files as they are then, so a fix saved meanwhile is picked up; after five quick failures it is `failed`: fix the code, then `compose::restart { "container": "<container key>" }`. The container runs the worker's own install and start scripts, so the first run installs dependencies and restarts once or twice while the dev loop writes `dist/`; that is expected.
 

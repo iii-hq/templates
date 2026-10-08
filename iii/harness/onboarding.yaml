@@ -18,12 +18,17 @@
 # The ADE reads this file each time the step opens; an invalid entry is
 # skipped, and without the file the step shows no examples.
 prompts:
-  - title: Build a TODO app
-    description: A todo list with notes, and a public page that counts what is still open
+  - title: Build a link shortener
+    description: Short links with their own public page, 302 redirects, and an admin panel
     agent: ade-worker-builder
-    prompt: >-
-      Build a TODO app. Each todo has a title, notes, and whether it is done.
-      Show how many todos are still open.
+    prompt: |-
+      Build a link shortener named `link-shortener`.
+
+      - Each link has a name, a target URL (http or https only) and a short code the app generates.
+      - The public page creates a link, shows and copies its short URL, and lists the saved links.
+      - `/<worker>/go/<code>` redirects (302) to the target, or answers 404 for an unknown code.
+
+      Test it in the browser: create one link through the form, copy it and open it. No demo records. Leave the public page open at the end.
     models:
       - { provider: claude-code, model: claude-sonnet-5-5, effort: medium }
       - { provider: anthropic, model: claude-sonnet-5-5, effort: medium }
