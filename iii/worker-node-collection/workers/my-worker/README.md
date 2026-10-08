@@ -35,7 +35,7 @@ export const MODEL = {
 | Function | `my-worker::model` | Internal. `{}` → `{ model, public_actions }` for the pages |
 | Trigger type | `my-worker:change` | Fires after every persisted write with `{ event, record, records }` (`created`, `updated`, `removed`). Config `{ events?, metadata? }`; the binding's metadata is merged with `config.metadata` (config wins) |
 | State | scope `my-worker`, key `<resource>` | The records as one JSON array |
-| HTTP | `GET /my-worker`, `GET /my-worker/:file`, `POST /my-worker/api/:fn` | `fn` is `list`, `get`, `create`, `update`, `remove`, `model` or a name in `PUBLIC_ACTIONS` |
+| HTTP | `GET /my-worker`, `GET /my-worker/:file`, `POST /my-worker/api/:fn` | `fn` is a name in `PUBLIC_CRUD` (ships `list`, `create` and `remove`), `model`, or a name in `PUBLIC_ACTIONS`. The ADE page reaches every function through the engine |
 | HTTP | `/my-worker/<path>` per `PUBLIC_ROUTES` entry | One internal function `my-worker::route::<method>::<path>` and one http trigger each; none by default |
 
 ## Files
@@ -43,13 +43,13 @@ export const MODEL = {
 | Path | Per app? | Role |
 |---|---|---|
 | `src/model.ts` | **yes** | The app: resource, fields, list columns, sort |
-| `src/actions.ts` | optional | Domain actions, `PUBLIC_ACTIONS` (ships `toggle`) and `PUBLIC_ROUTES` (ships none) |
+| `src/actions.ts` | optional | Domain actions, `PUBLIC_CRUD` (ships `list`, `create` and `remove`), `PUBLIC_ACTIONS` (ships `toggle`) and `PUBLIC_ROUTES` (ships none) |
 | `web/App.tsx`, `web/app.css` | **yes** | The public page, written for your records (ships one for the default model) |
 | `web/client.ts` | no | `call(name, payload)` and `createApi(client)`: `api.list()`, `api.create(...)`, … |
 | `src/record.ts` | no | `Model`, `checkModel`, validation, create/update/remove, parse, sort, counts, schemas |
 | `src/functions.ts` | no | `registerDomain`: CRUD and `my-worker::model` from the model |
 | `src/store.ts` | no | `createCollection`: state, one write queue, the `my-worker:change` trigger type |
-| `src/web.ts` | no | HTTP handlers; `API_FUNCTIONS` derived from the model and `PUBLIC_ACTIONS` |
+| `src/web.ts` | no | HTTP handlers; `API_FUNCTIONS` derived from the model, `PUBLIC_CRUD` and `PUBLIC_ACTIONS` |
 | `src/routes.ts` | no | `PUBLIC_ROUTES` plumbing: `PublicRoute`, `redirect`, `checkRoutes`, `registerRoutes`; imports nothing from the app, so actions can use it without a cycle |
 | `src/index.ts` | no | Plumbing: worker, `info`, ADE assets, HTTP routes, shutdown |
 | `ui/WorkerPage.tsx`, `ui/styles.css` | no | The ADE admin page, rendered from `my-worker::model`: add form, live list, endpoints |
@@ -59,7 +59,7 @@ export const MODEL = {
 
 1. **Edit `src/model.ts`:** the resource, the fields, the list columns and the sort. That is the whole backend and the admin.
    - Mark fields like emails or phone numbers `private: true`: the public HTTP API leaves them out of every response, while the admin page still shows them.
-2. **Optionally add domain actions in `src/actions.ts`** (a commented `links::visit` shows the shape) and list the public ones in `PUBLIC_ACTIONS`.
+2. **Optionally add domain actions in `src/actions.ts`** (a commented `links::visit` shows the shape) and list the public ones in `PUBLIC_ACTIONS`. Keep `PUBLIC_CRUD` to the record calls the public page makes: port 3111 has no auth, and a public `create` or `update` skips your actions' checks.
    - Need your own URL (a short link, a webhook)? Add it to `PUBLIC_ROUTES` in `src/actions.ts`: `{ method, path, handler }` answers on `/my-worker/<path>` (e.g. `GET go/:slug` returning `redirect(url)` from `src/routes.ts`). The first segment must be static; `api/...`, a one-segment GET and duplicates are refused at startup.
 3. **Write the public page** in `web/App.tsx` and `web/app.css`, calling the worker through `createApi(client)` from `web/client.ts`.
 4. **Run** `pnpm typecheck && pnpm test && pnpm build`.

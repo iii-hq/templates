@@ -1,12 +1,19 @@
 // Domain actions: the per-app extension point. CRUD comes from the model
 // (src/functions.ts); put anything else a record app does here, as
-// my-worker::<resource>::<action>, and list the ones the public page may call
-// in PUBLIC_ACTIONS (src/web.ts allowlists exactly those).
+// my-worker::<resource>::<action>. List the record calls and the actions the
+// public page may make in PUBLIC_CRUD and PUBLIC_ACTIONS: src/web.ts
+// allowlists exactly those.
 import type { IIIClient } from 'iii-sdk'
 import type { RegisterFunctionFormat } from 'iii-sdk/protocol'
 import type { ActionContext } from './functions.js'
 import { booleanFields, recordSchema, updateRecord } from './record.js'
 import type { PublicRoute } from './routes.js'
+
+/** Record calls the public page may make over HTTP (`list` -> my-worker::<resource>::list).
+    Port 3111 has no auth, so list only what the page calls: a public
+    `create` or `update` lets any caller skip a domain action's own checks.
+    The ADE page keeps every call through the engine connection. */
+export const PUBLIC_CRUD: readonly ('list' | 'get' | 'create' | 'update' | 'remove')[] = ['list', 'create', 'remove']
 
 /** Action names the public page may call over HTTP (`toggle` -> my-worker::<resource>::toggle). */
 export const PUBLIC_ACTIONS: readonly string[] = ['toggle']

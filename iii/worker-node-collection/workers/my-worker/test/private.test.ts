@@ -101,8 +101,8 @@ describe('the public HTTP API with a private field', () => {
     assert.equal('email' in records[0], false)
     assert.doesNotMatch(JSON.stringify(listed.body), /ada@example\.com/)
 
-    const viaGet = await api('get', { id: record.id })
-    assert.equal('email' in (viaGet.body as { record: object }).record, false)
+    // get is not public by default (PUBLIC_CRUD), so it cannot leak either.
+    assert.equal((await api('get', { id: record.id })).status_code, 404)
     const viaToggle = await api('toggle', { id: record.id, field: 'attending' })
     assert.equal((viaToggle.body as { record: Record<string, unknown> }).record.attending, true)
     assert.equal('email' in (viaToggle.body as { record: object }).record, false)

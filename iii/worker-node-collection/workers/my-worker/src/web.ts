@@ -3,7 +3,7 @@
 // allowlist: `:file` and `:fn` come straight from the URL (`..` included).
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { PUBLIC_ACTIONS } from './actions.js'
+import { PUBLIC_ACTIONS, PUBLIC_CRUD } from './actions.js'
 import { MODEL } from './model.js'
 import { type Model, privateFields } from './record.js'
 import { type HttpRequest, type HttpResponse, WEB_PATH } from './routes.js'
@@ -19,11 +19,12 @@ const ASSETS = new Map([
 ])
 
 /** Functions the page may call over HTTP: short name -> `my-worker::<suffix>`.
-    Derived from the model and PUBLIC_ACTIONS (src/actions.ts), so a renamed
-    resource needs no edit here. A Map, so `constructor` is never a name. */
+    Derived from the model, PUBLIC_CRUD and PUBLIC_ACTIONS (src/actions.ts), so
+    a renamed resource needs no edit here. A Map, so `constructor` is never a
+    name. */
 export function apiFunctions(model: Model): ReadonlyMap<string, string> {
   return new Map([
-    ...['list', 'get', 'create', 'update', 'remove'].map((name): [string, string] => [name, `${model.resource}::${name}`]),
+    ...PUBLIC_CRUD.map((name): [string, string] => [name, `${model.resource}::${name}`]),
     ['model', 'model'],
     ...PUBLIC_ACTIONS.map((name): [string, string] => [name, `${model.resource}::${name}`]),
   ])
