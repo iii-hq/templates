@@ -288,7 +288,7 @@ skill, two wires with one direction each:
 
 ### Context and verification
 
-The app builder preloads `harness/iii-node/index` and the contracts of the
+The app builder preloads `harness/iii-node` and the contracts of the
 functions it calls. It reads the `worker-node-ade` files it reshapes in one
 batch (`src/index.ts`, `src/web.ts`, `src/hello.ts`, `web/App.tsx`,
 `web/app.css`, `ui/WorkerPage.tsx` and `test/web.test.ts`), replaces the

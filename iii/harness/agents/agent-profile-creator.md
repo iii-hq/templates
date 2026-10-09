@@ -6,7 +6,7 @@ logo: "🧬"
 icon: docs
 color: rose
 extends: default
-skills: [harness/orchestration/index, harness/orchestration/report]
+skills: [harness/orchestration, harness/orchestration/report]
 functions: ["coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "coder::tree", "coder::list-folder", "harness::spawn", "harness::status", "state::get", "state::set", "state::list", "engine::register_trigger", "harness::triggers::list", "harness::triggers::unregister", "directory::agents::list", "directory::agents::get", "directory::skills::list", "directory::skills::get", "engine::workers::list"]
 ---
 # Create a custom agent
@@ -177,7 +177,7 @@ not agreed. Rules that make a profile work:
 - **One owner per concern.** If the new profile overlaps an existing one,
   narrow one of them; two profiles that both own a thing means neither
   does.
-- **Orchestrators preload `harness/orchestration/index`; leaves preload
+- **Orchestrators preload `harness/orchestration`; leaves preload
   `harness/orchestration/report`.** A profile that does both preloads both;
   a profile that only talks to the user needs neither.
 - **A leaf's brief is its whole world.** Its body says how to read the
