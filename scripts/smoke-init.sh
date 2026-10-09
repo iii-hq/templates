@@ -447,7 +447,9 @@ if not value or len(value) > 200:
 skills = re.search(r'^skills: \[(.*)\]$', front, re.M)
 for skill in (skills.group(1).split(",") if skills else []):
     skill = skill.strip().strip('"')
-    if skill and not os.path.isfile(os.path.join(skills_dir, skill + ".md")):
+    # A folder id resolves to its index.md, as iii-directory serves it.
+    candidates = (skill + ".md", os.path.join(skill, "index.md"))
+    if skill and not any(os.path.isfile(os.path.join(skills_dir, c)) for c in candidates):
         sys.exit(f"FAIL: {path} preloads missing skill {skill}")
 PYEOF
 done
