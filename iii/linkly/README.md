@@ -17,7 +17,7 @@ shortener that grows into a multi-tenant link platform, one worker at a time.
 | `worker-compose.yaml` | all | One commented block per chapter. Uncomment the block for the chapter you are on. |
 | `link/` | 1, 3, 4, 5, 7 | Short codes, redirects, HTTP endpoints. |
 | `analytics/` | 4 | Python worker that counts links per day. |
-| `click-streamer/` | 5 | Broadcasts every click to the `clicks` stream. |
+| `click-streamer/` | 5 | Owns the `click-streamer::click` trigger type and delivers every click to the functions bound to it. `watch.ts` prints the feed in a terminal. |
 | `bulk-importer/` | 6 | Imports a CSV of links over a channel. |
 | `channel-client/` | 6 | Script that uploads the CSV. |
 | `auth/` | 7 | Gates browser connections. |

@@ -11,11 +11,6 @@ startup_timeout: 360s
 engine:
   url: ws://127.0.0.1:49134
 
-  # iii-stream powers real-time streams (Ch. 5). Engine workers cannot be added
-  # after start, so it runs from the beginning.
-  workers:
-    iii-stream: {}
-
 containers:
   # Ch. 1: HTTP endpoints, an in-memory key-value store, and the link worker.
   http:
@@ -58,7 +53,7 @@ containers:
   #       analytics:
   #         url: sqlite:./data/analytics.db
 
-  # Ch. 4: a click queue, pub/sub events, and the Python analytics worker.
+  # Ch. 4: a click queue, durable topics, and the Python analytics worker.
   # queue:
   #   worker: package://queue
   #   version: latest
@@ -70,17 +65,13 @@ containers:
   #         type: standard
   #         max_retries: 5
   #         concurrency: 5
-  # pubsub:
-  #   worker: package://pubsub
-  #   version: latest
   # analytics:
   #   worker: path://./analytics
-  #   start_after: [database, pubsub]
+  #   start_after: [database, queue]
 
-  # Ch. 5: the live click stream. iii-stream already runs (see engine.workers).
+  # Ch. 5: the live click feed, a trigger type owned by click-streamer.
   # click-streamer:
   #   worker: path://./click-streamer
-  #   start_after: [pubsub]
 
   # Ch. 6: bulk CSV import over a channel.
   # bulk-importer:
@@ -103,6 +94,7 @@ containers:
   #       expose_functions:
   #         - match("link::create")
   #         - match("link::request_delete")
+  #         - match("link::click_summary")
   # auth:
   #   worker: path://./auth
   #   env_file: ['./.env']
