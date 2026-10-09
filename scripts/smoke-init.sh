@@ -271,7 +271,7 @@ for expected in \
   README.md worker-compose.yaml .env .gitignore data/.gitkeep \
   link/iii.worker.yaml link/package.json link/tsconfig.json link/src/index.ts \
   analytics/iii.worker.yaml analytics/requirements.txt analytics/src/main.py \
-  click-streamer/iii.worker.yaml click-streamer/package.json click-streamer/src/index.ts \
+  click-streamer/iii.worker.yaml click-streamer/package.json click-streamer/src/index.ts click-streamer/watch.ts \
   bulk-importer/iii.worker.yaml bulk-importer/package.json bulk-importer/src/index.ts \
   auth/iii.worker.yaml auth/package.json auth/src/index.ts \
   channel-client/package.json channel-client/import-links.js; do
@@ -293,7 +293,8 @@ assert_contains "$LINKLY_DIR/worker-compose.yaml" "  # database:"
 assert_contains "$LINKLY_DIR/link/src/index.ts" "// --- Ch. 1 | prelude ---"
 assert_contains "$LINKLY_DIR/link/src/index.ts" "// --- Ch. 7 | link::request_delete ---"
 assert_contains "$LINKLY_DIR/analytics/src/main.py" "# --- Ch. 4 | analytics::on_link_created ---"
-assert_contains "$LINKLY_DIR/click-streamer/src/index.ts" "// --- Ch. 5 | click-streamer::broadcast ---"
+assert_contains "$LINKLY_DIR/click-streamer/src/index.ts" "// --- Ch. 5 | click-streamer::click ---"
+assert_contains "$LINKLY_DIR/click-streamer/watch.ts" "// --- Ch. 5 | watch ---"
 assert_contains "$LINKLY_DIR/bulk-importer/src/index.ts" "// --- Ch. 6 | bulk-importer::import_csv ---"
 assert_contains "$LINKLY_DIR/auth/src/index.ts" "// --- Ch. 7 | auth::browser ---"
 assert_contains "$LINKLY_DIR/channel-client/import-links.js" "// --- Ch. 6 | import-links ---"
