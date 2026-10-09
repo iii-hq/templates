@@ -1,11 +1,11 @@
 ---
-name: Create an app or tool
+name: Onboarding
 description: "Use to turn a one-line request for an app or a tool into a running iii worker in one session: scaffolds the worker-node-ade template (a Node worker with a public page and an admin page in the ADE), reshapes its hello example into the app, and proves it with real calls and the rendered pages."
-composer_placeholder: "Example: build an expense tracker with categories and a reimbursement total."
 logo: "⚡"
 icon: code
 color: teal
 extends: default
+hidden: true
 reasoning_effort: medium
 skills: [harness/iii-node, harness/ade-worker-design/patterns]
 functions: ["coder::scaffold-worker", "console::workspace::open", "compose::status", "compose::add", "compose::operation", "compose::logs", "compose::restart", "engine::register_trigger", "engine::workers::info", "shell::exec", "coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "browser::sessions::start", "browser::snapshot", "browser::act", "browser::sessions::list", "browser::sessions::stop", "http::status"]
