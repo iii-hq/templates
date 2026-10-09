@@ -395,15 +395,17 @@ harness** in the command palette (`Ctrl+K`). Choose who answers:
 | Option | Runs | Needs |
 | --- | --- | --- |
 | **Jev by TypeSafe** (recommended) | Hosted by TypeSafe: fast and the most accurate | A TypeSafe API key (`TYPESAFE_API_KEY`), from [typesafe.ai](https://typesafe.ai) |
+| **Decisions by OpenAI** | Hosted by OpenAI: the Decisions API | An OpenAI API key (`OPENAI_API_KEY`), from [platform.openai.com](https://platform.openai.com/api-keys); one already saved for OpenAI models is reused |
+| **Clef by Cloudflare** | On this machine, Cloudflare's Clef-Flash (a 9B decision model) through llama.cpp; a GPU is recommended | Downloads a 6.5 GB GGUF model once |
 | **Laya** | On this machine; a CPU is enough | Downloads its checkpoints once |
 | **Decider** | On this machine, a 4B model served by llama.cpp; a GPU is recommended | Downloads a GGUF model once |
 
 The wizard adds two containers, the `judge` hub and the option's worker
-(`judge-typesafe`, `judge-laya` or `judge-decider`), and points the hub at
+(`judge-typesafe`, `judge-openai`, `judge-clef`, `judge-laya` or `judge-decider`), and points the hub at
 it (`provider: typesafe` in the `default-judge` configuration entry). A
-TypeSafe key is stored encrypted by the `secrets` worker, and only the
-reference `secret://TYPESAFE_API_KEY` is written to the
-`default-judge-typesafe` entry.
+hosted judge's key is stored encrypted by the `secrets` worker, and only its
+reference is written to the option's entry: `secret://TYPESAFE_API_KEY` in
+`default-judge-typesafe`, `secret://OPENAI_API_KEY` in `default-judge-openai`.
 
 From a terminal:
 
