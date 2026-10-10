@@ -43,4 +43,4 @@ files:
 next_steps:
   - 'Have an API key for one AI provider ready: on the first visit, the setup wizard in the ADE adds that provider and connects its key, encrypted or kept in .env (README.md, step 1)'
   - 'Run: iii compose --up (leave it running), then open the ADE at http://127.0.0.1:3113 (README.md, step 3, if that address does not answer)'
-  - 'Start a conversation with "Create an app or tool" and send the first-app example from README.md, step 5, or describe your own in one line. You do not need to create a custom agent first'
+  - 'On the last step of the setup wizard, select "Build an expense tracker": a conversation starts and builds it (README.md, step 5). You do not need to create a custom agent first'

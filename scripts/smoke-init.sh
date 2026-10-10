@@ -418,10 +418,11 @@ while IFS= read -r listed; do
 done <"$TMP_DIR/harness-files.txt"
 assert_file "$HARNESS_DIR/.gitignore"
 
-# The two gallery profiles keep their ids (the file names) and show what they
-# are for. A single builder does the whole job, so the former specialist
-# profiles are no longer shipped.
-assert_contains "$HARNESS_DIR/agents/ade-worker-builder.md" "name: Create an app or tool"
+# The two profiles keep their ids (the file names). The builder runs the
+# setup wizard's examples and stays out of the gallery; a single builder does
+# the whole job, so the former specialist profiles are no longer shipped.
+assert_contains "$HARNESS_DIR/agents/ade-worker-builder.md" "name: Onboarding"
+assert_contains "$HARNESS_DIR/agents/ade-worker-builder.md" "hidden: true"
 assert_contains "$HARNESS_DIR/agents/agent-profile-creator.md" "name: Create a custom agent"
 for profile in tech-lead backend-engineer frontend-engineer; do
   assert_absent "$HARNESS_DIR/agents/$profile.md"
@@ -429,7 +430,7 @@ done
 
 # Each gallery profile carries its own composer example (it is not inherited),
 # within iii-directory's 200-character limit after whitespace collapses, and
-# every skill it preloads ships with the template.
+# every skill a profile preloads ships with the template.
 for profile in ade-worker-builder agent-profile-creator; do
   python3 - "$HARNESS_DIR/agents/$profile.md" "$HARNESS_DIR/skills" <<'PYEOF'
 import os
@@ -439,11 +440,12 @@ import sys
 path, skills_dir = sys.argv[1], sys.argv[2]
 front = open(path).read().split("---\n", 2)[1]
 match = re.search(r'^composer_placeholder: "(.*)"$', front, re.M)
-if not match:
-    sys.exit(f"FAIL: {path} has no composer_placeholder")
-value = " ".join(match.group(1).split())
-if not value or len(value) > 200:
-    sys.exit(f"FAIL: {path} composer_placeholder must be 1-200 characters")
+if not re.search(r'^hidden: true$', front, re.M):
+    if not match:
+        sys.exit(f"FAIL: {path} has no composer_placeholder")
+    value = " ".join(match.group(1).split())
+    if not value or len(value) > 200:
+        sys.exit(f"FAIL: {path} composer_placeholder must be 1-200 characters")
 skills = re.search(r'^skills: \[(.*)\]$', front, re.M)
 for skill in (skills.group(1).split(",") if skills else []):
     skill = skill.strip().strip('"')
@@ -495,8 +497,8 @@ for entry in entries:
         sys.exit(f"FAIL: {path}: {title.group(1)} uses missing agent {name}")
 PYEOF
 
-# The printed next steps lead to the gallery choice, not to hidden profiles.
-assert_contains "$TMP_DIR/harness-init.log" "Create an app or tool"
+# The printed next steps lead to the setup wizard's example, not to a profile.
+assert_contains "$TMP_DIR/harness-init.log" "Build an expense tracker"
 if grep -Eq 'Tech Lead|engineers' "$TMP_DIR/harness-init.log"; then
   echo "FAIL: harness next steps name hidden profiles" >&2
   exit 1
