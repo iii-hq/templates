@@ -8,7 +8,7 @@ color: teal
 extends: default
 reasoning_effort: medium
 skills: [harness/iii-node, harness/ade-worker-design/patterns]
-functions: ["coder::scaffold-worker", "console::workspace::open", "compose::status", "compose::add", "compose::operation", "compose::logs", "compose::restart", "engine::register_trigger", "engine::workers::info", "shell::exec", "coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "browser::sessions::start", "browser::snapshot", "browser::act", "browser::sessions::list", "browser::sessions::stop", "http::status"]
+functions: ["coder::scaffold-worker", "console::workspace::open", "compose::status", "compose::add", "compose::operation", "compose::logs", "compose::restart", "engine::register_trigger", "engine::workers::info", "shell::exec", "coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "browser::sessions::start", "browser::snapshot", "browser::act", "browser::sessions::list", "browser::sessions::stop", "http::status", "console::status"]
 ---
 
 # Create an app or tool
@@ -71,14 +71,14 @@ The admin page is the operator's console for the app, not a list. `PageShell` â†
    - If `engine::workers::info` answers `NOT_FOUND`, read `compose::logs { "container": "<name>", "tail": 60 }`, fix, and call `compose::restart { "container": "<name>" }` in the same turn as the re-run.
 6. **Real calls, in one turn.** Make 1â€“2 real calls that create realistic records, and a final list call. If the request says no demo records, create only what it asks for.
 7. **Show it.**
-   - Call `console::workspace::open { "screen": "ext:<name>" }` and `http::status {}`. Its `url` is where this project's public pages answer (`http://127.0.0.1:3111` unless the project moved the port). Call it `<base>` below. Never assume 3111: another project on this machine may own that port. Only an `http` worker too old to have `http::status` (function not found) falls back to `http://127.0.0.1:3111`.
+   - Call `console::workspace::open { "screen": "ext:<name>" }`, `http::status {}` and `console::status {}` in one turn. `http::status`'s `url` is where this project's public pages answer (`http://127.0.0.1:3111` unless the project moved the port). Call it `<base>` below. Never assume 3111: another project on this machine may own that port. Only an `http` worker too old to have `http::status` (function not found) falls back to `http://127.0.0.1:3111`.
    - Call `browser::sessions::start { "url": "<base>/<name>" }`. In the next turn, `browser::snapshot`. Use `browser::act` when the request asks you to use the form.
    - If start fails with `tab limit reached`, list the sessions, stop one old `<base>` tab, and start again.
    - If `http::status` reports no `url` or a `last_reload_error`, the `http` container is not serving: read `compose::logs { "container": "http", "tail": 60 }` and report it under "not verified" (for example `Address in use`: another project owns the port, see the README's "Ports and network access").
    - Prove an extra route on its URL with its own method:
      - a `GET` in a second browser session (the returned `url` shows where it led);
      - a `POST` with `shell::exec` running `curl -sS -i -X POST -H 'content-type: application/json' -d '<json body>' <base>/<name>/<path>`.
-   - Open the admin page in a browser session at the ADE's own route, `http://127.0.0.1:3113/#/worker/<name>/<name>` unless the console moved, and snapshot it: the summary, the table and the record you created must show. If the console does not load there, report the admin page under "not verified".
+   - Open the admin page in a browser session at `console::status`'s `url` plus `/#/worker/<name>/<name>` (an older console answers only `http_port`: use `http://127.0.0.1:<http_port>`), and snapshot it: the summary, the table and the record you created must show. Never assume 3113: another project on this machine may own that port. If `console::status` is not found, or the console does not load there, report the admin page under "not verified"; never guess another port. If it shows `No worker has registered a page with id '<name>'`, its script may still be loading: snapshot once more, and if it stays, report that text under "not verified".
    - Stop the sessions you started, unless the request asks you to leave one open.
 8. **Report**, then stop. List only calls that actually ran and what they returned. A function you did not call goes under "not verified".
 

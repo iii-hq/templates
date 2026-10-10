@@ -57,8 +57,10 @@ type List = { records: DataRecord[]; counts: Counts }
 /** my-worker::info: where the public page lives. */
 type Info = { web_url: string | null; web_path: string }
 
-/** The http worker's default port, used when III_HTTP_URL is unset. */
-const HTTP_WORKER_PORT = 3111
+/** http::status: where the http worker listens (null while it is stopped).
+    No answer, no link: a guessed port could be another project's. */
+type HttpStatus = { port: number | null; url: string | null }
+
 /** Opens a tab in the browser worker; "Open public page" uses it when present. */
 const BROWSER_START = 'browser::sessions::start'
 
@@ -113,6 +115,7 @@ type Outcome = { headline: string; detail: string }
 export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void }) {
   const { ref, narrow } = useContainerNarrow()
   const [info, setInfo] = useState<Info | null>(null)
+  const [http, setHttp] = useState<HttpStatus | null>(null)
   const [meta, setMeta] = useState<ModelInfo | null>(null)
   const [metaError, setMetaError] = useState<string | null>(null)
   const [draft, setDraft] = useState<Draft>({})
@@ -126,6 +129,7 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
 
   useEffect(() => {
     host.iii.trigger<Info>('my-worker::info', {}).then(setInfo, () => setInfo(null))
+    host.iii.trigger<HttpStatus>('http::status', {}).then(setHttp, () => setHttp(null))
     host.iii.trigger<ModelInfo>('my-worker::model', {}).then(
       (next) => {
         setMeta(next)
@@ -213,15 +217,18 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
     if (event.key === 'Escape') setEditing(null)
   }
 
-  const publicHref = info && (info.web_url ?? `http://${window.location.hostname}:${HTTP_WORKER_PORT}${info.web_path}`)
+  // Without web_url: the http worker's port on the console's host for a new
+  // tab, and its local url for the browser worker, which runs beside it.
+  const publicHref =
+    info && (info.web_url ?? (http?.port ? `http://${window.location.hostname}:${http.port}${info.web_path}` : null))
+  const browserUrl = info && (info.web_url ?? (http?.url ? `${http.url}${info.web_path}` : null))
 
   // Opens the public page in the browser worker's console page; without one,
   // or on a modified click, the link opens a new tab.
   function openInBrowser(event: MouseEvent<HTMLAnchorElement>) {
-    if (!browser || !info || !publicHref || event.metaKey || event.ctrlKey || event.shiftKey) return
+    if (!browser || !browserUrl || event.metaKey || event.ctrlKey || event.shiftKey) return
     event.preventDefault()
-    const url = info.web_url ?? `http://127.0.0.1:${HTTP_WORKER_PORT}${info.web_path}`
-    host.iii.trigger<{ session_id: string }>(BROWSER_START, { url, preview: false }).then(
+    host.iii.trigger<{ session_id: string }>(BROWSER_START, { url: browserUrl, preview: false }).then(
       ({ session_id }) => host.panels?.open({ pageId: 'browser', context: { sessionId: session_id } }),
       (error) => {
         setBrowser(false)

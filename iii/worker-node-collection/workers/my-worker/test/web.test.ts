@@ -66,8 +66,8 @@ describe('web handlers', () => {
     }
   })
 
-  // Port 3111 has no auth: a record call the public page does not make stays
-  // off it, so nothing bypasses a domain action's own checks (MOT-5341).
+  // The http worker has no auth: a record call the public page does not make
+  // stays off it, so nothing bypasses a domain action's own checks (MOT-5341).
   it('keeps get and update off the public API unless PUBLIC_CRUD lists them', async () => {
     let called = false
     const closed = webHandlers(dir, async () => {

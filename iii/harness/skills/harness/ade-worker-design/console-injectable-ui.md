@@ -23,9 +23,10 @@ Composition recipes for record-shaped UIs: `patterns`.
 > surfaces it registers. `ui/WorkerPage.tsx` is the ADE page, the worker's
 > admin (Settings, Test, Endpoints): it has the iii `Wordmark` as its header
 > icon, calls the worker through `host.iii` and shows **Open public page** from
-> `<worker>::info`'s `web_url` (else `web_path` on the console's host).
-> `web/App.tsx` is the public page users open at
-> `http://127.0.0.1:3111/<worker>`, in its own design (`web/app.css`, not
+> `<worker>::info`'s `web_url` (else `web_path` on the console's host at the
+> `http::status` port). `web/App.tsx` is the public page users open at
+> `/<worker>` on the `http` worker (the `url` from `http::status`,
+> `http://127.0.0.1:3111` by default), in its own design (`web/app.css`, not
 > console-linted): it reaches the backend through its `client` prop and
 > imports nothing from `@iii-dev/console-ui` at runtime, because those
 > components exist only in the ADE (`iii-node` › Public page and ADE admin
@@ -777,7 +778,7 @@ Validate all four layers; a green build alone is not enough.
    display, complete-detail lifecycle fidelity, action fallback, fail-closed
    redaction, and disable/disconnect fallback.
 
-**The page alone: `#/worker/<scope>[/<page-id>][?context=<json>]`.** The
+**The page alone: `<url>/#/worker/<scope>[/<page-id>][?context=<json>]`, with `url` from `console::status` (never an assumed 3113).** The
 console renders that one page over the full viewport — no tab strip, chat or
 palette; the tab title is `iii - <scope>` — and never reads or writes the
 shared workspace layout, so a Playwright or `browser`-worker session can open

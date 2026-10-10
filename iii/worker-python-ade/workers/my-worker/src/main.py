@@ -1,5 +1,5 @@
 """my-worker: my-worker::hello, its settings, its own trigger type, an admin page
-in the ADE, and the public page users open at http://127.0.0.1:3111/my-worker through the http worker."""
+in the ADE, and the public page users open at /my-worker on the http worker (http::status reports its address)."""
 
 from __future__ import annotations
 
@@ -323,7 +323,7 @@ def main() -> None:
         # loop and Compose see the crash.
         iii.shutdown()
         raise
-    print(f"{NAME} started: http://127.0.0.1:3111/{NAME}", flush=True)
+    print(f"{NAME} started: public page at {WEB_PATH} on the http worker", flush=True)
     # The SDK runs its event loop in a non-daemon thread, so the process outlives
     # main() and does not exit on SIGINT. Wait for SIGTERM (scripts/dev.py on every
     # save, Compose on stop) or SIGINT (Ctrl-C), then disconnect and let the process end.

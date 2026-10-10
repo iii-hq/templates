@@ -62,7 +62,7 @@ iii.registerFunction('my-worker::ui-content', uiContent(fileURLToPath(new URL('d
 iii.registerTrigger({ type: 'console:script', function_id: 'my-worker::ui-content', config: { path: 'my-worker/page.js' } })
 iii.registerTrigger({ type: 'console:style', function_id: 'my-worker::ui-content', config: { path: 'my-worker/styles.css' } })
 
-// --- Public page over HTTP (http worker, 127.0.0.1:3111) ---
+// --- Public page over HTTP (the http worker; http::status reports its address) ---
 
 const web = webHandlers(fileURLToPath(new URL('dist/web', root)), (fn, payload) =>
   iii.trigger({ function_id: `my-worker::${fn}`, payload }),
