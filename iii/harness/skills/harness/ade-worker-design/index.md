@@ -37,7 +37,7 @@ three documents:
   driver with its six externals and design lint, the bundling `/hooks` and
   `/format` subpaths, `lucide-react` icons, scoping, hot reload, debugging,
   behaviour across widths, the configuration-form grammar, testing (a page
-  alone at `#/worker/<scope>[/<page-id>]`) and the delivery checks.
+  alone at `<url>/#/worker/<scope>[/<page-id>]`, `url` from `console::status`) and the delivery checks.
 - `console-design` — the iii Schematic design system: surface ramp, tokens,
   typography, radius, motion, the one Numbers table, every shared component
   with its do/don't, hooks and formatters, the UX patterns table and the
@@ -66,7 +66,7 @@ Fetch any of them with `directory::skills::get { "id": "harness/ade-worker-desig
   `engine::register_trigger`, and never `console:assets`.
 - New surfaces must be seen in the running console at phone, narrow-split
   and wide widths, in both themes, with the manifest free of warnings: a
-  page alone at `#/worker/<scope>[/<page-id>]` for screenshots and
+  page alone at `<url>/#/worker/<scope>[/<page-id>]`, `url` from `console::status` for screenshots and
   drive-through, the full console for chat slots and the palette. On
   corrections, recheck affected states and dependencies; reuse earlier
   observations only while they still apply. A build alone is not evidence

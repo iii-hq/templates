@@ -41,8 +41,9 @@ under `ui/`, the public page under `web/`, generated outputs under
 Settings (it saves through the internal `<worker>::set-greeting`), Test and
 Endpoints, and an **Open public page** link built from `web_url` (else
 `web_path`) of `<worker>::info`; it calls functions through `host.iii`. The
-public page, `web/App.tsx`, is what users open at
-`http://127.0.0.1:3111/<worker>`: plain React with its own design
+public page, `web/App.tsx`, is what users open at `/<worker>` on the `http`
+worker (the `url` from `http::status`, `http://127.0.0.1:3111` by default):
+plain React with its own design
 (`web/app.css`), no runtime `@iii-dev/console-ui` export, calling functions
 only through its `client` prop (the worker's allowlisted HTTP API, which
 leaves out admin functions). Neither imports a backend module or backend file.

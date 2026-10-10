@@ -10,7 +10,7 @@ import { booleanFields, recordSchema, updateRecord } from './record.js'
 import type { PublicRoute } from './routes.js'
 
 /** Record calls the public page may make over HTTP (`list` -> my-worker::<resource>::list).
-    Port 3111 has no auth, so list only what the page calls: a public
+    The http worker has no auth, so list only what the page calls: a public
     `create` or `update` lets any caller skip a domain action's own checks.
     The ADE page keeps every call through the engine connection. */
 export const PUBLIC_CRUD: readonly ('list' | 'get' | 'create' | 'update' | 'remove')[] = ['list', 'create', 'remove']

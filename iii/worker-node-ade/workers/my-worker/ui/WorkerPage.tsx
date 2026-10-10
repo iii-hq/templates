@@ -26,11 +26,13 @@ import { type FormEvent, type MouseEvent, useCallback, useEffect, useState } fro
     web_url is absolute only when the worker has III_HTTP_URL set. */
 type Info = { web_url: string | null; web_path: string; greeting: string }
 
-/** The http worker's default port. Without web_url the public page is opened
-    on this port of the host the console is browsed from (a new tab) or of
-    127.0.0.1 (the browser worker, which runs beside the http worker); set
-    III_HTTP_URL on the worker for another port or host. */
-const HTTP_WORKER_PORT = 3111
+/** http::status: where the http worker listens (null while it is stopped).
+    Without web_url the public page is opened on this port of the host the
+    console is browsed from (a new tab) or at url, the local address (the
+    browser worker, which runs beside the http worker); set III_HTTP_URL on the
+    worker for another host. No answer, no link: a guessed port could be
+    another project's. */
+type HttpStatus = { port: number | null; url: string | null }
 
 /** Opens a tab in the browser worker. When it is registered, "Open public
     page" opens there, inside the console, instead of in a new browser tab. */
@@ -64,6 +66,7 @@ const ENDPOINTS = [
 export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void }) {
   const { ref, narrow } = useContainerNarrow()
   const [info, setInfo] = useState<Info | null>(null)
+  const [http, setHttp] = useState<HttpStatus | null>(null)
   const [draft, setDraft] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState<Outcome | null>(null)
@@ -75,6 +78,7 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
 
   const loadInfo = useCallback(() => {
     host.iii.trigger<Info>('my-worker::info', {}).then(setInfo, () => setInfo(null))
+    host.iii.trigger<HttpStatus>('http::status', {}).then(setHttp, () => setHttp(null))
   }, [host])
   useEffect(loadInfo, [loadInfo])
 
@@ -120,7 +124,8 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
   }
 
   const publicHref =
-    info && (info.web_url ?? `http://${window.location.hostname}:${HTTP_WORKER_PORT}${info.web_path}`)
+    info && (info.web_url ?? (http?.port ? `http://${window.location.hostname}:${http.port}${info.web_path}` : null))
+  const browserUrl = info && (info.web_url ?? (http?.url ? `${http.url}${info.web_path}` : null))
 
   // Opens the public page in the browser worker's console page. Without a
   // browser worker, or on a modified click, the link opens a new browser tab as
@@ -128,10 +133,9 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
   // later clicks open a new tab: a window.open after the failed call would no
   // longer count as the click and the popup blocker would stop it.
   function openInBrowser(event: MouseEvent<HTMLAnchorElement>) {
-    if (!browser || !info || !publicHref || event.metaKey || event.ctrlKey || event.shiftKey) return
+    if (!browser || !browserUrl || event.metaKey || event.ctrlKey || event.shiftKey) return
     event.preventDefault()
-    const url = info.web_url ?? `http://127.0.0.1:${HTTP_WORKER_PORT}${info.web_path}`
-    host.iii.trigger<{ session_id: string }>(BROWSER_START, { url, preview: false }).then(
+    host.iii.trigger<{ session_id: string }>(BROWSER_START, { url: browserUrl, preview: false }).then(
       ({ session_id }) => {
         setOpening(null)
         host.panels?.open({ pageId: 'browser', context: { sessionId: session_id } })

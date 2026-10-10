@@ -65,5 +65,5 @@ next_steps:
   - 'In terminal 1 from the project root, start Compose: iii compose --up'
   - 'Compose pre_run runs scripts/start.sh, which creates a private venv, installs the worker and builds its page'
   - 'In terminal 2 from the project root, call: iii trigger my-worker::hello name=World'
-  - 'Open the public page at http://127.0.0.1:3111/my-worker; the my-worker page in the ADE is its admin'
+  - 'Open the public page at /my-worker on the http worker (iii trigger http::status prints its address, http://127.0.0.1:3111 by default); the my-worker page in the ADE is its admin'
   - 'Edits to workers/my-worker/src/ reload on save; after editing ui/ or web/, run pnpm build in workers/my-worker/ui'
