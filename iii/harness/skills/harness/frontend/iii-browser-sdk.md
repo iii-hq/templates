@@ -215,7 +215,7 @@ Rules that keep this honest:
 
 ```bash
 # .env.local: the public RBAC listener, e.g. rbac-proxy (the `port` rbac-proxy::status answers, 49200 by default)
-VITE_III_WS_URL=ws://localhost:49200
+VITE_III_WS_URL=ws://localhost:<port rbac-proxy::status answers>
 ```
 
 - Never the `http` worker's port (3111 by default), which serves HTTP routes and no worker
