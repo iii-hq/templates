@@ -49,4 +49,4 @@ The tests run against a small fake bus (`tests/conftest.py`), so they need no en
 
 ## Security
 
-The `http` worker on port 3111 has no authentication. Anyone who can reach the port can load the page and call every function in `API_FUNCTIONS`. Do not expose port 3111 through a public proxy or tunnel.
+The `http` worker's port (3111 by default) has no authentication. Anyone who can reach the port can load the page and call every function in `API_FUNCTIONS`. Do not expose that port through a public proxy or tunnel.

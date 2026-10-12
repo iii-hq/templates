@@ -82,6 +82,16 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
   }, [host])
   useEffect(loadInfo, [loadInfo])
 
+  // The http worker can come up after this page (a fresh project's first
+  // start): ask again until it reports a port, then stop.
+  useEffect(() => {
+    if (http?.port) return
+    const timer = window.setInterval(() => {
+      host.iii.trigger<HttpStatus>('http::status', {}).then(setHttp, () => undefined)
+    }, 5000)
+    return () => window.clearInterval(timer)
+  }, [host, http])
+
   // engine::functions::info answers NOT_FOUND when no browser worker runs.
   useEffect(() => {
     if (!host.panels) return

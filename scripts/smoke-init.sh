@@ -130,7 +130,7 @@ static_template_checks() {
   assert_contains "$node_ade/worker-compose.yaml" "    worker: package://http"
   assert_contains "$node_ade/workers/my-worker/package.json" '"@iii-dev/console-ui": "0.2.0"'
   assert_contains "$node_ade/README.md" "http://127.0.0.1:3111/my-worker"
-  assert_contains "$node_ade/README.md" "never expose port 3111"
+  assert_contains "$node_ade/README.md" "never expose that port"
   assert_no_active_base_image "$node_ade/workers/my-worker/iii.worker.yaml"
 
   if find "$python" "$node" "$node_ade" -type d \( -name .venv -o -name venv -o -name node_modules -o -name __pycache__ -o -name dist \) -print -quit | grep -q .; then
