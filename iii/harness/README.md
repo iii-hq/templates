@@ -2,8 +2,8 @@
 
 This template starts the iii engine, AI agents, and the ADE: the workspace
 where you chat with agents and use the apps and tools they build. Start with a
-small app or tool, create a reusable agent, or use Default for general work in
-your project.
+small app from the setup wizard's examples, create a reusable agent, or use
+Default for general work in your project.
 
 ## What you can do
 
@@ -11,12 +11,12 @@ When you start a new conversation in the ADE, choose one of these:
 
 | Choice | Use it to |
 | --- | --- |
-| **Create an app or tool** | Describe an app or a tool in one line and get a running worker in one conversation: it starts from a ready-made template, opens a live admin panel in the ADE as soon as the worker starts, then shapes the data, actions and public page to your request. It builds one list of records with text, number and yes/no fields, plus actions and a public page; for anything else, use Default. |
 | **Create a custom agent** | Create a reusable agent with instructions and skills for a specific task. Once saved, it becomes a choice here too. |
 | **Default** | Ask general questions and get help with development tasks in your project. |
 
-You do not need to create a custom agent before using the ADE. **Create an
-app or tool** builds and verifies it for you in the same conversation.
+You do not need to create a custom agent before using the ADE. The setup
+wizard's app examples run with **Onboarding**, a builder the gallery does not
+list: it builds and verifies the app in the same conversation (step 5).
 
 > **Default** is the built-in general agent. `iii-directory` versions that
 > predate it list the same agent as `iii-minimal`.
@@ -126,16 +126,17 @@ an agent from running commands or changing files elsewhere on your machine.
 
 ### 5. Try your first app
 
-Select **Create an app or tool** and send this message:
+On the setup wizard's last step, select **Build an expense tracker**. A new
+conversation starts with the **Onboarding** agent and a model this machine
+has, and sends this message:
 
 ```text
 Build an expense tracker. Each expense has a description, an amount, a category, and whether it was reimbursed. Show the total still to be reimbursed.
 ```
 
-The setup wizard's last step offers this message too, with a few other
-examples: select one and a new conversation opens with the message ready to
-send, its agent selected, and a model this machine has. See
-[Example prompts](#example-prompts) to change them.
+The step offers a few other examples too. Reopen it any time from the command
+palette: **Set up the harness**. See [Example prompts](#example-prompts) to
+change them.
 
 ### 6. Know what happens next
 
@@ -197,8 +198,9 @@ You do not need anything below to use the ADE.
 
 ### Agents in this template
 
-`agents/` ships two profiles, the first two choices described above. The
-app builder does the whole job itself in one session, so no hidden
+`agents/` ships two profiles: **Onboarding**, the app builder the setup
+wizard's examples use (hidden from the gallery), and **Create a custom
+agent**. The app builder does the whole job itself in one session, so no
 specialist profiles are needed. **Default** and the other built-in profiles
 come from the `iii-directory` worker, not from this folder.
 
@@ -211,7 +213,7 @@ on both. Display names can change; the profile id (the file name) is what
 `extends`, saved sessions and `harness::send { options: { agent: "<id>" } }`
 use.
 
-The two gallery profiles also set `composer_placeholder`: the example request
+**Create a custom agent** also sets `composer_placeholder`: the example request
 the ADE shows in the empty message box while that profile is selected. It is
 never sent, never added to the prompt and not inherited through `extends`
 (at most 200 characters of plain text). `iii-directory` versions without the
@@ -220,13 +222,13 @@ field ignore it.
 ```text
 default                           built-in, shown as Default
 └── iii-minimal                   built-in hidden alias of default
-    ├── ade-worker-builder        Create an app or tool: scaffolds a worker, opens its panel, reshapes it into your app
+    ├── ade-worker-builder        Onboarding (hidden): scaffolds a worker, opens its panel, reshapes it into your app
     └── agent-profile-creator     Create a custom agent: plans a new profile with you and writes it beside these
 ```
 
 | Profile id | Shown as | Role |
 | --- | --- | --- |
-| `ade-worker-builder` | Create an app or tool | Scaffolds the `worker-node-ade` template with `coder::scaffold-worker` and opens its admin page in the ADE, then, in one session, reshapes its hello example into the app you asked for (the functions, the public page and the admin page) and verifies it with real calls and the rendered pages. |
+| `ade-worker-builder` | Onboarding (hidden; the setup wizard's examples use it) | Scaffolds the `worker-node-ade` template with `coder::scaffold-worker` and opens its admin page in the ADE, then, in one session, reshapes its hello example into the app you asked for (the functions, the public page and the admin page) and verifies it with real calls and the rendered pages. |
 | `agent-profile-creator` | Create a custom agent | Plans a new profile with you, using the existing ones as the reference, and writes `agents/<id>.md`. |
 
 ### Example prompts
@@ -235,8 +237,8 @@ default                           built-in, shown as Default
 step. Add, change or remove entries there; the ADE reads the file each time
 the step opens. Each entry has a `title`, an optional `description`, the
 `agent` profile the conversation uses (a file name in `agents/` without
-`.md`, or a built-in profile such as `default`), the `prompt` put in the
-message box, and `models` in order of preference:
+`.md`, or a built-in profile such as `default`), the `prompt` the
+conversation sends, and `models` in order of preference:
 
 ```yaml
 prompts:
