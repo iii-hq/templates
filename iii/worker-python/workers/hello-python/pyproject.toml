@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Minimal Python worker — hello-python::greet returns a greeting."
 requires-python = ">=3.11"
 dependencies = [
-    "iii-sdk==0.24.2",
+    "iii-sdk==0.24.4",
     "watchfiles",
 ]
 
