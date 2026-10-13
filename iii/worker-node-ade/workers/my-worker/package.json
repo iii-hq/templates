@@ -15,7 +15,7 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p ui/tsconfig.json"
   },
   "dependencies": {
-    "iii-sdk": "^0.24.2",
+    "iii-sdk": "0.24.5",
     "tsx": "^4.19.0"
   },
   "devDependencies": {
