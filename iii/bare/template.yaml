@@ -1,7 +1,7 @@
 name: Bare
 description: Minimal iii project scaffold — worker-compose.yaml and the console.
-version: "0.23.0"
-min_iii_version: "0.23.0"
+version: "0.24.3"
+min_iii_version: "0.24.3"
 
 # No language requirements: this template is the bare scaffold used by
 # `iii project init`. Workers are added later via
