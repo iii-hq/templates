@@ -5,7 +5,7 @@ templates:
   - worker-python-ade
   - worker-node
   - worker-node-ade
-  - worker-node-collection
+  - worker-crud
   - docker
   - worker-bare
   - quickstart
