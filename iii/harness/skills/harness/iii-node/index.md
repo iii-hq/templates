@@ -74,10 +74,10 @@ Never hand-write a new worker's package. The `ide` worker copies the `worker-nod
 2. Register the `compose-operation` wake on an `operation_id` you pick (Declare the worker with `compose::add` describes it), then scaffold and start the package in one call:
 
    ```json
-   coder::scaffold-worker { "template": "worker-node-ade", "name": "<worker-name>", "operation_id": "<operation id>", "start_after": ["<console container>"] }
+   coder::scaffold-worker { "template": "worker-node-ade", "name": "<worker-name>", "operation_id": "<operation id>" }
    ```
 
-   It writes the files into `workers/<worker-name>`, relative to the session root, then adds the worker to the stack in the same call: `compose::add` with the worker, its `start_after` and every `requires` container the stack lacks (`http`). Pass `directory` only when the architecture names another folder, and end it with `/<worker-name>`. The result is `{ directory, files, compose, compose_add, requires, operation_id, started, next_steps }`: `directory` and every `files[].path` are absolute, and the wake fires when `operation_id` ends. `next_steps` are written for people; follow this section instead, and never restart the project to start the worker.
+   It writes the files into `workers/<worker-name>`, relative to the session root, then adds the worker to the stack in the same call: `compose::add` with the worker and every `requires` container the stack lacks (`http`). Never pass `start_after` naming the console container (see Declare the worker with `compose::add`). Pass `directory` only when the architecture names another folder, and end it with `/<worker-name>`. The result is `{ directory, files, compose, compose_add, requires, operation_id, started, next_steps }`: `directory` and every `files[].path` are absolute, and the wake fires when `operation_id` ends. `next_steps` are written for people; follow this section instead, and never restart the project to start the worker.
 
    The call writes every file or none. It refuses an invalid name, an unknown template, a folder whose last segment is not the name, a folder outside the session's writable roots, a folder that exists and is not empty, and (C235, before any write) a name the stack already has a container for. Never delete a folder to retry: when it already holds this worker, edit it in place; otherwise choose another parent folder or name and say why. When the templates are unavailable (no cache and no network), report it and stop.
 3. When the result has a `start_error`, or a note that it was not started (its `compose::add` needs approval, for one), the files are written but the worker is not in the stack: declare it yourself, `compose::add` with `compose_add` whole and the step 2 `operation_id` (Declare the worker with `compose::add`).
@@ -407,11 +407,11 @@ Never write the worker's entry into `worker-compose.yaml` by hand. A running dae
    }
    ```
 
-2. Read `compose::status` once. If it already lists a container named like the last segment of `compose.worker` (`<worker-name>`), stop and pick another name: `compose::add` replaces a container with the same key, so it would repoint the running one to the new folder. Otherwise build the `workers` list from the scaffold result and that read: the returned `compose` object, unchanged except for an added `start_after`, then an entry for every `requires` container that `compose::status` does not list in `containers[].container`:
+2. Read `compose::status` once. If it already lists a container named like the last segment of `compose.worker` (`<worker-name>`), stop and pick another name: `compose::add` replaces a container with the same key, so it would repoint the running one to the new folder. Otherwise build the `workers` list from the scaffold result and that read: the returned `compose` object, unchanged, then an entry for every `requires` container that `compose::status` does not list in `containers[].container`:
 
    ```text
    workers = [
-     { ...result.compose, start_after: ["<console container>"] },
+     result.compose,
      ...result.requires.filter((name) => !declared.includes(name)),
      // http → { worker: "package://http", version: "latest", config_name: "http" }
    ]
@@ -420,7 +420,7 @@ Never write the worker's entry into `worker-compose.yaml` by hand. A running dae
    Declare them with the same operation id: `compose::add { "operation_id": "<session-id>:add-issue-board", "workers": <workers> }`. For `issue-board` in a stack without `http`, `workers` holds the container object followed by `{ "worker": "package://http", "version": "latest", "config_name": "http" }`.
 
    - `compose.worker` is already the absolute path of the scaffolded folder, which `compose::add` accepts; pass it unchanged. The container key is the folder's last segment, `<worker-name>`; `compose::status` shows it.
-   - `start_after` names the container that runs the console in this compose file (`ade` in the harness template; `compose::status` lists the real keys), so the console's UI provider exists before the worker registers its assets.
+   - Add no `start_after` naming the console container (`ade` in the harness template). The worker runs without the console: the engine holds its `console:*` triggers (`console:script`, `console:style`) until the console registers those trigger types, and applies them again each time the console comes back. `start_after` would make the worker a dependent, and Compose stops a container's dependents when it exits, so a console exit would take the user's app offline.
    - Keep `compose.scripts` and `restart` as returned: `pre_run` installs the dependencies, `run` starts the dev loop (`node scripts/dev.mjs`), which gives the worker hot reload under compose, and `restart: on-failure` retries a crash.
    - Declare a missing `http` with that object, the same form the templates use, so it reads its `http` configuration. A `requires` container the stack already declares is not added again.
    - The response `{ operation_id, requested, status }` is an acceptance, not readiness.
@@ -480,4 +480,4 @@ evidence only while it remains applicable; broaden checks if impact is unclear.
 - When the domain has records (ADE-only surfaces): a record opens as its own pane in the same workspace tab through `host.panels.open`. In every case the page adapts when the tab splits (narrow mode).
 - The real Console renders the page (alone at `#/worker/<worker-name>[/<page-id>]` for screenshots, and inside the workspace) in narrow and wide panes, light and dark themes, with keyboard navigation, visible focus, stable async states, and no browser-console errors.
 - Reconnects and repeated UI edits do not accumulate duplicate functions, triggers, pages, renderers, or forms.
-- The worker was declared through `compose::add`, never by editing `worker-compose.yaml`; `compose::status` shows it and every `requires` container `ready`, and its entry is the scaffold's `compose` object with `start_after` the console container.
+- The worker was declared through `compose::add`, never by editing `worker-compose.yaml`; `compose::status` shows it and every `requires` container `ready`, and its entry is the scaffold's `compose` object, with no `start_after` naming the console container.
