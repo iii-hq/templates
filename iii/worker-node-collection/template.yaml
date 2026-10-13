@@ -67,5 +67,5 @@ next_steps:
   - 'In terminal 1 from the project root, start Compose: iii compose --up'
   - 'Compose pre_run runs pnpm install; run starts scripts/dev.mjs, which builds the pages and restarts the worker on save'
   - 'In terminal 2 from the project root, add an item: iii trigger my-worker::items::create title=First'
-  - 'Open the public page at http://127.0.0.1:3111/my-worker; the my-worker page in the ADE is its admin'
-  - 'Port 3111 has no auth: never expose it through a public proxy or tunnel'
+  - 'Open the public page at /my-worker on the http worker (iii trigger http::status prints its address, http://127.0.0.1:3111 by default); the my-worker page in the ADE is its admin'
+  - 'The http worker port has no auth: never expose it through a public proxy or tunnel'

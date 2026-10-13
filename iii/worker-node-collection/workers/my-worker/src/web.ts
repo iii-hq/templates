@@ -1,5 +1,5 @@
-// HTTP handlers for the public page, served by the `http` worker on
-// 127.0.0.1:3111. That port has no auth, so every route answers from an
+// HTTP handlers for the public page, served by the `http` worker (http::status
+// reports its address). It has no auth, so every route answers from an
 // allowlist: `:file` and `:fn` come straight from the URL (`..` included).
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
