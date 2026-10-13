@@ -190,6 +190,7 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
       <PageMain>
         <div className="my-worker-scroll">
           <div className="my-worker-column">
+            <StatusPanel variant="info" headline="Hello world template" />
             <Outcome outcome={opening} />
             <SettingsSection title="Settings" description="What people see on the public page.">
               <div className="my-worker-stack">
