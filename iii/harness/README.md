@@ -68,6 +68,14 @@ call, how to fix a malformed call, which element of a page to click), so
 your main model spends its tokens on the work itself. You can skip it and
 add it later; see [Judge](#judge).
 
+While you go through these steps, the wizard also installs the
+[deepwork](https://workers.iii.dev/kits/iii/deepwork) kit in the background:
+multi-agent runs that plan a goal as kanban tickets, work them in parallel and
+verify each result. It adds the `kanban` worker and the kit's agents, and the
+last step shows when it is done. A profile of yours with the same name holds
+the install for a review in Directory > Kits. To skip the kit, remove it from
+`kits:` in `onboarding.yaml`.
+
 ### 2. Start the project
 
 ```bash

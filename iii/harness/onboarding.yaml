@@ -17,6 +17,15 @@
 #
 # The ADE reads this file each time the step opens; an invalid entry is
 # skipped, and without the file the step shows no examples.
+#
+# `kits` lists registry kits (<handle>/<name>, optionally @<version>) the
+# wizard installs in the background as soon as it opens
+# (directory::download-kit apply=true). A kit already installed is skipped,
+# and one whose plan needs a review waits in Directory > Kits. Remove the
+# line to install nothing.
+kits:
+  - iii/deepwork
+
 prompts:
   - title: Build a link shortener
     description: Short links with their own public page, 302 redirects, and an admin panel
