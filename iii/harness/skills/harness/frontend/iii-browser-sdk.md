@@ -114,6 +114,59 @@ one this worker registered. Registering a **trigger type** (`registerTriggerType
 browser is rarely right: it only makes sense when the browser itself is the event source. The
 RBAC listener also constrains which types a browser session may register.
 
+### Live data from a worker-owned trigger type
+
+When the tab shows records a backend worker owns and must stay current, the worker owns both
+the data and a trigger type that fires after each committed change (`harness/iii-node/index`
+› Live updates). The tab binds a function to that type, reads the current state with the
+worker's query, and reads again whenever a change arrives or the connection comes back. A
+trigger is a notification, not storage: nothing missed while disconnected is replayed, so the
+query is the source of truth.
+
+```tsx
+const TAB = crypto.randomUUID() // one handler id per tab: same-id functions load-balance
+
+function useLiveOrders() {
+  const iii = useIii()
+  const queryClient = useQueryClient()
+  const orders = useQuery({
+    queryKey: ['orders'],
+    queryFn: () => iii.trigger<{ limit: number }, Order[]>({
+      function_id: 'orders::list',
+      payload: { limit: 100 },
+    }),
+  })
+  useEffect(() => {
+    const refetch = () => queryClient.invalidateQueries({ queryKey: ['orders'] })
+    const fn = iii.registerFunction(`ui::orders-changed::${TAB}`, async () => {
+      refetch()
+      return null
+    })
+    const trigger = iii.registerTrigger({
+      type: 'orders::changed', // the trigger type the orders worker registered
+      function_id: `ui::orders-changed::${TAB}`,
+      config: {},
+    })
+    // Fires now with the current state, then on every transition: the read after binding
+    // covers a change that landed before the binding, and a reconnect re-reads.
+    const off = iii.addConnectionStateListener((state) => {
+      if (state === 'connected') refetch()
+    })
+    return () => {
+      off()
+      trigger.unregister()
+      fn.unregister()
+    }
+  }, [iii, queryClient])
+  return orders
+}
+```
+
+- Payloads that carry an id and a revision (or the whole record) let the tab skip a
+  notification it already has, or upsert without a round trip.
+- The RBAC auth function lists the type in `allowed_trigger_types` and exposes the query; a
+  per-tab `namespace` is the other way to keep two tabs' handlers apart.
+
 ## State, helpers, channels (subpath exports)
 
 - `iii-browser-sdk/state` — the engine's state worker, typed: `get<T>`/`set`/`delete`/`list`/
@@ -122,9 +175,11 @@ RBAC listener also constrains which types a browser session may register.
   read-modify-write race.
 - `iii-browser-sdk/helpers` — `createChannel(iii, bufferSize?)` returns a `Channel` with
   `writer` / `reader` and *serializable* `writerRef` / `readerRef`, so a ref can be handed to
-  a backend worker and the bytes stream either direction; `createStream(iii, name, impl)` wires
-  a `stream::get/set/delete/list/list_groups` implementation; `isChannelRef` and
-  `extractChannelRefs` (recursive, returns `[path, ref]` tuples) complete the set.
+  a backend worker and the bytes stream either direction; `isChannelRef` and
+  `extractChannelRefs` (recursive, returns `[path, ref]` tuples) complete the set. The module
+  still exports `createStream`, deprecated together with `iii-stream`: never use it for live
+  data. Bind the owning worker's trigger type instead (above, and the "Migrate from iii-stream
+  and pubsub" guide).
 - `ChannelWriter.sendMessage` / `sendBinary` / `close`; `ChannelReader.onMessage` /
   `onBinary` / `readAll`.
 - Some releases publish `iii-browser-sdk/stream` as an empty module with types only. Read the
