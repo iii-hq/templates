@@ -1,7 +1,7 @@
 name: Record app with ADE page (Node)
 description: A model-driven Node/TypeScript record app - src/model.ts describes the records, and the CRUD functions, a my-worker:change trigger type and a live ADE admin page follow it; only domain actions and the public page are written per app. Ships a todo model.
-version: "0.24.2"
-min_iii_version: "0.24.2"
+version: "0.24.6"
+min_iii_version: "0.24.6"
 
 treat_required_as_included: true
 requires:

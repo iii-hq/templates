@@ -1,7 +1,7 @@
 name: Worker with ADE page (Python)
 description: A Python worker with settings, its own trigger type and a public page over HTTP for users and an admin page in the ADE.
-version: "0.24.2"
-min_iii_version: "0.24.2"
+version: "0.24.6"
+min_iii_version: "0.24.6"
 
 treat_required_as_included: true
 requires:
