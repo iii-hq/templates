@@ -66,7 +66,7 @@ The admin page is the operator's console for the app, not a list. `PageShell` â†
    - **Admin page.** Rewrite `ui/WorkerPage.tsx` to the admin page spec, its data through `useWorkerLive` from `@iii-dev/console-ui/hooks`, its layout rules in `ui/styles.css`, in one or two files of `ui/` (`ui/RecordDialog.tsx` for the dialogs if `WorkerPage.tsx` passes about 6 KB).
    - **Public page.** Rewrite `web/App.tsx` for the domain and add rules to `web/app.css`. Give it a clear headline with live counts, a fast input that keeps focus, satisfying empty states and keyboard support.
 4. **Test everything, in one turn.**
-   - `shell::exec` in the worker folder: `pnpm typecheck && pnpm test && pnpm build`.
+   - `shell::exec` in the worker folder: `corepack pnpm@10 typecheck && corepack pnpm@10 test && corepack pnpm@10 build`. Never `pnpm install` and never install pnpm: the dev loop installed and built on the first save, and `corepack` pins the version in one call.
    - Also call `engine::workers::info { "name": "<name>" }`.
 5. **Fix.** Fix every reported error in as few edits as possible, then re-run the full step 4 command until it is green.
    - If `engine::workers::info` answers `NOT_FOUND`, read `compose::logs { "container": "<name>", "tail": 60 }`, fix, and call `compose::restart { "container": "<name>" }` in the same turn as the re-run.
@@ -97,12 +97,12 @@ A child session runs under this same profile, with the same skills and functions
 ## Facts (verified; do not probe them again)
 
 - **Reads.** `coder::read-file { "paths": [...] }` takes bare paths and `{ "path", "line_from", "line_to" }` windows in one list. Read everything a step needs in one call, before that step's first write.
-- **Independent calls.** Calls that do not need each other's results (a status read, a log tail, a worker info) go in ONE `fp::batch { calls: [{ "id", "function", "payload" }] }`, never one call per turn. Each entry answers in place as `{ id, function, status: "ok", result }` or `{ id, function, status: "error", code, message }`; read `ok` first. Keep a batch to 12 calls and expect a result over 16 KB to come back cut with `truncated: true`. A chain where one call feeds the next is not a batch: make those calls directly.
 - **Live data.** The admin page subscribes with `useWorkerLive({ iii: host.iii, triggers, fetch, handlerId })`. A hand-rolled `host.iii.registerTrigger` + `host.iii.on` pair is only for a hub that several mounted pages share.
 - **`state::get`** returns the bare stored value, `null` when absent. `configuration::get` returns `{ value }`.
 - **Writes.**
   - Put one file in each `coder::create-file` call, and keep each call under about 6 KB.
   - Two files of under 4 KB each may share one call if it stays under about 8 KB.
+  - Delete a replaced file in the same turn as the file that replaces it.
 - **Edit text is literal.**
   - `replacement` and `content` take real line breaks, never the two characters backslash-n.
   - `coder::update-file` patterns follow the Rust `regex` crate: no lookahead or lookbehind.
