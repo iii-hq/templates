@@ -28,7 +28,7 @@ Use the first two turns for this, and read nothing else first:
    - call `coder::scaffold-worker { "template": "worker-node-ade", "name": "<name>", "operation_id": "<id>" }` with no `start_after`, so the app keeps running when the ADE exits;
    - write a plan of at most five lines: the functions (public or internal), the `state` scope that stores the data, any extra HTTP route, and what the public page and the admin page show. Mark guesses `Assumed:`.
 4. If the scaffold result has a `start_error` or a `[harness] Not started` note, only the files were written: the worker is not in the stack and no terminal event will come. In the next turn, declare it with `compose::add` under the same `operation_id`, its `workers` built as `iii-node` â€º Declare the worker with `compose::add`, step 2 says. The armed wake fires when that ends. If the note says this session may not call `compose::add`, say so, hand the user the result's `compose_add`, and stop. Never `compose::restart` a worker that is not in the stack.
-5. In the next turn, while the worker starts, call `compose::operation { "progress_operation_id": "<id>" }` and make ONE `coder::read-file { "paths": [...] }` of `src/index.ts`, `src/web.ts`, `src/hello.ts`, `web/App.tsx`, `web/app.css`, `ui/WorkerPage.tsx` and `test/web.test.ts`. These are the only files you read all session.
+5. In the next turn, while the worker starts, call `compose::operation { "progress_operation_id": "<id>" }` and make ONE `coder::read-file { "paths": [...] }` of `src/index.ts`, `src/web.ts`, `src/hello.ts`, `web/App.tsx`, `web/app.css`, `ui/WorkerPage.tsx`, `ui/styles.css` and `test/web.test.ts`. These are the only files you read all session. Every library shape you write against is already in your skills: `iii-node` â€º SDK shapes (`registerFunction`, `registerTrigger`, `registerTriggerType`, handler arguments) and `ade-worker-design/console-injectable-ui` â€º Literal shapes (`Select`, `Checkbox`, `useWorkerLive`). Write from those; never open `node_modules`. When a shape you need is in neither, add its declaration file, or a `{ "path", "line_from", "line_to" }` window of it, to that same `paths` list. All reading happens in this one call, before the first write.
 6. **Open the admin page before any write.** If `compose::operation` already reports a terminal success, call `console::workspace::open { "screen": "ext:<name>" }` and `engine::workers::info { "name": "<name>" }` in the next turn. Otherwise end the turn; when the wake fires (usually within 30 seconds), those two calls are your first. Tell the user in one line that the admin page is open and will turn into their app as you save. Never write a file before the page is open.
 7. If the start ran and failed, read `compose::logs { "container": "<name>", "tail": 100 }`, fix the cause and `compose::restart` that container. Never restart the project.
 
@@ -62,7 +62,7 @@ The admin page is the operator's console for the app, not a list. `PageShell` â†
 ## Workflow
 
 1. **Backend and tests, in one pass.** The domain module and its test, the functions in `src/index.ts`, `API_FUNCTIONS` and any route in `src/web.ts`, and `test/web.test.ts` updated for the new allowlist and routes. Delete the example files you replaced.
-2. **Admin page, right after the backend,** so the open panel becomes the app early. Rewrite `ui/WorkerPage.tsx` to the admin page spec, in one or two files of `ui/` (`ui/RecordDialog.tsx` for the dialogs if `WorkerPage.tsx` passes about 6 KB).
+2. **Admin page, right after the backend,** so the open panel becomes the app early. Rewrite `ui/WorkerPage.tsx` to the admin page spec, its data through `useWorkerLive` from `@iii-dev/console-ui/hooks`, its layout rules in `ui/styles.css`, in one or two files of `ui/` (`ui/RecordDialog.tsx` for the dialogs if `WorkerPage.tsx` passes about 6 KB).
 3. **Public page.** Rewrite `web/App.tsx` for the domain and add rules to `web/app.css`. Give it a clear headline with live counts, a fast input that keeps focus, satisfying empty states and keyboard support.
 4. **Test everything, in one turn.**
    - `shell::exec` in the worker folder: `pnpm typecheck && pnpm test && pnpm build`.
@@ -84,6 +84,9 @@ The admin page is the operator's console for the app, not a list. `PageShell` â†
 
 ## Facts (verified; do not probe them again)
 
+- **Reads.** `coder::read-file { "paths": [...] }` takes bare paths and `{ "path", "line_from", "line_to" }` windows in one list. Read everything a step needs in one call, before that step's first write.
+- **Live data.** The admin page subscribes with `useWorkerLive({ iii: host.iii, triggers, fetch, handlerId })`. A hand-rolled `host.iii.registerTrigger` + `host.iii.on` pair is only for a hub that several mounted pages share.
+- **`state::get`** returns the bare stored value, `null` when absent. `configuration::get` returns `{ value }`.
 - **Writes.**
   - Put one file in each `coder::create-file` call, and keep each call under about 6 KB.
   - Two files of under 4 KB each may share one call if it stays under about 8 KB.
