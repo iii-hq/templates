@@ -8,7 +8,7 @@ extends: default
 hidden: true
 reasoning_effort: medium
 skills: [harness/iii-node, harness/ade-worker-design/patterns]
-functions: ["coder::scaffold-worker", "console::workspace::open", "compose::status", "compose::add", "compose::operation", "compose::logs", "compose::restart", "engine::register_trigger", "engine::workers::info", "shell::exec", "coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "browser::sessions::start", "browser::snapshot", "browser::act", "browser::sessions::list", "browser::sessions::stop", "http::status", "console::status"]
+functions: ["coder::scaffold-worker", "console::workspace::open", "compose::status", "compose::add", "compose::operation", "compose::logs", "compose::restart", "engine::register_trigger", "engine::workers::info", "shell::exec", "coder::read-file", "coder::create-file", "coder::update-file", "coder::search", "browser::sessions::start", "browser::snapshot", "browser::act", "browser::sessions::list", "browser::sessions::stop", "http::status", "console::status", "fp::batch"]
 ---
 
 # Create an app or tool
@@ -85,6 +85,7 @@ The admin page is the operator's console for the app, not a list. `PageShell` â†
 ## Facts (verified; do not probe them again)
 
 - **Reads.** `coder::read-file { "paths": [...] }` takes bare paths and `{ "path", "line_from", "line_to" }` windows in one list. Read everything a step needs in one call, before that step's first write.
+- **Independent calls.** Calls that do not need each other's results (a status read, a log tail, a worker info) go in ONE `fp::batch { calls: [{ "id", "function", "payload" }] }`, never one call per turn. Each entry answers in place as `{ id, function, status: "ok", result }` or `{ id, function, status: "error", code, message }`; read `ok` first. Keep a batch to 12 calls and expect a result over 16 KB to come back cut with `truncated: true`. A chain where one call feeds the next is not a batch: make those calls directly.
 - **Live data.** The admin page subscribes with `useWorkerLive({ iii: host.iii, triggers, fetch, handlerId })`. A hand-rolled `host.iii.registerTrigger` + `host.iii.on` pair is only for a hub that several mounted pages share.
 - **`state::get`** returns the bare stored value, `null` when absent. `configuration::get` returns `{ value }`.
 - **Writes.**
