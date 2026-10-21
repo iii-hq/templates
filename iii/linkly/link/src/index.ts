@@ -18,7 +18,7 @@
 
 // --- Ch. 1 | prelude ---
 // // THIS CODE WILL BE REMOVED AND REPLACED LATER WITH THE CODE FROM CHAPTER 3
-// import { registerWorker } from "iii-sdk";
+// import { InvocationError, registerWorker } from "iii-sdk";
 // import { Logger } from "@iii-dev/helpers/observability";
 //
 // const worker = registerWorker(process.env.III_URL ?? "ws://localhost:49134", {
@@ -36,7 +36,7 @@
 
 // --- Ch. 3 | prelude (replaces Ch. 1) ---
 // // THIS CODE WILL BE REMOVED AND REPLACED LATER WITH THE CODE FROM CHAPTER 4
-// import { registerWorker } from "iii-sdk";
+// import { InvocationError, registerWorker } from "iii-sdk";
 // import { Logger } from "@iii-dev/helpers/observability";
 //
 // const worker = registerWorker(process.env.III_URL ?? "ws://localhost:49134", {
@@ -55,7 +55,7 @@
 // }
 
 // --- Ch. 4 | prelude (replaces Ch. 3) ---
-// import { registerWorker, TriggerAction } from "iii-sdk";
+// import { InvocationError, registerWorker, TriggerAction } from "iii-sdk";
 // import { Logger } from "@iii-dev/helpers/observability";
 //
 // const worker = registerWorker(process.env.III_URL ?? "ws://localhost:49134", {
@@ -86,7 +86,7 @@
 //   let code = payload.code;
 //   if (code) {
 //     // A requested code must be free; creating never overwrites an existing link.
-//     if (await taken(code)) throw new Error(`code "${code}" is taken`);
+//     if (await taken(code)) throw new Error(`code \`${code}\` is already taken`);
 //   } else {
 //     // A generated code retries until it finds a free one.
 //     do {
@@ -106,14 +106,20 @@
 // worker.registerFunction("link::create", async (payload: { url: string; code?: string }) => {
 //   const code = payload.code ?? makeCode();
 //   const url = /^https?:\/\//i.test(payload.url) ? payload.url : `https://${payload.url}`;
-//   await worker.trigger({
+//   // ON CONFLICT DO NOTHING turns a taken code into zero inserted rows instead
+//   // of a database error, so link::create can say so in its own words.
+//   const { affected_rows } = await worker.trigger<
+//     { db: string; sql: string; params: string[] },
+//     { affected_rows: number }
+//   >({
 //     function_id: "database::execute",
 //     payload: {
 //       db: DB,
-//       sql: "INSERT INTO links (code, url, created_at) VALUES (?, ?, ?)",
+//       sql: "INSERT INTO links (code, url, created_at) VALUES (?, ?, ?) ON CONFLICT(code) DO NOTHING",
 //       params: [code, url, new Date().toISOString()],
 //     },
 //   });
+//   if (affected_rows === 0) throw new Error(`code \`${code}\` is already taken`);
 //   await worker.trigger({
 //     function_id: "state::set",
 //     payload: { scope: "links", key: code, value: { url } },
@@ -126,14 +132,20 @@
 // worker.registerFunction("link::create", async (payload: { url: string; code?: string }) => {
 //   const code = payload.code ?? makeCode();
 //   const url = /^https?:\/\//i.test(payload.url) ? payload.url : `https://${payload.url}`;
-//   await worker.trigger({
+//   // ON CONFLICT DO NOTHING turns a taken code into zero inserted rows instead
+//   // of a database error, so link::create can say so in its own words.
+//   const { affected_rows } = await worker.trigger<
+//     { db: string; sql: string; params: string[] },
+//     { affected_rows: number }
+//   >({
 //     function_id: "database::execute",
 //     payload: {
 //       db: DB,
-//       sql: "INSERT INTO links (code, url, created_at) VALUES (?, ?, ?)",
+//       sql: "INSERT INTO links (code, url, created_at) VALUES (?, ?, ?) ON CONFLICT(code) DO NOTHING",
 //       params: [code, url, new Date().toISOString()],
 //     },
 //   });
+//   if (affected_rows === 0) throw new Error(`code \`${code}\` is already taken`);
 //   await worker.trigger({
 //     function_id: "state::set",
 //     payload: { scope: "links", key: code, value: { url } },
@@ -209,11 +221,14 @@
 //       headers: { "Content-Type": "application/json" },
 //     };
 //   } catch (err) {
-//     // link::create throws when a requested code is already taken (Ch. 3 on,
-//     // the database's PRIMARY KEY on code raises the same conflict).
+//     // link::create throws when a requested code is already taken. The SDK
+//     // hands its error back as an InvocationError whose message is
+//     // `<err.code>: <what link::create threw>`; drop that prefix.
+//     const error =
+//       err instanceof InvocationError ? err.message.slice(err.code.length + 2) : String(err);
 //     return {
 //       status_code: 409,
-//       body: { error: err instanceof Error ? err.message : "conflict" },
+//       body: { error },
 //       headers: { "Content-Type": "application/json" },
 //     };
 //   }
