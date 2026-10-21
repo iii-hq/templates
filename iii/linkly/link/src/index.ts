@@ -2,7 +2,17 @@
 //
 // Every block below is one step of the tutorial, tagged with its chapter.
 // Uncomment the blocks for the chapter you are on. Where a chapter revises a
-// function you already enabled, comment the earlier version out again.
+// function you already enabled, comment the earlier version out again: two
+// live copies of a block do not compile ("The symbol "worker" has already
+// been declared"). The revisions, by chapter:
+//
+//   Ch. 3: comment out Ch. 1 prelude, link::create, link::resolve and
+//          http::redirect; uncomment their Ch. 3 versions.
+//   Ch. 4: comment out Ch. 3 prelude, link::create and http::redirect;
+//          uncomment their Ch. 4 versions.
+//   Ch. 5: comment out Ch. 3 link::record_click; uncomment the Ch. 5 one.
+//
+// Every other block stays on once you uncomment it.
 //
 // Docs: https://iii.dev/docs/next/tutorials/linkly/foundations
 
