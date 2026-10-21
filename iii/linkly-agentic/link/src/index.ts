@@ -7,6 +7,10 @@
 // Ch. 1 asks for link::create and link::resolve, plus the http::create and
 // http::redirect triggers that expose them as POST /links and GET /s/:code.
 //
+// The pinned iii-sdk (package.json) takes the function id as the first argument
+// and the handler as the second; it has no object form. Every worker the agent
+// adds pins the same version and calls it the same way.
+//
 // Docs: https://iii.dev/docs/next/tutorials/linkly/foundations
 
 import { registerWorker } from "iii-sdk";
