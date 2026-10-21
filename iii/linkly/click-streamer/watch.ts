@@ -2,13 +2,6 @@
 //
 //   npm install && npx tsx watch.ts
 //
-// It is a plain script, not a Compose container, so it does not get the
-// project's engine URL and namespace for free. It reads them from III_URL and
-// III_NAMESPACE; the defaults match the `engine.url` and `namespace` that
-// worker-compose.yaml ships with. If you changed either, pass them:
-//
-//   III_URL=ws://127.0.0.1:<port> III_NAMESPACE=<namespace> npx tsx watch.ts
-//
 // Docs: https://iii.dev/docs/next/tutorials/linkly/streaming
 
 // --- Ch. 5 | watch ---
@@ -16,9 +9,7 @@
 //
 // const worker = registerWorker(process.env.III_URL ?? "ws://127.0.0.1:49134", {
 //   workerName: "click-watcher",
-//   // Join the project's namespace: click-streamer registered the
-//   // click-streamer::click trigger type there, and link::click_summary lives
-//   // there too. From another namespace the binding is parked and never fires.
+//   // The project's namespace, where click-streamer::click and link::* live.
 //   namespace: process.env.III_NAMESPACE || "default",
 // });
 //

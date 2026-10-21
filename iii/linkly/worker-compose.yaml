@@ -91,15 +91,10 @@ containers:
   #     engine_url: ws://127.0.0.1:49134
   #     rbac:
   #       auth_function_id: auth::browser
-  #       # A rule answers only in the namespace it names. Keep these equal to
-  #       # the `namespace:` at the top of this file, or the browser is refused.
   #       expose_functions:
-  #         - match: link::create
-  #           namespace: default
-  #         - match: link::request_delete
-  #           namespace: default
-  #         - match: link::click_summary
-  #           namespace: default
+  #         - match("link::create")
+  #         - match("link::request_delete")
+  #         - match("link::click_summary")
   # auth:
   #   worker: path://./auth
   #   env_file: ['./.env']

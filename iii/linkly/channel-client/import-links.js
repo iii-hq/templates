@@ -4,12 +4,6 @@
 //
 //   node import-links.js
 //
-// It is not a Compose container, so it reads the project's engine URL and
-// namespace from III_URL and III_NAMESPACE; the defaults match the `engine.url`
-// and `namespace` that worker-compose.yaml ships with. If you changed either:
-//
-//   III_URL=ws://127.0.0.1:<port> III_NAMESPACE=<namespace> node import-links.js
-//
 // Docs: https://iii.dev/docs/next/tutorials/linkly/channels
 
 // --- Ch. 6 | import-links ---
@@ -18,7 +12,7 @@
 //
 // const worker = registerWorker(process.env.III_URL ?? "ws://127.0.0.1:49134", {
 //   workerName: "uploader",
-//   // bulk-importer::import_csv is registered in the project's namespace.
+//   // The project's namespace, where bulk-importer::import_csv lives.
 //   namespace: process.env.III_NAMESPACE || "default",
 // });
 //
