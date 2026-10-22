@@ -26,6 +26,7 @@ files:
   - click-streamer/package.json
   - click-streamer/tsconfig.json
   - click-streamer/src/index.ts
+  - click-streamer/watch.ts
   - bulk-importer/iii.worker.yaml
   - bulk-importer/package.json
   - bulk-importer/tsconfig.json

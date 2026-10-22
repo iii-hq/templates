@@ -2,13 +2,23 @@
 //
 // Every block below is one step of the tutorial, tagged with its chapter.
 // Uncomment the blocks for the chapter you are on. Where a chapter revises a
-// function you already enabled, comment the earlier version out again.
+// function you already enabled, comment the earlier version out again: two
+// live copies of a block do not compile ("The symbol "worker" has already
+// been declared"). The revisions, by chapter:
+//
+//   Ch. 3: comment out Ch. 1 prelude, link::create, link::resolve and
+//          http::redirect; uncomment their Ch. 3 versions.
+//   Ch. 4: comment out Ch. 3 prelude, link::create and http::redirect;
+//          uncomment their Ch. 4 versions.
+//   Ch. 5: comment out Ch. 3 link::record_click; uncomment the Ch. 5 one.
+//
+// Every other block stays on once you uncomment it.
 //
 // Docs: https://iii.dev/docs/next/tutorials/linkly/foundations
 
 // --- Ch. 1 | prelude ---
 // // THIS CODE WILL BE REMOVED AND REPLACED LATER WITH THE CODE FROM CHAPTER 3
-// import { registerWorker } from "iii-sdk";
+// import { InvocationError, registerWorker } from "iii-sdk";
 // import { Logger } from "@iii-dev/helpers/observability";
 //
 // const worker = registerWorker(process.env.III_URL ?? "ws://localhost:49134", {
@@ -26,7 +36,7 @@
 
 // --- Ch. 3 | prelude (replaces Ch. 1) ---
 // // THIS CODE WILL BE REMOVED AND REPLACED LATER WITH THE CODE FROM CHAPTER 4
-// import { registerWorker } from "iii-sdk";
+// import { InvocationError, registerWorker } from "iii-sdk";
 // import { Logger } from "@iii-dev/helpers/observability";
 //
 // const worker = registerWorker(process.env.III_URL ?? "ws://localhost:49134", {
@@ -45,7 +55,7 @@
 // }
 
 // --- Ch. 4 | prelude (replaces Ch. 3) ---
-// import { registerWorker, TriggerAction } from "iii-sdk";
+// import { InvocationError, registerWorker, TriggerAction } from "iii-sdk";
 // import { Logger } from "@iii-dev/helpers/observability";
 //
 // const worker = registerWorker(process.env.III_URL ?? "ws://localhost:49134", {
@@ -76,7 +86,7 @@
 //   let code = payload.code;
 //   if (code) {
 //     // A requested code must be free; creating never overwrites an existing link.
-//     if (await taken(code)) throw new Error(`code "${code}" is taken`);
+//     if (await taken(code)) throw new Error(`code \`${code}\` is already taken`);
 //   } else {
 //     // A generated code retries until it finds a free one.
 //     do {
@@ -96,14 +106,20 @@
 // worker.registerFunction("link::create", async (payload: { url: string; code?: string }) => {
 //   const code = payload.code ?? makeCode();
 //   const url = /^https?:\/\//i.test(payload.url) ? payload.url : `https://${payload.url}`;
-//   await worker.trigger({
+//   // ON CONFLICT DO NOTHING turns a taken code into zero inserted rows instead
+//   // of a database error, so link::create can say so in its own words.
+//   const { affected_rows } = await worker.trigger<
+//     { db: string; sql: string; params: string[] },
+//     { affected_rows: number }
+//   >({
 //     function_id: "database::execute",
 //     payload: {
 //       db: DB,
-//       sql: "INSERT INTO links (code, url, created_at) VALUES (?, ?, ?)",
+//       sql: "INSERT INTO links (code, url, created_at) VALUES (?, ?, ?) ON CONFLICT(code) DO NOTHING",
 //       params: [code, url, new Date().toISOString()],
 //     },
 //   });
+//   if (affected_rows === 0) throw new Error(`code \`${code}\` is already taken`);
 //   await worker.trigger({
 //     function_id: "state::set",
 //     payload: { scope: "links", key: code, value: { url } },
@@ -116,21 +132,30 @@
 // worker.registerFunction("link::create", async (payload: { url: string; code?: string }) => {
 //   const code = payload.code ?? makeCode();
 //   const url = /^https?:\/\//i.test(payload.url) ? payload.url : `https://${payload.url}`;
-//   await worker.trigger({
+//   // One timestamp for the row and the event, so subscribers see when the link
+//   // was created, not when their copy arrived.
+//   const created_at = new Date().toISOString();
+//   // ON CONFLICT DO NOTHING turns a taken code into zero inserted rows instead
+//   // of a database error, so link::create can say so in its own words.
+//   const { affected_rows } = await worker.trigger<
+//     { db: string; sql: string; params: string[] },
+//     { affected_rows: number }
+//   >({
 //     function_id: "database::execute",
 //     payload: {
 //       db: DB,
-//       sql: "INSERT INTO links (code, url, created_at) VALUES (?, ?, ?)",
-//       params: [code, url, new Date().toISOString()],
+//       sql: "INSERT INTO links (code, url, created_at) VALUES (?, ?, ?) ON CONFLICT(code) DO NOTHING",
+//       params: [code, url, created_at],
 //     },
 //   });
+//   if (affected_rows === 0) throw new Error(`code \`${code}\` is already taken`);
 //   await worker.trigger({
 //     function_id: "state::set",
 //     payload: { scope: "links", key: code, value: { url } },
 //   });
 //   await worker.trigger({
-//     function_id: "publish",
-//     payload: { topic: "link.created", data: { code, url } },
+//     function_id: "iii::durable::publish",
+//     payload: { topic: "link.created", data: { code, url, created_at } },
 //   });
 //   logger.info("link created", { code, url });
 //   return { code, url };
@@ -199,11 +224,23 @@
 //       headers: { "Content-Type": "application/json" },
 //     };
 //   } catch (err) {
-//     // link::create throws when a requested code is already taken (Ch. 3 on,
-//     // the database's PRIMARY KEY on code raises the same conflict).
+//     // The SDK hands link::create's error back as an InvocationError whose
+//     // message is `<err.code>: <what link::create threw>`; drop that prefix.
+//     const error =
+//       err instanceof InvocationError ? err.message.slice(err.code.length + 2) : String(err);
+//     // Only link::create's own "is already taken" message means the code is in
+//     // use (409). Anything else failed on the server's side (500).
+//     if (error.endsWith("is already taken")) {
+//       return {
+//         status_code: 409,
+//         body: { error },
+//         headers: { "Content-Type": "application/json" },
+//       };
+//     }
+//     logger.error("link create failed", { error });
 //     return {
-//       status_code: 409,
-//       body: { error: err instanceof Error ? err.message : "conflict" },
+//       status_code: 500,
+//       body: { error: "could not create the link" },
 //       headers: { "Content-Type": "application/json" },
 //     };
 //   }
@@ -291,7 +328,10 @@
 // worker.registerFunction(
 //   "link::record_click",
 //   async (payload: { code: string; clicked_at: string }) => {
-//     await worker.trigger({
+//     const { last_insert_id } = await worker.trigger<
+//       { db: string; sql: string; params: string[] },
+//       { last_insert_id: string | null }
+//     >({
 //       function_id: "database::execute",
 //       payload: {
 //         db: DB,
@@ -299,14 +339,27 @@
 //         params: [payload.code, payload.clicked_at],
 //       },
 //     });
+//     // The row is committed. Announce it, without waiting on the listeners.
 //     worker.trigger({
-//       function_id: "publish",
-//       payload: { topic: "link.clicked", data: payload },
+//       function_id: "click-streamer::broadcast",
+//       payload: { id: Number(last_insert_id), code: payload.code, clicked_at: payload.clicked_at },
 //       action: TriggerAction.Void(),
 //     });
 //     return { recorded: true };
 //   },
 // );
+
+// --- Ch. 5 | link::click_summary ---
+// worker.registerFunction("link::click_summary", async () => {
+//   const { rows } = await worker.trigger<
+//     { db: string; sql: string },
+//     { rows: Array<{ total: number; last_id: number | null }> }
+//   >({
+//     function_id: "database::query",
+//     payload: { db: DB, sql: "SELECT COUNT(*) AS total, MAX(id) AS last_id FROM clicks" },
+//   });
+//   return { total: rows[0]?.total ?? 0, last_id: rows[0]?.last_id ?? 0 };
+// });
 
 // --- Ch. 3 | http::redirect (replaces Ch. 1) ---
 // // THIS CODE WILL BE REMOVED AND REPLACED LATER WITH THE CODE FROM CHAPTER 4

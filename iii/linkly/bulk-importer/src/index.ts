@@ -37,11 +37,11 @@
 //       });
 //       imported += 1;
 //     } catch (err) {
-//       // Skip a row the database rejects (a code already taken, refused by the
-//       // PRIMARY KEY on links.code). Re-throw anything else (a timeout, a worker
-//       // that is down) so a broken import fails loudly instead of counting rows
-//       // it never created as "skipped".
-//       if (!String(err).includes("UNIQUE constraint failed")) throw err;
+//       // link::create refuses a taken code with its own error, "code `<code>`
+//       // is already taken". Skip that row. Re-throw anything else (a timeout, a
+//       // worker that is down) so a broken import fails loudly instead of
+//       // counting rows it never created as "skipped".
+//       if (!(err instanceof Error && err.message.endsWith("is already taken"))) throw err;
 //       skipped += 1;
 //       logger.warn("bulk import row skipped", { code, error: String(err) });
 //     }
