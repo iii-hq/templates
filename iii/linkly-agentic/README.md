@@ -28,6 +28,9 @@ as it reaches each chapter.
    iii compose --up
    ```
 
+   It stays in the foreground. Press Ctrl+C there to stop the engine and every worker, or run
+   `iii kill --compose <project folder>` from another terminal.
+
 3. Add your provider (Anthropic shown; swap the name for yours):
 
    ```bash

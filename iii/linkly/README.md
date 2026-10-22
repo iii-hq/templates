@@ -34,3 +34,6 @@ iii compose --up
 ```
 
 That command starts the engine and every worker you have uncommented.
+
+`iii compose --up` stays in the foreground. Press Ctrl+C there to stop the engine and every worker,
+or run `iii kill --compose <project folder>` from another terminal.

@@ -221,14 +221,23 @@
 //       headers: { "Content-Type": "application/json" },
 //     };
 //   } catch (err) {
-//     // link::create throws when a requested code is already taken. The SDK
-//     // hands its error back as an InvocationError whose message is
-//     // `<err.code>: <what link::create threw>`; drop that prefix.
+//     // The SDK hands link::create's error back as an InvocationError whose
+//     // message is `<err.code>: <what link::create threw>`; drop that prefix.
 //     const error =
 //       err instanceof InvocationError ? err.message.slice(err.code.length + 2) : String(err);
+//     // Only link::create's own "is already taken" message means the code is in
+//     // use (409). Anything else failed on the server's side (500).
+//     if (error.endsWith("is already taken")) {
+//       return {
+//         status_code: 409,
+//         body: { error },
+//         headers: { "Content-Type": "application/json" },
+//       };
+//     }
+//     logger.error("link create failed", { error });
 //     return {
-//       status_code: 409,
-//       body: { error },
+//       status_code: 500,
+//       body: { error: "could not create the link" },
 //       headers: { "Content-Type": "application/json" },
 //     };
 //   }
