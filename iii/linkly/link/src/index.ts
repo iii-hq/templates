@@ -132,6 +132,9 @@
 // worker.registerFunction("link::create", async (payload: { url: string; code?: string }) => {
 //   const code = payload.code ?? makeCode();
 //   const url = /^https?:\/\//i.test(payload.url) ? payload.url : `https://${payload.url}`;
+//   // One timestamp for the row and the event, so subscribers see when the link
+//   // was created, not when their copy arrived.
+//   const created_at = new Date().toISOString();
 //   // ON CONFLICT DO NOTHING turns a taken code into zero inserted rows instead
 //   // of a database error, so link::create can say so in its own words.
 //   const { affected_rows } = await worker.trigger<
@@ -142,7 +145,7 @@
 //     payload: {
 //       db: DB,
 //       sql: "INSERT INTO links (code, url, created_at) VALUES (?, ?, ?) ON CONFLICT(code) DO NOTHING",
-//       params: [code, url, new Date().toISOString()],
+//       params: [code, url, created_at],
 //     },
 //   });
 //   if (affected_rows === 0) throw new Error(`code \`${code}\` is already taken`);
@@ -152,7 +155,7 @@
 //   });
 //   await worker.trigger({
 //     function_id: "iii::durable::publish",
-//     payload: { topic: "link.created", data: { code, url } },
+//     payload: { topic: "link.created", data: { code, url, created_at } },
 //   });
 //   logger.info("link created", { code, url });
 //   return { code, url };

@@ -45,7 +45,9 @@
 #
 # def on_link_created(data: dict) -> dict:
 #     """Runs whenever link publishes `link.created`. Counts links per day."""
-#     day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+#     # The day the link was created (UTC), not the day this copy arrived.
+#     created_at = datetime.fromisoformat(data["created_at"].replace("Z", "+00:00"))
+#     day = created_at.astimezone(timezone.utc).strftime("%Y-%m-%d")
 #     worker.trigger(
 #         {
 #             "function_id": "database::execute",
