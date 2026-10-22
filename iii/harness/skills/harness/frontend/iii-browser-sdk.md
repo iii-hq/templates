@@ -124,8 +124,6 @@ trigger is a notification, not storage: nothing missed while disconnected is rep
 query is the source of truth.
 
 ```tsx
-const TAB = crypto.randomUUID() // one handler id per tab: same-id functions load-balance
-
 function useLiveOrders() {
   const iii = useIii()
   const queryClient = useQueryClient()
@@ -137,14 +135,17 @@ function useLiveOrders() {
     }),
   })
   useEffect(() => {
+    // A fresh id per mount: only one live worker may own a function id in a namespace,
+    // and a remount (StrictMode, HMR) must not reuse the id its cleanup is unregistering.
+    const handlerId = `ui::orders-changed::${crypto.randomUUID()}`
     const refetch = () => queryClient.invalidateQueries({ queryKey: ['orders'] })
-    const fn = iii.registerFunction(`ui::orders-changed::${TAB}`, async () => {
+    const fn = iii.registerFunction(handlerId, async () => {
       refetch()
       return null
     })
     const trigger = iii.registerTrigger({
       type: 'orders::changed', // the trigger type the orders worker registered
-      function_id: `ui::orders-changed::${TAB}`,
+      function_id: handlerId,
       config: {},
     })
     // Fires now with the current state, then on every transition: the read after binding
@@ -253,10 +254,12 @@ Rules that keep this honest:
 - **Register handlers in an effect; unregister in its cleanup.** `registerFunction` returns a
   `FunctionRef` with `unregister()`. Skip it and an unmount or HMR leaves a stale handler
   answering backend calls in a dead tab.
-- **Function ids must be stable and addressable.** Name them for what they do
-  (`ui::notification`), never after a component instance. Two tabs registering the same id
-  load-balance, so target a *function*; use a `state` key or a channel when you need one
-  specific tab.
+- **Function ids that other code calls must be stable and addressable.** Name them for what
+  they do (`ui::notification`), never after a component instance. Only one live worker may own
+  a function id in a namespace: the engine rejects a second tab that registers the same id
+  there, it does not load-balance between them. Use a `state` key or a channel when you need
+  one specific tab, and give a handler that only a trigger binding reaches a unique id created
+  where it registers, as `useLiveOrders` does.
 - **`trigger()` is an imperative async call, not a render input.** Route it through a query or
   mutation layer (`queryFn: () => iii.trigger({ ... })`) so caching, retries, and loading
   states live in one place. Never call it during render.
