@@ -52,7 +52,9 @@
 //   const event: Click = { id: click.id, code: click.code, clicked_at: click.clicked_at };
 //   let delivered = 0;
 //   for (const binding of listeners.values()) {
-//     if (binding.config?.code && binding.config.code !== event.code) continue;
+//     // A binding with a code, even "", gets only that code's clicks; one
+//     // without a code gets every click.
+//     if (binding.config?.code !== undefined && binding.config.code !== event.code) continue;
 //     try {
 //       await worker.trigger({
 //         function_id: binding.function_id,
