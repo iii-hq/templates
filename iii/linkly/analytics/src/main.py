@@ -20,6 +20,15 @@
 #
 # DB = "analytics"
 #
+# SCHEMA = [
+#     # One row per link. Delivery is at least once, so a redelivered event
+#     # finds its row already there and changes nothing.
+#     "CREATE TABLE IF NOT EXISTS link_events (code TEXT PRIMARY KEY, day TEXT NOT NULL)",
+#     # The per-day counts are computed from those rows, never stored.
+#     "CREATE VIEW IF NOT EXISTS daily_link_counts AS "
+#     "SELECT day, COUNT(*) AS count FROM link_events GROUP BY day",
+# ]
+#
 # def ensure_schema() -> None:
 #     """The analytics worker owns its own table, in its own database.
 #
@@ -28,15 +37,10 @@
 #     """
 #     for attempt in range(1, 31):
 #         try:
-#             worker.trigger(
-#                 {
-#                     "function_id": "database::execute",
-#                     "payload": {
-#                         "db": DB,
-#                         "sql": "CREATE TABLE IF NOT EXISTS daily_link_counts (day TEXT PRIMARY KEY, count INTEGER NOT NULL)",
-#                     },
-#                 }
-#             )
+#             for sql in SCHEMA:
+#                 worker.trigger(
+#                     {"function_id": "database::execute", "payload": {"db": DB, "sql": sql}}
+#                 )
 #             return
 #         except Exception:
 #             if attempt >= 30:
@@ -44,7 +48,7 @@
 #             time.sleep(1)
 #
 # def on_link_created(data: dict) -> dict:
-#     """Runs whenever link publishes `link.created`. Counts links per day."""
+#     """Runs whenever link publishes `link.created`. Records the link's day."""
 #     # The day the link was created (UTC), not the day this copy arrived.
 #     created_at = datetime.fromisoformat(data["created_at"].replace("Z", "+00:00"))
 #     day = created_at.astimezone(timezone.utc).strftime("%Y-%m-%d")
@@ -53,13 +57,13 @@
 #             "function_id": "database::execute",
 #             "payload": {
 #                 "db": DB,
-#                 "sql": "INSERT INTO daily_link_counts (day, count) VALUES (?, 1) "
-#                 "ON CONFLICT(day) DO UPDATE SET count = count + 1",
-#                 "params": [day],
+#                 "sql": "INSERT INTO link_events (code, day) VALUES (?, ?) "
+#                 "ON CONFLICT(code) DO NOTHING",
+#                 "params": [data["code"], day],
 #             },
 #         }
 #     )
-#     logger.info(f"counted new link {data.get('code')} for {day}")
+#     logger.info(f"recorded new link {data['code']} for {day}")
 #     return {"ok": True}
 #
 # ensure_schema()
