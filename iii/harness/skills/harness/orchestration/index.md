@@ -16,7 +16,7 @@ Two wires, one direction each.
   whole brief. It arrives knowing only its own identity and that text;
   anything you leave out, it invents.
 - **Upstream is `state`.** The brief names one state key; the child writes
-  its result there when it finishes. You armed a `state` wake on that key
+  its result there when it finishes. You observed that key with a wake
   before spawning, so the write starts your next turn with the result in it.
 
 The child does not look for a parent, does not wait for you, and arms nothing
@@ -51,8 +51,9 @@ Choose the child's `session_id`: a readable slug plus a short random suffix,
 `issue-board-backend-7f3a`. Its result key is that same slug in scope
 `results`, so one identifier names the session, the wake and the result.
 
-1. **Arm the wake.** No `target`; the empty target is what makes it a
-   wake into your own session (any `harness::*` target is refused).
+1. **Arm the wake.** Observe `state::on-changed` with filters on the result
+   key. No `target`; the empty target is what makes it a wake into your own
+   session (any `harness::*` target is refused).
 
    ```json
    harness::observe {
@@ -66,6 +67,8 @@ Choose the child's `session_id`: a readable slug plus a short random suffix,
      "lifecycle": { "expires_in_ms": 7200000 }
    }
    ```
+
+   It returns `{ observer_id, once }`; keep the `observer_id`.
 
    A wake is once by default: it parks you until the key is written, fires,
    and retires. `expires_in_ms` is the backstop for a child that never
@@ -92,7 +95,7 @@ Choose the child's `session_id`: a readable slug plus a short random suffix,
      be the child's whole identity instead of enriching the default.
    - `options: { "orchestrator": true }` only for a child that must spawn
      children of its own. Everything else is a leaf: it may arm a wake for
-     its own work, and cannot spawn, send, or unregister anything.
+     its own work, and cannot spawn, send, or remove observers.
    - Omit `options.functions` and the child inherits your policy. Pass
      `options.functions.allow` only to narrow it, and then list every id
      the child's work needs, one per entry, no wildcards. A profile's
@@ -159,7 +162,8 @@ findings until the question or sources change.
 
 ## On the wake
 
-The event is `{ type: "state", event_type, scope, key, old_value, new_value }`;
+The wake carries the `state::on-changed` event,
+`{ type: "state", event_type, scope, key, old_value, new_value }`;
 `new_value` is the child's result document: `outcome`, `summary`,
 `evidence`, `files`, `questions`.
 
@@ -179,8 +183,8 @@ The event is `{ type: "state", event_type, scope, key, old_value, new_value }`;
 4. **Blocked with a question**: answer it the same way, a spawn into the
    same session with the answer in the brief.
 
-`state::get` the key before acting on a late or duplicated fire; the child
-may have written again since.
+`state::get` the key before acting on a late or duplicated delivery; the
+child may have written again since.
 
 After corrections, recheck changed behavior and dependent checks. Preserve
 earlier evidence only while its code, contracts and runtime still apply;
@@ -189,14 +193,14 @@ Do not replay an engineer's full test matrix at every orchestration level.
 
 ## Fan-in
 
-- N children are N wakes and N keys. Never watch scope `results` without a
-  key: another orchestrator's children write there too.
+- N children are N wakes and N keys. Never observe scope `results` without
+  a key filter: another orchestrator's children write there too.
 - `state::list { "scope": "results" }` shows which results have landed.
 - `harness::status { "session_id": "<child>" }` is one child's current
   turn; a child that wrote its result has stopped.
-- `harness::triggers::list {}` audits what you still have armed. A fired
-  wake is already gone; `harness::triggers::unregister { "subscription_id" }`
-  retires one you no longer need.
+- `harness::observers::list {}` audits what you still have armed. A
+  delivered wake is already gone; `harness::unobserve { "id": "<observer_id>" }`
+  removes one you no longer need.
 
 ## Traps
 
@@ -210,7 +214,7 @@ Do not replay an engineer's full test matrix at every orchestration level.
   `board::play { row, col }`. The child that owns a function id's schema
   finishes before the child that calls it starts.
 - **The wake armed after the spawn.** A fast child writes before the
-  binding exists and the event is lost. Arm first, always.
+  observer exists and the event is lost. Arm first, always.
 - **A tiny `options.max_turns`** strands a child mid-task with nothing
   written. Omit it.
 - **You wrote the implementation yourself.** Reaching for the keyboard

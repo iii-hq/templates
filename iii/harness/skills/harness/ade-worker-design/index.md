@@ -2,7 +2,7 @@
 name: ade-worker-design
 description: >-
   Design and build the UI an iii worker injects into the ADE console — pages,
-  function and trigger-activity renderers, configuration forms and scoped
+  function and observer-activity renderers, configuration forms and scoped
   stylesheets — against the console's host contract, its design system and the
   record-shaped interaction patterns. Read it before adding or changing any
   worker console UI.
@@ -11,13 +11,14 @@ description: >-
 # ade-worker-design
 
 The ADE console is the host every worker can inject UI into at runtime: a
-worker observes `console::ui::asset` for a script and a style asset, every open
-tab imports the module, calls its `setup(host)`, and hot-reloads it on
-re-registration. No console rebuild, no iframe. This skill is the designer's
-half of building such a worker: what the host accepts, how the console looks
-and behaves, and which interaction pattern fits which kind of data. The
-worker's service half — package shape, functions, configuration, delivery,
-compose wiring — is the `iii-node` skill and belongs to the Backend Engineer.
+worker observes `console::ui::asset` once for its script and once for its
+style, every open tab imports the module, calls its `setup(host)`, and
+hot-reloads it when the asset changes. No console rebuild, no iframe. This
+skill is the designer's half of building such a worker: what the host
+accepts, how the console looks and behaves, and which interaction pattern
+fits which kind of data. The worker's service half — package shape,
+functions, configuration, delivery, compose wiring — is the `iii-node` skill
+and belongs to the Backend Engineer.
 
 ## Choose the reference for your role
 
@@ -31,9 +32,9 @@ looking up a detail, inspect the relevant section instead of rereading all
 three documents:
 
 - `console-injectable-ui` — the authoring contract: the wire contract and
-  asset rules, the `setup(host)` slots (pages, panels, function-trigger and
-  trigger-activity renderers, configuration forms, provider forms, chat
-  slots, overlays, palette), `host.iii` for live data, the shared build
+  asset rules, the `setup(host)` slots (pages, panels, function-call and
+  observer-activity renderers, configuration forms, provider forms, chat
+  slots, overlays, palette), `host.iii` for calls and live data, the shared build
   driver with its six externals and design lint, the bundling `/hooks` and
   `/format` subpaths, `lucide-react` icons, scoping, hot reload, debugging,
   behaviour across widths, the configuration-form grammar, testing (a page
@@ -62,8 +63,9 @@ Fetch any of them with `directory::skills::get { "id": "harness/ade-worker-desig
   `[data-iii-ui="<worker>"]`; an unscoped rule restyles the whole console.
   The build driver refuses one and the manifest reports leftovers as
   `warnings`.
-- Asset observers are created by the worker's SDK client (`iii.observe` of
-  `console::ui::asset`), which replays them on reconnect.
+- Assets are `console::ui::asset` observers made over the worker's own
+  connection, so they leave with the worker; never observe the tab-only
+  `console::ui::on-assets-changed`.
 - New surfaces must be seen in the running console at phone, narrow-split
   and wide widths, in both themes, with the manifest free of warnings: a
   page alone at `<url>/#/worker/<scope>[/<page-id>]`, `url` from `console::status` for screenshots and

@@ -208,7 +208,7 @@ close the modal, then open the new record as its own pane (§3).
 
 ## 6. Chat card for agent calls
 
-Register one `FunctionTriggerRenderer` that claims the worker's record
+Register one `FunctionCallRenderer` that claims the worker's record
 functions. Unwrap the harness envelope first with `unwrapEnvelope(message.output)` from
 `@iii-dev/console-ui/format` (`console-injectable-ui` › Slots): the record
 lives at `details`.
@@ -244,18 +244,20 @@ the settings action; never render a Configure button or mount
 
 ## 8. Live updates
 
-- The worker hosts an observable function `<worker>::on-change`
-  (`harness/iii-node/index` › Live updates) and calls it for every mutation with
-  the **whole record** (`{ type, event, record_id, record, comment?, activity? }`),
-  plus a `store.reloaded` event when the backing store changes. An observer's
-  metadata reaches its target as the second argument; the worker forwards nothing.
-- The UI keeps **one binding per tab** shared by every mounted page: a module
-  hub with a listener set that registers `host.iii.on(fn, …)` and the
-  `registerTrigger` with `function_id: \`${fn}::${host.iii.browserId}\`` on
-  the first subscriber and tears both down on the last. A page that only
+- The worker hosts a private event function `<worker>::on-change` (see
+  `iii-node` → Live updates) and calls it after every mutation with the
+  **whole record** (`{ type, event, record_id, record, comment?, activity? }`),
+  plus a `store.reloaded` event when the backing store changes. It takes no
+  args; observers narrow it with filters on `input.record_id` or
+  `input.event`. An observer's `metadata` reaches its target as the handler's
+  second argument; the worker never forwards it.
+- The UI keeps **one observer per tab** shared by every mounted page: a module
+  hub with a listener set that registers `host.iii.on(fn, …)` and calls
+  ``host.iii.observe('<worker>::on-change', `${fn}::${host.iii.browserId}`)``
+  on the first subscriber, and disposes both on the last. A page that only
   refetches on events can use `useWorkerLive` (`@iii-dev/console-ui/hooks`)
   with its own `handlerId`; keep the hub when several mounted pages share one
-  binding and upsert from payloads.
+  observer and upsert from payloads.
 - Collections **upsert from the payload** (remove when `deleted_at` is set) and
   refetch only on `store.reloaded` or events without a payload. Record screens
   merge the record and append unseen comments/activity by id.
