@@ -29,7 +29,7 @@ the communication protocol is the same.
 
 ## Before the first spawn
 
-- `engine::functions::info { "function_ids": ["harness::spawn", "engine::register_trigger"] }`
+- `engine::functions::info { "function_ids": ["harness::spawn", "harness::observe"] }`
   once; `task`, `agent`, `session_id`, `display`, `options.orchestrator` and
   the return shape are what matter.
 - Inspect a selected profile with `directory::agents::get` only when its
@@ -51,15 +51,18 @@ Choose the child's `session_id`: a readable slug plus a short random suffix,
 `issue-board-backend-7f3a`. Its result key is that same slug in scope
 `results`, so one identifier names the session, the wake and the result.
 
-1. **Arm the wake.** No `function_id`; the empty target is what makes it a
+1. **Arm the wake.** No `target`; the empty target is what makes it a
    wake into your own session (any `harness::*` target is refused).
 
    ```json
-   engine::register_trigger {
-     "trigger_type": "state",
-     "config": { "scope": "results", "key": "issue-board-backend-7f3a" },
+   harness::observe {
+     "function_id": "state::on-changed",
+     "filters": {
+       "input.scope": { "$eq": "results" },
+       "input.key": { "$eq": "issue-board-backend-7f3a" }
+     },
      "label": "issue-board-backend-7f3a",
-     "metadata": { "action": "result from issue-board-backend-7f3a" },
+     "action": "result from issue-board-backend-7f3a",
      "lifecycle": { "expires_in_ms": 7200000 }
    }
    ```

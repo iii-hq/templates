@@ -41,11 +41,11 @@ Composition recipes for record-shaped UIs: `patterns`.
 
 ## How it works
 
-A worker registers `console:script` and `console:style` triggers whose
-`config.path` identifies an asset and whose `function_id` serves `{content}`
-for `{path}`. The console hashes and serves those bytes, then pushes changes
+A worker observes `console::ui::asset` once per asset, with `args: { kind, path }`
+(`kind` is `script`, `style` or `module`) and a content function as the target
+that serves `{content}` for `{path}`. The console hashes and serves those bytes, then pushes changes
 to open tabs. Tabs `import()` scripts and call their default `setup(host)`;
-styles load as scoped `<link>` assets. Re-registering a path hot-reloads it.
+styles load as scoped `<link>` assets. Observing a path again hot-reloads it.
 Registration is deployment; disconnect is teardown.
 
 ## Project layout
@@ -487,7 +487,7 @@ await buildWorkerUi({ scope: 'mywork', root: import.meta.dirname, outdir: '../di
 | Option | Default | Purpose |
 |---|---|---|
 | `scope` | required | The `data-iii-ui` value — first asset path segment, normally the worker name |
-| `entryPoints` | `['page.tsx', 'styles.css']` | Extra scripts each need their own `console:script` trigger and a default `setup` |
+| `entryPoints` | `['page.tsx', 'styles.css']` | Extra scripts each need their own `console::ui::asset` observer (`kind: 'script'`) and a default `setup` |
 | `outdir`, `root` | `'dist'`, `process.cwd()` | Paths resolve against `root`; pass `import.meta.dirname` when invoked from elsewhere |
 | `keyframePrefixes` | `[scope, "<scope>-ui"]` | Allowed `@keyframes` name prefixes |
 | `allowUnscopedSelectors` | `[]` | Selector prefixes that are global on purpose (a portal root, vendor CSS such as `.xterm`) |
@@ -548,27 +548,29 @@ The baseline, floor and radius the rules check are the values in
 ## 4. Registration (the worker side)
 
 One content function serving all of the worker's assets (dispatch on
-`path`), one trigger per asset. A Node worker implements the wire contract
+`path`), one observer per asset. A Node worker implements the wire contract
 directly: one function mapping `{path}` to `{content, content_type?}`, then
-one Message-path `console:script` or `console:style` trigger per asset with
-`config: {path}`. The scaffold's `src/ui.ts` is written in
+one `iii.observe({ function_id: 'console::ui::asset', args: { kind, path } }, '<worker>::ui-content')`
+per asset. The scaffold's `src/ui.ts` is written in
 `harness/iii-node/index` › Worker-side asset delivery; keep the first path
 segment equal to the worker name and reject unknown paths.
 
-**Always register through the SDK's Message path, never the engine's durable
-`register_trigger`:** Message-path triggers are garbage-collected on
-disconnect and replayed on reconnect.
+**Always observe from the worker's SDK client:** it replays its observers on
+reconnect. `console:script` and `console:style` triggers no longer exist; a
+worker that still registers them (an `iii-sdk` before 0.26) serves no page and
+gets no error.
 
 ## Runtime contract
 
 | | |
 |---|---|
-| Trigger types | `console:script` (ESM JS), `console:style` (CSS); never register the tab-only `console:assets` type |
-| Trigger config | `{ "path": string }`, nothing else |
-| Path rules | lowercase `[a-z0-9._-]` segments, no leading slash, no `.`/`..` segments, ≤ 512 chars; extension must match the type (`.js` / `.css`); **convention: first segment = worker name** — it becomes the `data-iii-ui` scope and the only human-readable attribution |
+| Observed function | `console::ui::asset`; `args.kind` is `script` (ESM JS, imported at mount), `style` (CSS) or `module` (served, imported on demand with `host.importModule`) |
+| Args | `{ "kind": string, "path": string }`, nothing else (other fields are refused) |
+| Path rules | lowercase `[a-z0-9._-]` segments, no leading slash, no `.`/`..` segments, ≤ 512 chars; extension must match the kind (`.js` / `.css`); **convention: first segment = worker name** — it becomes the `data-iii-ui` scope and the only human-readable attribution |
 | Content function | input `{ "path": string }` → output `{ "content": string, "content_type"?: string }` |
 | Size cap | 8 MiB per asset — larger registrations are rejected (the driver fails first) |
 | Reload | same path + changed content hash replaces the asset; unchanged content is a no-op |
+| Supersede | a later observer of the same path replaces the earlier one; a failed content fetch rejects the observer |
 
 ## Configuration forms
 

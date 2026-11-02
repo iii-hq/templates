@@ -11,7 +11,7 @@ description: >-
 # ade-worker-design
 
 The ADE console is the host every worker can inject UI into at runtime: a
-worker registers a `console:script` and a `console:style` asset, every open
+worker observes `console::ui::asset` for a script and a style asset, every open
 tab imports the module, calls its `setup(host)`, and hot-reloads it on
 re-registration. No console rebuild, no iframe. This skill is the designer's
 half of building such a worker: what the host accepts, how the console looks
@@ -62,8 +62,8 @@ Fetch any of them with `directory::skills::get { "id": "harness/ade-worker-desig
   `[data-iii-ui="<worker>"]`; an unscoped rule restyles the whole console.
   The build driver refuses one and the manifest reports leftovers as
   `warnings`.
-- Asset triggers go through the SDK Message path, never the durable
-  `engine::register_trigger`, and never `console:assets`.
+- Asset observers are created by the worker's SDK client (`iii.observe` of
+  `console::ui::asset`), which replays them on reconnect.
 - New surfaces must be seen in the running console at phone, narrow-split
   and wide widths, in both themes, with the manifest free of warnings: a
   page alone at `<url>/#/worker/<scope>[/<page-id>]`, `url` from `console::status` for screenshots and

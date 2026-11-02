@@ -244,12 +244,11 @@ the settings action; never render a Configure button or mount
 
 ## 8. Live updates
 
-- The worker owns a trigger type `<worker>:change` (`harness/iii-node/index`
-  › Live updates) and fires an event for every mutation carrying the **whole record**
-  (`{ type, event, record_id, record, comment?, activity? }`) plus a
-  `store.reloaded` event when the backing store changes. The type also supports
-  trigger metadata — a `metadata` field in its config — and forwards it on every
-  `iii.trigger`, so a binding's handler receives it as its second argument.
+- The worker hosts an observable function `<worker>::on-change`
+  (`harness/iii-node/index` › Live updates) and calls it for every mutation with
+  the **whole record** (`{ type, event, record_id, record, comment?, activity? }`),
+  plus a `store.reloaded` event when the backing store changes. An observer's
+  metadata reaches its target as the second argument; the worker forwards nothing.
 - The UI keeps **one binding per tab** shared by every mounted page: a module
   hub with a listener set that registers `host.iii.on(fn, …)` and the
   `registerTrigger` with `function_id: \`${fn}::${host.iii.browserId}\`` on

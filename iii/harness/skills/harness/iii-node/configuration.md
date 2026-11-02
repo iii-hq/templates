@@ -46,27 +46,30 @@ Reach for it when:
 - A worker needs to reload in-memory state when its configuration is rewritten by another component or by an operator editing the YAML directly.
 - The same handler should run regardless of who edited the configuration (local SDK call, remote engine via the bridge adapter, or a file edit).
 
-If you only need the new value inside the same function that wrote it, `configuration::set` already returns `old_value` / `new_value` — register a trigger only when a *different* worker should react.
+If you only need the new value inside the same function that wrote it, `configuration::set` already returns `old_value` / `new_value` — observe `configuration::on-updated` only when a *different* worker should react.
 
 ### How to bind
 
 1. Register a handler: `iii.registerFunction('stream::on-config-change', handler)`.
-2. Register the trigger:
+2. Observe `configuration::on-updated`, which takes no `args`; choose the entry and the event with `filters`:
 
 ```typescript
-iii.registerTrigger({
-  type: 'configuration',
-  function_id: 'stream::on-config-change',
-  config: {
-    configuration_id: 'iii-stream',          // optional. Omit to receive every id.
-    event_types: ['configuration:updated'],  // optional. Subset of configuration:registered|configuration:updated|configuration:deleted.
-    // condition_function_id is also supported — see get function info.
+iii.observe(
+  {
+    function_id: 'configuration::on-updated',
+    namespace: 'default', // engine-hosted; required when the worker runs in a project namespace
+    filters: {
+      'input.id': { $eq: 'iii-stream' },                  // omit to receive every id
+      'input.event_type': { $eq: 'configuration:updated' }, // or $in over registered | updated | deleted
+    },
+    deliver: 'input', // the handler receives the event, not the Observed envelope
   },
-})
+  'stream::on-config-change',
+)
 ```
 
-Mutations that fire triggers: `configuration::register` (`:registered` on first call, `:updated` on re-registration), `configuration::set` (`:updated`), TTL cleanup (`:deleted`), and external `fs` create/edit/delete events. Reads do **not** fire triggers.
+Do not pass the 0.25 trigger config (`{ configuration_id, event_types }`) as `args`: `configuration::on-updated` declares no `args_format`, so the engine accepts the observer, ignores the args, and runs the handler for every entry's change.
 
-The worker also respects per-id TTL: when `ttl_seconds > 0` is configured and the **last** trigger bound to a `configuration_id` is unregistered, the entry is deleted after the TTL elapses. A new trigger registration before the countdown fires aborts the cleanup.
+Calls that fire it: `configuration::register` (`:registered` on first call, `:updated` on re-registration), `configuration::set` (`:updated`), and external `fs` create/edit/delete events (removing `<id>.yaml` replays as `:deleted`). Reads do **not** fire it. An entry persists until its file is removed; `ttl_seconds` is ignored (the worker logs a `warn` when it is not `0`).
 
-For the event payload shape, call `iii get function info` on the trigger type or handler function id.
+For the event payload shape, read `engine::functions::info { function_id: 'configuration::on-updated' }`.

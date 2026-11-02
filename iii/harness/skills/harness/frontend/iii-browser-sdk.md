@@ -1,14 +1,14 @@
 ---
 title: iii-browser-sdk
-description: Make a browser app a first-class iii worker with iii-browser-sdk — registerWorker, registerFunction, trigger, registerTrigger, engine state, and streaming channels, wired into React and Vite.
+description: Make a browser app a first-class iii worker with iii-browser-sdk — registerWorker, registerFunction, call, observe, engine state, and streaming channels, wired into React and Vite.
 type: how-to
 ---
 
 # iii-browser-sdk
 
 `iii-browser-sdk` turns the frontend into an iii worker: one WebSocket to the engine instead
-of many HTTP round-trips, backend workers pushing into the UI with `trigger()`, and the same
-primitives used server-side (`registerFunction`, `trigger`, `registerTrigger`). No Node.js
+of many HTTP round-trips, backend workers pushing into the UI with `call()`, and the same
+primitives used server-side (`registerFunction`, `call`, `observe`). No Node.js
 dependencies, no OpenTelemetry — it runs on native `WebSocket`.
 
 Docs <https://iii.dev/docs/tutorials/linkly/frontend> ·
@@ -34,8 +34,11 @@ const iii = registerWorker(import.meta.env.VITE_III_WS_URL) // the public RBAC l
 ```
 
 `registerWorker(address, options?)` is the sole top-level function; everything else hangs off
-the returned `ISdk` — `registerFunction`, `registerTrigger`, `registerTriggerType`,
-`trigger`, `addConnectionStateListener`, `getFatalError`, `shutdown`. Do not destructure
+the returned `ISdk` — `registerFunction`, `call`, `observe`, the observer hooks
+(`onObserverAdded`, `onObserverRemoved`, `onObserverMatch`, `onObserverDeliver`),
+`addConnectionStateListener`, `getFatalError`, `shutdown`. Since 0.26 there is no
+`registerTrigger` or `registerTriggerType`; `trigger` and `TriggerAction` remain only as
+deprecated aliases of `call` and `CallAction`. Do not destructure
 these as top-level imports; they are not exported that way.
 
 `InitOptions`: `workerName`, `namespace`, `invocationTimeoutMs` (default 30000),
@@ -61,12 +64,12 @@ ref.unregister()
 - Pass a `description` (plus `request_format` / `response_format` when callers need the
   contract) — that is what `engine::functions::info` shows.
 - Return JSON-serializable data; a thrown error surfaces as the caller's error.
-- A backend worker reaches it by id: `iii.trigger({ function_id: 'ui::show-notification', payload })`.
+- A backend worker reaches it by id: `iii.call({ function_id: 'ui::show-notification', payload })`.
 
 ## Calling backend functions
 
 ```ts
-const users = await iii.trigger<{ limit: number }, User[]>({
+const users = await iii.call<{ limit: number }, User[]>({
   function_id: 'api::get::users',
   payload: { limit: 20 },
   timeoutMs: 5000,
@@ -77,9 +80,9 @@ Three routing modes — choose deliberately:
 
 | Mode | Call | Use when |
 | --- | --- | --- |
-| await (default) | `await iii.trigger({ function_id, payload })` | you need the result |
-| fire-and-forget | `action: TriggerAction.Void()` | telemetry, non-essential side effects |
-| enqueue | `action: TriggerAction.Enqueue({ queue })` | long work; resolves to `{ messageReceiptId }` |
+| await (default) | `await iii.call({ function_id, payload })` | you need the result |
+| fire-and-forget | `action: CallAction.Void()` | telemetry, non-essential side effects |
+| enqueue | `action: CallAction.Enqueue({ queue })` | long work; resolves to `{ messageReceiptId }` |
 
 `namespace` on the request routes the invocation elsewhere; omit it to stay in your own.
 
@@ -95,33 +98,37 @@ iii.registerFunction('ui::update-dashboard', async (m: Metrics) => {
 ```
 
 That is the whole real-time design: a backend worker calls
-`trigger({ function_id: 'ui::update-dashboard', payload })` and the open tab updates. Do not
+`call({ function_id: 'ui::update-dashboard', payload })` and the open tab updates. Do not
 add polling, SSE, or a second socket alongside it.
 
-## Triggers in the browser
+## Observers in the browser
 
 ```ts
-const trigger = iii.registerTrigger({
-  type: 'state',
-  function_id: 'ui::refresh', // a function this tab registered
-  config: { scope: 'orders', key: '*' },
-})
-trigger.unregister()
+const observer = iii.observe(
+  {
+    function_id: 'state::on-changed',
+    filters: { 'input.scope': { $eq: 'orders' } },
+    deliver: 'input', // the target receives the change, not the Observed envelope
+  },
+  'ui::refresh', // a function this tab registered
+)
+// later
+await observer.dispose()
 ```
 
-`registerTrigger` fills `namespace` from this worker — correct, because the target function is
-one this worker registered. Registering a **trigger type** (`registerTriggerType`) from a
-browser is rarely right: it only makes sense when the browser itself is the event source. The
-RBAC listener also constrains which types a browser session may register.
+The target is a function this tab registered. The source resolves in this worker's namespace
+unless it sets `namespace`. Hosting an observable function from a browser is rarely right: it
+only makes sense when the browser itself is the event source. The RBAC listener decides what a
+browser session may observe: its grants must cover both the observed function and the target.
 
-### Live data from a worker-owned trigger type
+### Live data from a worker-owned change function
 
 When the tab shows records a backend worker owns and must stay current, the worker owns both
-the data and a trigger type that fires after each committed change (`harness/iii-node/index`
-› Live updates). The tab binds a function to that type, reads the current state with the
-worker's query, and reads again whenever a change arrives or the connection comes back. A
-trigger is a notification, not storage: nothing missed while disconnected is replayed, so the
-query is the source of truth.
+the data and an observable function it calls after each committed change (`harness/iii-node/index`
+› Live updates). The tab observes that function with a handler of its own, reads the current
+state with the worker's query, and reads again whenever a change arrives or the connection comes
+back. An observer is a notification, not storage: nothing missed while disconnected is replayed,
+so the query is the source of truth.
 
 ```tsx
 function useLiveOrders() {
@@ -129,7 +136,7 @@ function useLiveOrders() {
   const queryClient = useQueryClient()
   const orders = useQuery({
     queryKey: ['orders'],
-    queryFn: () => iii.trigger<{ limit: number }, Order[]>({
+    queryFn: () => iii.call<{ limit: number }, Order[]>({
       function_id: 'orders::list',
       payload: { limit: 100 },
     }),
@@ -143,19 +150,18 @@ function useLiveOrders() {
       refetch()
       return null
     })
-    const trigger = iii.registerTrigger({
-      type: 'orders::changed', // the trigger type the orders worker registered
-      function_id: handlerId,
-      config: {},
-    })
-    // Fires now with the current state, then on every transition: the read after binding
-    // covers a change that landed before the binding, and a reconnect re-reads.
+    const observer = iii.observe(
+      { function_id: 'orders::on-changed', deliver: 'input' }, // the orders worker's change function
+      handlerId,
+    )
+    // Fires now with the current state, then on every transition: the read after observing
+    // covers a change that landed before the observer, and a reconnect re-reads.
     const off = iii.addConnectionStateListener((state) => {
       if (state === 'connected') refetch()
     })
     return () => {
       off()
-      trigger.unregister()
+      void observer.dispose().catch(() => undefined)
       fn.unregister()
     }
   }, [iii, queryClient])
@@ -165,21 +171,21 @@ function useLiveOrders() {
 
 - Payloads that carry an id and a revision (or the whole record) let the tab skip a
   notification it already has, or upsert without a round trip.
-- The RBAC auth function lists the type in `allowed_trigger_types` and exposes the query; a
-  per-tab `namespace` is the other way to keep two tabs' handlers apart.
+- The RBAC auth function grants the session `orders::on-changed`, the handler ids and the
+  query; a per-tab `namespace` is the other way to keep two tabs' handlers apart.
 
 ## State, helpers, channels (subpath exports)
 
 - `iii-browser-sdk/state` — the engine's state worker, typed: `get<T>`/`set`/`delete`/`list`/
-  `update`, plus `StateEventType.Created|Updated|Deleted` for the change events the `state`
-  trigger delivers. Use `update` with ordered `ops` when you need an atomic edit instead of a
+  `update`, plus `StateEventType.Created|Updated|Deleted` for the change events
+  `state::on-changed` is called with. Use `update` with ordered `ops` when you need an atomic edit instead of a
   read-modify-write race.
 - `iii-browser-sdk/helpers` — `createChannel(iii, bufferSize?)` returns a `Channel` with
   `writer` / `reader` and *serializable* `writerRef` / `readerRef`, so a ref can be handed to
   a backend worker and the bytes stream either direction; `isChannelRef` and
   `extractChannelRefs` (recursive, returns `[path, ref]` tuples) complete the set. The module
   still exports `createStream`, deprecated together with `iii-stream`: never use it for live
-  data. Bind the owning worker's trigger type instead (above, and the "Migrate from iii-stream
+  data. Observe the owning worker's change function instead (above, and the "Migrate from iii-stream
   and pubsub" guide).
 - `ChannelWriter.sendMessage` / `sendBinary` / `close`; `ChannelReader.onMessage` /
   `onBinary` / `readAll`.
@@ -191,8 +197,8 @@ function useLiveOrders() {
 - **Auth is RBAC at the listener, not headers.** A browser cannot set headers on a WebSocket
   handshake, so `headers` is ignored: credentials ride as **query parameters or cookies** and
   are judged by the RBAC *auth function* on the upgrade request (`{ headers, query_params,
-  ip_address }` in, `AuthResult` out, scoping namespaces, allowed/forbidden function ids, and
-  allowed trigger types). The engine-owned listener must be a **public, RBAC-protected
+  ip_address }` in, `AuthResult` out, scoping namespaces, allowed/forbidden function ids; observing
+  needs both the observed function and the target). The engine-owned listener must be a **public, RBAC-protected
   instance** (e.g. `iii-worker-manager#browser`, or the `rbac-proxy` worker in front of the
   private one); the private listener must never face
   untrusted browser clients.
@@ -262,7 +268,7 @@ Rules that keep this honest:
   one specific tab, and give a handler that only a trigger binding reaches a unique id created
   where it registers, as `useLiveOrders` does.
 - **`trigger()` is an imperative async call, not a render input.** Route it through a query or
-  mutation layer (`queryFn: () => iii.trigger({ ... })`) so caching, retries, and loading
+  mutation layer (`queryFn: () => iii.call({ ... })`) so caching, retries, and loading
   states live in one place. Never call it during render.
 - **Server state is not UI state.** Engine state and trigger results belong in the cache, not
   mirrored into `useState`.
