@@ -95,6 +95,7 @@ containers:
   #         - match("link::create")
   #         - match("link::request_delete")
   #         - match("link::click_summary")
+  #         - match("click-streamer::on-click")
   # auth:
   #   worker: path://./auth
   #   env_file: ['./.env']
