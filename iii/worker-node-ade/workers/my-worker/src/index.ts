@@ -1,7 +1,6 @@
 import { fileURLToPath } from 'node:url'
-import { registerWorker, TriggerAction } from 'iii-sdk'
+import { CallAction, registerWorker } from 'iii-sdk'
 import type { RegisterFunctionFormat } from 'iii-sdk/protocol'
-import type { TriggerConfig } from 'iii-sdk/trigger'
 import { greetee, hello, normalizeGreeting, storedGreeting, type HelloInput, type HelloOutput } from './hello.js'
 import { uiContent } from './ui-assets.js'
 import { WEB_PATH, webHandlers, webUrl } from './web.js'
@@ -26,7 +25,7 @@ let greeting = 'Hello'
 
 async function loadConfig() {
   // configuration::* lives in the engine's `default` namespace.
-  const { value } = await iii.trigger<unknown, { value: { greeting?: string } | null }>({
+  const { value } = await iii.call<unknown, { value: { greeting?: string } | null }>({
     function_id: 'configuration::get',
     namespace: 'default',
     payload: { id: 'my-worker' },
@@ -41,61 +40,42 @@ iii.registerFunction('my-worker::config-changed', loadConfig, {
   response_format: { type: 'object', properties: { greeting: { type: 'string' } }, required: ['greeting'] },
   metadata: { internal: true },
 })
-iii.registerTrigger({
-  type: 'configuration',
-  function_id: 'my-worker::config-changed',
-  config: { configuration_id: 'my-worker', event_types: ['configuration:updated'] },
-})
-
-// --- Own trigger type: my-worker:hello fires after every greeting ---
-
-type HelloTriggerConfig = { metadata?: Record<string, unknown> }
-const subscribers = new Map<string, TriggerConfig<HelloTriggerConfig>>()
-
-iii.registerTriggerType<HelloTriggerConfig>(
+// configuration::on-updated takes no args: choose the entry and the event with filters.
+iii.observe(
   {
-    id: 'my-worker:hello',
-    description:
-      'Fires after every my-worker::hello call with { name, message }. Config: { metadata? } — metadata rides along to the invoked handler.',
-  },
-  {
-    registerTrigger: async (binding) => {
-      subscribers.set(binding.id, binding)
-    },
-    unregisterTrigger: async (binding) => {
-      subscribers.delete(binding.id)
+    function_id: 'configuration::on-updated',
+    filters: {
+      'input.id': { $eq: 'my-worker' },
+      'input.event_type': { $eq: 'configuration:updated' },
     },
   },
+  'my-worker::config-changed',
 )
 
-/** The metadata a handler receives: the binding's own, with the config's
-    `metadata` laid over it (config first on every shared key). Merged, not
-    replaced: a session wake routes on its binding metadata, so dropping it
-    would lose the delivery. */
-function metadataFor(binding: { config?: HelloTriggerConfig | null; metadata?: unknown }): Record<string, unknown> | undefined {
-  const own = isRecord(binding.metadata) ? binding.metadata : undefined
-  const fromConfig = isRecord(binding.config?.metadata) ? binding.config.metadata : undefined
-  if (!own && !fromConfig) return undefined
-  return { ...own, ...fromConfig }
+// --- Event function: my-worker::on-hello is called after every greeting ---
+
+const ON_HELLO = 'my-worker::on-hello'
+const HELLO_EVENT: RegisterFunctionFormat = {
+  type: 'object',
+  properties: { name: { type: 'string' }, message: { type: 'string' } },
+  required: ['name', 'message'],
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
+// A private function that returns the event it is called with. Only this worker
+// calls it; anyone may observe it, and an observer's metadata reaches its target
+// without this worker forwarding anything.
+iii.registerFunction(ON_HELLO, (event: { name: string } & HelloOutput) => event, {
+  description: 'Called after every my-worker::hello with { name, message }. No args; filter on input.name.',
+  request_format: HELLO_EVENT,
+  response_format: HELLO_EVENT,
+  private: true,
+})
 
 function emitHello(event: { name: string } & HelloOutput) {
-  for (const binding of subscribers.values()) {
-    const metadata = metadataFor(binding)
-    iii
-      .trigger({
-        function_id: binding.function_id,
-        namespace: binding.namespace,
-        payload: event,
-        ...(metadata === undefined ? {} : { metadata }),
-        action: TriggerAction.Void(),
-      })
-      .catch(() => undefined)
-  }
+  if (!iii.isObserved(ON_HELLO)) return
+  iii
+    .call({ function_id: ON_HELLO, payload: event, action: CallAction.Void() })
+    .catch((error) => console.error('[my-worker] emit failed', error))
 }
 
 // --- Functions ---
@@ -140,8 +120,8 @@ iii.registerFunction(
   async ({ greeting: next }: { greeting?: string }) => {
     const value = normalizeGreeting(next)
     // configuration::* lives in the engine's `default` namespace; the
-    // configuration trigger above reloads `greeting` after the write too.
-    await iii.trigger({
+    // configuration::on-updated observer above reloads `greeting` after the write too.
+    await iii.call({
       function_id: 'configuration::set',
       namespace: 'default',
       payload: { id: 'my-worker', value: { greeting: value } },
@@ -161,7 +141,7 @@ iii.registerFunction(
   },
 )
 
-// --- Admin page in the ADE: the console loads dist/ui through console:script/console:style ---
+// --- Admin page in the ADE: the console loads dist/ui through console::ui::asset observers ---
 
 iii.registerFunction(
   'my-worker::ui-content',
@@ -177,13 +157,13 @@ iii.registerFunction(
     metadata: { internal: true },
   },
 )
-iii.registerTrigger({ type: 'console:script', function_id: 'my-worker::ui-content', config: { path: 'my-worker/page.js' } })
-iii.registerTrigger({ type: 'console:style', function_id: 'my-worker::ui-content', config: { path: 'my-worker/styles.css' } })
+iii.observe({ function_id: 'console::ui::asset', args: { kind: 'script', path: 'my-worker/page.js' } }, 'my-worker::ui-content')
+iii.observe({ function_id: 'console::ui::asset', args: { kind: 'style', path: 'my-worker/styles.css' } }, 'my-worker::ui-content')
 
 // --- Public page over HTTP (the http worker; http::status reports its address) ---
 
 const web = webHandlers(fileURLToPath(new URL('dist/web', root)), (fn, payload) =>
-  iii.trigger({ function_id: `my-worker::${fn}`, payload }),
+  iii.call({ function_id: `my-worker::${fn}`, payload }),
 )
 iii.registerFunction('my-worker::http-page', web.page, {
   description: 'GET /my-worker: the public page.',
@@ -197,14 +177,14 @@ iii.registerFunction('my-worker::http-api', web.api, {
   description: 'POST /my-worker/api/:fn: call an allowlisted my-worker function.',
   metadata: { internal: true },
 })
-iii.registerTrigger({ type: 'http', function_id: 'my-worker::http-page', config: { api_path: '/my-worker', http_method: 'GET' } })
-iii.registerTrigger({ type: 'http', function_id: 'my-worker::http-asset', config: { api_path: '/my-worker/:file', http_method: 'GET' } })
-iii.registerTrigger({ type: 'http', function_id: 'my-worker::http-api', config: { api_path: '/my-worker/api/:fn', http_method: 'POST' } })
+iii.observe({ function_id: 'http::on-request', args: { method: 'GET', path: '/my-worker' } }, 'my-worker::http-page')
+iii.observe({ function_id: 'http::on-request', args: { method: 'GET', path: '/my-worker/:file' } }, 'my-worker::http-asset')
+iii.observe({ function_id: 'http::on-request', args: { method: 'POST', path: '/my-worker/api/:fn' } }, 'my-worker::http-api')
 
 // --- Configuration seed, then the first read ---
 
 iii
-  .trigger({
+  .call({
     function_id: 'configuration::ensure',
     namespace: 'default',
     payload: {

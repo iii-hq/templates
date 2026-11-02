@@ -281,13 +281,13 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
         ...['list', 'get', 'create', 'update', 'remove'].map((name) => ({ label: 'Function', value: fn(name) })),
         ...(meta?.public_actions ?? []).map((name) => ({ label: 'Action', value: fn(name) })),
         { label: 'Function', value: 'my-worker::model' },
-        { label: 'Trigger type', value: 'my-worker:change' },
+        { label: 'Event function', value: 'my-worker::on-change' },
         { label: 'Public page', value: 'GET /my-worker' },
         { label: 'Public API', value: 'POST /my-worker/api/:fn' },
       ]
     : []
   const endpointNotes: Record<string, string> = {
-    'my-worker:change': 'Fires after every write with { event, record, records }; this page re-fetches on each.',
+    'my-worker::on-change': 'Called after every write with { event, record, records }; observe it to react to changes.',
     'my-worker::model': 'The model these pages render from.',
     'GET /my-worker': 'What people who use this worker open, served by the http worker.',
     'POST /my-worker/api/:fn': `list, get, create, update, remove, model${(meta?.public_actions ?? []).map((a) => `, ${a}`).join('')}.`,

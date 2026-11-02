@@ -6,7 +6,7 @@
 # The agent stack below is live: an agent runs in the console and builds Linkly
 # with you. The Anthropic and OpenAI providers ship enabled; put your key in
 # .env before you start Compose. For a different provider, add it after the
-# first start with: iii trigger compose::add worker=provider-<name>
+# first start with: iii call compose::add worker=provider-<name>
 #
 # Each chapter has its own block. As the agent builds a chapter, it creates that
 # chapter's worker and uncomments the block here.
@@ -34,7 +34,7 @@ containers:
           store_method: in_memory
 
   # Ch. 1: your link worker. Build it, install its deps, then add it with
-  # `iii trigger compose::add worker=./link`. http and state above are ready for it.
+  # `iii call compose::add worker=./link`. http and state above are ready for it.
   # link:
   #   worker: path://./link
   #   # Ch. 3: the schema is created at startup, after database is up.
@@ -42,7 +42,7 @@ containers:
 
   # The agent stack. llm-router and the providers read your keys from .env. The
   # Anthropic and OpenAI providers ship enabled; add another after `iii compose
-  # --up` with: iii trigger compose::add worker=provider-<name>
+  # --up` with: iii call compose::add worker=provider-<name>
   cron:
     worker: package://cron
     version: latest
@@ -120,9 +120,9 @@ containers:
   #   provider-claude-code     reads ~/.claude/.credentials.json, written by the
   #                            Claude Code CLI when you sign in there
   #   provider-github-copilot  no file and no env var: it runs a GitHub device
-  #                            flow. Run iii trigger provider::github-copilot::login::start,
+  #                            flow. Run iii call provider::github-copilot::login::start,
   #                            enter the user_code it returns at the verification
-  #                            URL, then call iii trigger provider::github-copilot::login::poll.
+  #                            URL, then call iii call provider::github-copilot::login::poll.
 
   #  provider-claude-code:
   #    worker: package://provider-claude-code
@@ -182,7 +182,7 @@ containers:
   #   worker: path://./analytics
   #   start_after: [database, queue]
 
-  # Ch. 5: the live click feed, a trigger type owned by click-streamer.
+  # Ch. 5: the live click feed, an event function owned by click-streamer.
   # click-streamer:
   #   worker: path://./click-streamer
 

@@ -44,7 +44,7 @@ iii compose
 In a third terminal, bring the project up:
 
 ```bash
-iii trigger compose::up
+iii call compose::up
 ```
 
 ## Use the console

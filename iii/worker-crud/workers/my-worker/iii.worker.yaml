@@ -6,7 +6,7 @@ manifest: package.json
 license: Apache-2.0
 tags: [example, node, console-ui, records]
 # Scaffolded from the worker-crud template (Record app with ADE page (Node)).
-description: Model-driven record app — src/model.ts drives my-worker::<resource>::list|get|create|update|remove, a my-worker:change trigger type and the ADE admin page; a public page over HTTP.
+description: Model-driven record app — src/model.ts drives my-worker::<resource>::list|get|create|update|remove, a my-worker::on-change event function and the ADE admin page; a public page over HTTP.
 
 # Host development is the default: worker-compose.yaml runs scripts/dev.mjs (`pnpm dev`).
 # runtime:

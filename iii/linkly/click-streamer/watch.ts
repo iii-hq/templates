@@ -9,7 +9,7 @@
 //
 // const worker = registerWorker(process.env.III_URL ?? "ws://127.0.0.1:49134", {
 //   workerName: "click-watcher",
-//   // The project's namespace, where click-streamer::click and link::* live.
+//   // The project's namespace, where click-streamer::on-click and link::* live.
 //   namespace: process.env.III_NAMESPACE || "default",
 // });
 //
@@ -20,14 +20,13 @@
 //   return null;
 // });
 //
-// // Bind first, then read the total, so no click falls between the two.
-// worker.registerTrigger({
-//   type: "click-streamer::click",
-//   function_id: "click-watcher::print",
-//   config: {},
-// });
+// // Observe first, then read the total, so no click falls between the two.
+// // deliver: "output" hands click-watcher::print the click the feed returned.
+// await worker
+//   .observe({ function_id: "click-streamer::on-click", deliver: "output" }, "click-watcher::print")
+//   .ready();
 //
-// const summary = await worker.trigger<Record<string, never>, { total: number; last_id: number }>({
+// const summary = await worker.call<Record<string, never>, { total: number; last_id: number }>({
 //   function_id: "link::click_summary",
 //   payload: {},
 // });

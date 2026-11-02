@@ -31,7 +31,7 @@
 //     const url = row.slice(comma + 1).trim();
 //     if (!url) continue;
 //     try {
-//       await worker.trigger({
+//       await worker.call({
 //         function_id: "link::create",
 //         payload: { code, url },
 //       });

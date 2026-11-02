@@ -36,7 +36,7 @@ iii compose --up
 In terminal 2, also from the generated project root, call the worker:
 
 ```sh
-iii trigger hello-node::greet name=World
+iii call hello-node::greet name=World
 ```
 
 Expected response:
@@ -82,10 +82,10 @@ Do this before publishing a bundle so the guest install and start recipes are ex
 3. Restart only this worker:
 
    ```sh
-   iii trigger compose::restart container=hello-node
+   iii call compose::restart container=hello-node
    ```
 
-4. Inspect `iii trigger engine::workers::list` and require `isolation: libkrun` for `hello-node`, then call `hello-node::greet` again. If startup fails, inspect the actual Compose logs; do not rely on a mode banner.
+4. Inspect `iii call engine::workers::list` and require `isolation: libkrun` for `hello-node`, then call `hello-node::greet` again. If startup fails, inspect the actual Compose logs; do not rely on a mode banner.
 
 The guest runs `npm install` and then the manifest start command. You do not normally need to remove host dependencies. If a platform-specific package is unexpectedly resolved from a shared host `node_modules`, stop this worker, move `node_modules` temporarily outside the worker directory, retry, and restore it before returning to host mode.
 

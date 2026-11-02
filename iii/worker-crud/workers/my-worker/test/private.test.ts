@@ -1,5 +1,5 @@
 // Private fields: kept out of every record the public HTTP API returns, while
-// engine callers (iii.trigger, the ADE page) still get them. Runs the real
+// engine callers (iii.call, the ADE page) still get them. Runs the real
 // CRUD functions (registerDomain) on a fake engine and the real web handlers
 // wired the way src/index.ts wires them, against its own test model.
 import assert from 'node:assert/strict'
@@ -53,19 +53,19 @@ describe('a model with a private field', () => {
   })
 })
 
-/** A fake engine: state in a Map, registered functions callable by trigger. */
+/** A fake engine: state in a Map, registered functions callable by call. */
 function fakeEngine() {
   const state = new Map<string, unknown>()
   const functions = new Map<string, (payload: unknown) => Promise<unknown>>()
   const iii = {
     registerFunction(id: string, handler: (payload: unknown) => Promise<unknown>) {
       functions.set(id, handler)
+      return { id, isObserved: () => false, unregister() {} }
     },
-    registerTrigger() {},
-    registerTriggerType() {
-      return { unregister() {} }
+    observe() {
+      return { dispose: async () => undefined }
     },
-    async trigger({ function_id, payload }: { function_id: string; payload?: unknown }) {
+    async call({ function_id, payload }: { function_id: string; payload?: unknown }) {
       const { scope, key, value } = (payload ?? {}) as { scope?: string; key?: string; value?: unknown }
       if (function_id === 'state::get') return state.get(`${scope}/${key}`) ?? null
       if (function_id === 'state::set') {
@@ -84,7 +84,7 @@ describe('the public HTTP API with a private field', () => {
   const engine = fakeEngine()
   registerDomain(engine as unknown as IIIClient, GUESTS)
   // As src/index.ts wires it: the API calls through the engine.
-  const web = webHandlers('/nonexistent', (fn, payload) => engine.trigger({ function_id: `my-worker::${fn}`, payload }), GUESTS)
+  const web = webHandlers('/nonexistent', (fn, payload) => engine.call({ function_id: `my-worker::${fn}`, payload }), GUESTS)
   const api = (fn: string, body: unknown) => web.api({ path_params: { fn }, body })
 
   it('create and list over HTTP omit the email; an engine call returns it', async () => {
@@ -107,8 +107,8 @@ describe('the public HTTP API with a private field', () => {
     assert.equal((viaToggle.body as { record: Record<string, unknown> }).record.attending, true)
     assert.equal('email' in (viaToggle.body as { record: object }).record, false)
 
-    // Engine callers (iii.trigger, the ADE page through host.iii) see every field.
-    const full = (await engine.trigger({ function_id: 'my-worker::guests::list', payload: {} })) as { records: Record<string, unknown>[] }
+    // Engine callers (iii.call, the ADE page through host.iii) see every field.
+    const full = (await engine.call({ function_id: 'my-worker::guests::list', payload: {} })) as { records: Record<string, unknown>[] }
     assert.equal(full.records[0].email, 'ada@example.com')
   })
 

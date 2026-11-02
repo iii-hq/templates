@@ -4,9 +4,8 @@
 //
 // Docs: https://iii.dev/docs/next/tutorials/linkly/streaming
 
-// --- Ch. 5 | click-streamer::click ---
-// import { registerWorker, TriggerAction } from "iii-sdk";
-// import type { TriggerConfig } from "iii-sdk/trigger";
+// --- Ch. 5 | click-streamer::on-click ---
+// import { ObserveRejection, registerWorker } from "iii-sdk";
 // import { Logger } from "@iii-dev/helpers/observability";
 //
 // const worker = registerWorker(process.env.III_URL ?? "ws://localhost:49134", {
@@ -15,61 +14,43 @@
 // const logger = new Logger();
 //
 // type Click = { id: number; code: string; clicked_at: string };
-// type ClickFilter = { code?: string };
 //
-// // Every function bound to click-streamer::click, keyed by trigger id. The cap
-// // keeps a flood of listeners from growing it without limit.
-// const MAX_LISTENERS = 256;
-// const listeners = new Map<string, TriggerConfig<ClickFilter>>();
-//
-// worker.registerTriggerType<ClickFilter>(
+// // The live feed. Each call is one click, and the click it returns is what
+// // every listener receives.
+// const onClick = worker.registerFunction(
+//   "click-streamer::on-click",
+//   async (click: Click): Promise<Click> => ({
+//     id: click.id,
+//     code: click.code,
+//     clicked_at: click.clicked_at,
+//   }),
 //   {
-//     id: "click-streamer::click",
-//     description: "Fires after a click is recorded. Config: { code? }. Payload: { id, code, clicked_at }.",
-//   },
-//   {
-//     async registerTrigger(binding) {
-//       // Throwing rejects the binding, and the worker that asked sees the error.
-//       const code = binding.config?.code;
-//       if (code !== undefined && typeof code !== "string") {
-//         throw new Error("click-streamer::click: code must be a string");
-//       }
-//       if (!listeners.has(binding.id) && listeners.size >= MAX_LISTENERS) {
-//         throw new Error("click-streamer::click: too many listeners");
-//       }
-//       listeners.set(binding.id, binding);
-//     },
-//     async unregisterTrigger(binding) {
-//       // Also called when the listening worker disconnects.
-//       listeners.delete(binding.id);
-//     },
+//     description: "Runs once per recorded click. Observers receive { id, code, clicked_at }.",
+//     // Only click-streamer calls the feed. Any worker may observe it.
+//     private: true,
 //   },
 // );
 //
-// worker.registerFunction("click-streamer::broadcast", async (click: Click) => {
-//   // Copy the fields: the engine stamps bookkeeping fields such as
-//   // _caller_worker_id on every delivery.
-//   const event: Click = { id: click.id, code: click.code, clicked_at: click.clicked_at };
-//   let delivered = 0;
-//   for (const binding of listeners.values()) {
-//     // A binding with a code, even "", gets only that code's clicks; one
-//     // without a code gets every click.
-//     if (binding.config?.code !== undefined && binding.config.code !== event.code) continue;
-//     try {
-//       await worker.trigger({
-//         function_id: binding.function_id,
-//         // Deliver where the listener registered, with its metadata.
-//         namespace: binding.namespace,
-//         metadata: binding.metadata,
-//         payload: event,
-//         action: TriggerAction.Void(),
-//       });
-//       delivered++;
-//     } catch (err) {
-//       logger.warn("click delivery failed", { trigger: binding.id, error: String(err) });
-//     }
+// // iii accepts every observer by default. Cap the listeners: a throw rejects
+// // the new observer, and the worker that asked sees the error.
+// const MAX_LISTENERS = 256;
+// onClick.onObserverAdded(() => {
+//   if (onClick.observers().length >= MAX_LISTENERS) {
+//     throw new ObserveRejection(
+//       "TOO_MANY_LISTENERS",
+//       "click-streamer::on-click: too many listeners",
+//     );
 //   }
-//   return { delivered };
 // });
+//
+// // Runs each time link::record_click runs, with the click it returned.
+// worker.registerFunction("click-streamer::announce", async (click: Click) => {
+//   await worker.call({ function_id: "click-streamer::on-click", payload: click });
+//   return null;
+// });
+// worker.observe(
+//   { function_id: "link::record_click", deliver: "output" },
+//   "click-streamer::announce",
+// );
 //
 // logger.info("click-streamer ready");
