@@ -288,7 +288,7 @@ consoles: feature-detect them.
 
 | Surface | What it is |
 |---|---|
-| `host.pages` | `register({ id, title, configurationId?, render })` registers a page the workspace opens through `host.panels.open` or `ade::workspace::open { screen: "ext:<id>" }`, plus a nav entry; `#/worker/<scope>[/<id>]` renders it alone (Testing, below). `render` receives `PageRenderProps` (below). Set `configurationId` when the worker has a configuration entry; the host places the one settings action in `PageHeader`. Never mount `WorkerConfigurationDialog` yourself. |
+| `host.pages` | `register({ id, title, configurationId?, render })` registers a page the workspace opens through `host.panels.open` or `console::workspace::open { screen: "ext:<id>" }`, plus a nav entry; `#/worker/<scope>[/<id>]` renders it alone (Testing, below). `render` receives `PageRenderProps` (below). Set `configurationId` when the worker has a configuration entry; the host places the one settings action in `PageHeader`. Never mount `WorkerConfigurationDialog` yourself. |
 | `host.functionTriggers` | Chat/trace renderers. Match only the worker's function ids; return `null` to fall through. `message.description` is the harness's short activity label. **`message.output` is not the function's return value**: the harness wraps results in an envelope `{ content: [...], details: <function result> }` and failures carry an `error` key — read it through `unwrapEnvelope` from `@iii-dev/console-ui/format`, and return `null` for error envelopes so the host's error view wins; `message.input` is the payload as sent. `metadata: { display: true }` keeps a successful rich artifact visible while raw details stay collapsed: `tryRenderDisplay` is the compact card the chat keeps in collapsed call groups, `tryRender` the expanded view. If raw data can contain secrets, implement a pure, total, cycle-safe `redactRaw`; the raw tab and copy action otherwise expose the original input/output. |
 | `host.triggerRenderers?` | Layered trigger presentation; see below. |
 | `host.configForms` | The deliberate form for one configuration entry in global Settings. There is no schema-generated fallback: every configurable worker registers one. The host owns dirty tracking, validation, save, reset and the SaveBar; honor `focusField`. `{ layout: 'full' }` only for a workbench that owns its scrolling. Form anatomy and primitives: Configuration forms, below. |
@@ -758,7 +758,7 @@ project's own command before you build.
 | A dragged card vanishes and never comes back | the list removed the card while dragging and `dragend` never fired; keep it mounted (dimmed) and clear state from document-level `dragend`/`drop` |
 | Detail opened inside the board instead of a new pane | use `host.panels.open({ pageId })` with a separately registered page rather than local selection state |
 
-Inspect `ade::ui-manifest` (or `GET <ADE URL>/ui`),
+Inspect `console::ui-manifest` (or `GET <ADE URL>/ui`),
 `/ui/<path>`, registered triggers, and `[iii-ui]` browser logs in that order.
 The manifest is authoritative; its `warnings` must be empty.
 
@@ -792,7 +792,7 @@ Validate all four layers; a green build alone is not enough.
    display, complete-detail lifecycle fidelity, action fallback, fail-closed
    redaction, and disable/disconnect fallback.
 
-**The page alone: `<url>/#/worker/<scope>[/<page-id>][?context=<json>]`, with `url` from `ade::status` (never an assumed 3113).** The
+**The page alone: `<url>/#/worker/<scope>[/<page-id>][?context=<json>]`, with `url` from `console::status` (never an assumed 3113).** The
 console renders that one page over the full viewport — no tab strip, chat or
 palette; the tab title is `iii - <scope>` — and never reads or writes the
 shared workspace layout, so a Playwright or `browser`-worker session can open
@@ -805,7 +805,7 @@ place), the page's keyed commands, hot reload and the worker's overlays.
 `host.panels.open` delivers context in place for the page on screen and opens
 any other page in a new browser tab. `#/traces` renders the traces explorer
 the same way. Chat slots and the palette are out of its scope: validate those
-in the full console, opened through `ade::workspace::open`.
+in the full console, opened through `console::workspace::open`.
 
 ### Interaction matrix
 

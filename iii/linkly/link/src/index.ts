@@ -450,6 +450,7 @@
 // worker.observe(
 //   { function_id: "queue::on-message", args: { topic: "link.updated" } },
 //   "link::on_link_updated",
+//   { id: "link-cache-refresher" },
 // );
 
 // --- Ch. 7 | link::delete ---

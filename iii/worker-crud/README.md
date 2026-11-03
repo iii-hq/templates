@@ -4,7 +4,7 @@ A model-driven Node/TypeScript record app. `workers/my-worker/src/model.ts` desc
 
 ## Prerequisites
 
-- iii 0.24.2 or newer, with the state worker
+- iii 0.26.0 or newer, with the state worker
 - Node.js 22 or newer
 - pnpm 10 or newer (`corepack enable pnpm` installs it)
 

@@ -26,5 +26,5 @@ files:
 next_steps:
   - "Start the engine and the console: iii compose --up"
   - "Open the console: http://127.0.0.1:3113"
-  - "Add more workers: uncomment a block in worker-compose.yaml, or run iii call compose::add"
+  - "Add more workers: uncomment a block in worker-compose.yaml, or run iii call compose::add worker=queue"
   - "Docs: https://iii.dev/docs/quickstart"

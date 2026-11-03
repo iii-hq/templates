@@ -4,7 +4,7 @@ A minimal Node/TypeScript worker project with one function, `hello-node::greet`.
 
 ## Prerequisites
 
-- iii 0.23.0 or newer
+- iii 0.26.0 or newer
 - Node.js 20 or newer with npm
 
 The Console container is commented out in `worker-compose.yaml`; `http://127.0.0.1:3113` is available only after you enable that container.

@@ -4,7 +4,7 @@ A Node/TypeScript worker project with one function, `my-worker::hello`, and two 
 
 ## Prerequisites
 
-- iii 0.24.2 or newer
+- iii 0.26.0 or newer
 - Node.js 22 or newer
 - pnpm 10 or newer (`corepack enable pnpm` installs it)
 

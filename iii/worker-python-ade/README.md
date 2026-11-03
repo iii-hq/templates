@@ -4,7 +4,7 @@ A Python worker project. `workers/my-worker` registers `my-worker::hello`, keeps
 
 ## Prerequisites
 
-- iii 0.24.2 or newer
+- iii 0.26.0 or newer
 - Python 3.11 or newer, including the standard-library `venv` module
 - Node 22 or newer and pnpm 10 or newer, to build the page
 

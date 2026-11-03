@@ -72,6 +72,7 @@
 # worker.observe(
 #     {"function_id": "queue::on-message", "args": {"topic": "link.created"}},
 #     "analytics::on_link_created",
+#     {"id": "analytics-link-created"},
 # )
 #
 # print("Analytics worker started")
