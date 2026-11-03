@@ -140,7 +140,7 @@ def test_ui_content_serves_both_assets_and_rejects_others(bus, dist):
     assets = {
         (o["source"]["args"]["kind"], o["source"]["args"]["path"], o["target"])
         for o in bus.observers
-        if o["source"]["function_id"] == "console::ui::asset"
+        if o["source"]["function_id"] == "ade::ui::asset"
     }
     assert assets == {
         ("script", f"{NAME}/page.js", f"{NAME}::ui-content"),

@@ -16,7 +16,7 @@ engine:
 
 containers:
   # The ADE web UI on http://127.0.0.1:3113 — workers, functions, config,
-  # traces (registers console::*).
+  # traces (registers ade::*).
   ade:
     worker: package://ade
     version: "latest"

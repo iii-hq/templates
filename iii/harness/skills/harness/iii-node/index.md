@@ -498,7 +498,7 @@ evidence only while it remains applicable; broaden checks if impact is unclear.
 - `GET <url>/<worker-name>`, with the `url` from `http::status` (`http://127.0.0.1:3111` by default), renders the public page (`App`), in light and dark color schemes and at phone width, and its calls succeed; `GET /<worker-name>/<any other file>` and `POST /<worker-name>/api/<a function outside the allowlist>` answer 404.
 - The UI content function serves both registered paths and rejects unknown ones.
 - Asset paths, CSS scope, HTTP prefix, worker name, function prefix, and configuration id are internally consistent.
-- The Console manifest (`GET <console url>/ui` with the `url` from `console::status`, or `console::ui-manifest`) contains both assets, reports no CSS warnings, and changes hashes after a UI edit.
+- The Console manifest (`GET <console url>/ui` with the `url` from `ade::status`, or `ade::ui-manifest`) contains both assets, reports no CSS warnings, and changes hashes after a UI edit.
 - A real harness call to the worker (e.g. the agent fetching one record) renders through the worker's chat renderer — the result arrives as a `{ content, details }` envelope and must be unwrapped (see the designer's `console-injectable-ui`); confirm a `[data-iii-ui="<worker-name>"]` wrapper exists inside the chat DOM.
 - When the domain has live data (ADE-only surfaces): live updates reach an open ADE surface without a reload: mutate through a function from outside the UI and watch it change.
 - When the domain has records (ADE-only surfaces): a record opens as its own pane in the same workspace tab through `host.panels.open`. In every case the page adapts when the tab splits (narrow mode).

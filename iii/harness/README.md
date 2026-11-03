@@ -346,7 +346,7 @@ the provider you connect (`provider-<name>`, see
 builds (its worker, plus `http` for public pages).
 
 Container names are not always function namespaces: `ade` registers
-`console::*`, `ide` registers `shell::*` and `coder::*`, `llm-router`
+`ade::*`, `ide` registers `shell::*` and `coder::*`, `llm-router`
 registers `router::*`, and `iii-directory` registers `directory::*`.
 
 ### Model providers

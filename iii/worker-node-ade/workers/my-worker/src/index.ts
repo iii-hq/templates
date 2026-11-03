@@ -141,7 +141,7 @@ iii.registerFunction(
   },
 )
 
-// --- Admin page in the ADE: the console loads dist/ui through console::ui::asset observers ---
+// --- Admin page in the ADE: the console loads dist/ui through ade::ui::asset observers ---
 
 iii.registerFunction(
   'my-worker::ui-content',
@@ -157,8 +157,8 @@ iii.registerFunction(
     metadata: { internal: true },
   },
 )
-iii.observe({ function_id: 'console::ui::asset', args: { kind: 'script', path: 'my-worker/page.js' } }, 'my-worker::ui-content')
-iii.observe({ function_id: 'console::ui::asset', args: { kind: 'style', path: 'my-worker/styles.css' } }, 'my-worker::ui-content')
+iii.observe({ function_id: 'ade::ui::asset', args: { kind: 'script', path: 'my-worker/page.js' } }, 'my-worker::ui-content')
+iii.observe({ function_id: 'ade::ui::asset', args: { kind: 'style', path: 'my-worker/styles.css' } }, 'my-worker::ui-content')
 
 // --- Public page over HTTP (the http worker; http::status reports its address) ---
 

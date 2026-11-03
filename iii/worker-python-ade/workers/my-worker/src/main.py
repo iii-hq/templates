@@ -271,7 +271,7 @@ def register(iii: Any, dist: Path = DIST) -> None:
         },
     )
     for kind, path in (("script", f"{NAME}/page.js"), ("style", f"{NAME}/styles.css")):
-        iii.observe({"function_id": "console::ui::asset", "args": {"kind": kind, "path": path}}, f"{NAME}::ui-content")
+        iii.observe({"function_id": "ade::ui::asset", "args": {"kind": kind, "path": path}}, f"{NAME}::ui-content")
     for function_id, handler, api_path, method in (
         (f"{NAME}::http-page", page, f"/{NAME}", "GET"),
         (f"{NAME}::http-asset", web_file, f"/{NAME}/:file", "GET"),
