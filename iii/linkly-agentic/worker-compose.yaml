@@ -50,8 +50,8 @@ containers:
     worker: package://queue
     version: latest
     working_dir: .
-  console:
-    worker: package://console
+  ade:
+    worker: package://ade
     version: latest
   shell:
     worker: package://shell

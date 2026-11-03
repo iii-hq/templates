@@ -22,7 +22,7 @@ containers:
       pre_run_timeout: 5m
       run: npm run start
 
-  # Web UI on http://127.0.0.1:3113 — workers, functions, config, traces.
-  # console:
-  #   worker: package://console
-  #   version: "1.9.17"
+  # The ADE web UI on http://127.0.0.1:3113 — workers, functions, config, traces.
+  # ade:
+  #   worker: package://ade
+  #   version: "latest"
