@@ -22,7 +22,7 @@ Read the relevant references before implementing:
   - `console-design` — the Console visual system, component grammar, tokens, typography, spacing, and interaction rules.
   - `patterns` — concrete recipes for record-shaped UIs: boards with lanes and drag-and-drop, a record screen that opens as its own pane, activity timelines with threaded comments, creation modals, chat cards for agent calls, settings forms, and live updates.
 
-This file still owns the worker-side half of an injectable UI — the build script, the asset content function and its `console::ui::asset` observers, the dev watchers — because those ship inside the worker package. The pages, renderers, forms and styles themselves are the Frontend Engineer's work; when a task needs them, name the gap in your result rather than improvising markup here.
+This file still owns the worker-side half of an injectable UI — the build script, the asset content function and its `ade::ui::asset` observers, the dev watchers — because those ship inside the worker package. The pages, renderers, forms and styles themselves are the Frontend Engineer's work; when a task needs them, name the gap in your result rather than improvising markup here.
 
 ### Precedence for this Node scaffold
 
@@ -176,7 +176,7 @@ IIIClient.shutdown: () => Promise<void>
 A Compose project usually runs its workers in a project namespace (`III_NAMESPACE` is set by Compose); the engine-hosted workers (`configuration`, `engine::*`) live in `default`. Consequences:
 
 - Calls to engine-hosted functions from the worker need `namespace: 'default'` on `iii.call`; calls to the worker's own functions and other project workers omit it.
-- `iii.observe` of an engine-hosted function (`configuration::on-updated`, `engine::on-functions-changed`) and of another project worker's function (`console::ui::asset`) resolves without a `namespace` on the source; do not set one.
+- `iii.observe` of an engine-hosted function (`configuration::on-updated`, `engine::on-functions-changed`) and of another project worker's function (`ade::ui::asset`) resolves without a `namespace` on the source; do not set one.
 - An event function the worker registers itself lands in the worker's namespace; console tabs and the harness observe it without extra configuration.
 - The harness and the console reach the worker's functions by bare id; never prefix ids with a namespace.
 - A worker process you start yourself for checks (`node src/index.mjs`, `nohup …`) does not inherit `III_NAMESPACE` and lands in `default`, where the harness and the console cannot reach it: its functions answer `function_not_found`. Prefer the copy Compose runs. When you must start one, set `III_NAMESPACE=<project namespace>` (the namespace the project's workers show in `engine::functions::list` results), never run it beside the Compose copy, and stop it before ending the turn.
@@ -461,9 +461,9 @@ The scaffold's `src/index.ts` implements the injectable UI wire contract directl
 1. Build first, so `dist/ui/page.js` and `dist/ui/styles.css` exist. The manifest's `start` script does (`pnpm build && tsx src/index.ts`), so even a plain `compose::add` of the folder serves the page.
 2. Read each file when `ui-content` is called, not at startup: a start without a build must still register everything, and a missing file throws an error that names `pnpm build` and the restart.
 3. Register one content function, `<worker-name>::ui-content`, accepting `{ path }` and returning `{ content, content_type }`.
-4. Observe `console::ui::asset` once per asset, with the content function as the target:
-   - `iii.observe({ function_id: 'console::ui::asset', args: { kind: 'script', path: '<worker-name>/page.js' } }, '<worker-name>::ui-content')`;
-   - `iii.observe({ function_id: 'console::ui::asset', args: { kind: 'style', path: '<worker-name>/styles.css' } }, '<worker-name>::ui-content')`.
+4. Observe `ade::ui::asset` once per asset, with the content function as the target:
+   - `iii.observe({ function_id: 'ade::ui::asset', args: { kind: 'script', path: '<worker-name>/page.js' } }, '<worker-name>::ui-content')`;
+   - `iii.observe({ function_id: 'ade::ui::asset', args: { kind: 'style', path: '<worker-name>/styles.css' } }, '<worker-name>::ui-content')`.
 5. Keep the first path segment equal to `<worker-name>`; it defines the CSS scope.
 6. Reject unknown asset paths.
 
@@ -522,7 +522,7 @@ Never write the worker's entry into `worker-compose.yaml` by hand. A running dae
    Declare them with the same operation id: `compose::add { "operation_id": "<session-id>:add-issue-board", "workers": <workers> }`. For `issue-board` in a stack without `http`, `workers` holds the container object followed by `{ "worker": "package://http", "version": "latest", "config_name": "http" }`.
 
    - `compose.worker` is already the absolute path of the scaffolded folder, which `compose::add` accepts; pass it unchanged. The container key is the folder's last segment, `<worker-name>`; `compose::status` shows it.
-   - Add no `start_after` naming the console container (`ade` in the harness template). The worker runs without the console: its `console::ui::asset` observers stay `pending` until the console registers that function, and become active again each time the console comes back. `start_after` would make the worker a dependent, and Compose stops a container's dependents when it exits, so a console exit would take the user's app offline.
+   - Add no `start_after` naming the console container (`ade` in the harness template). The worker runs without the console: its `ade::ui::asset` observers stay `pending` until the console registers that function, and become active again each time the console comes back. `start_after` would make the worker a dependent, and Compose stops a container's dependents when it exits, so a console exit would take the user's app offline.
    - Keep `compose.scripts` and `restart` as returned: `pre_run` installs the dependencies, `run` starts the dev loop (`node scripts/dev.mjs`), which gives the worker hot reload under compose, and `restart: on-failure` retries a crash.
    - Declare a missing `http` with that object, the same form the templates use, so it reads its `http` configuration. A `requires` container the stack already declares is not added again.
    - The response `{ operation_id, requested, status }` is an acceptance, not readiness.
@@ -576,7 +576,7 @@ evidence only while it remains applicable; broaden checks if impact is unclear.
 - `GET <url>/<worker-name>`, with the `url` from `http::status` (`http://127.0.0.1:3111` by default), renders the public page (`App`), in light and dark color schemes and at phone width, and its calls succeed; `GET /<worker-name>/<any other file>` and `POST /<worker-name>/api/<a function outside the allowlist>` answer 404.
 - The UI content function serves both registered paths and rejects unknown ones.
 - Asset paths, CSS scope, HTTP prefix, worker name, function prefix, and configuration id are internally consistent.
-- The Console manifest (`GET <console url>/ui` with the `url` from `console::status`, or `console::ui-manifest`) contains both assets, reports no CSS warnings, and changes hashes after a UI edit.
+- The Console manifest (`GET <console url>/ui` with the `url` from `ade::status`, or `ade::ui-manifest`) contains both assets, reports no CSS warnings, and changes hashes after a UI edit.
 - A real harness call to the worker (e.g. the agent fetching one record) renders through the worker's chat renderer — the result arrives as a `{ content, details }` envelope and must be unwrapped (see the designer's `console-injectable-ui`); confirm a `[data-iii-ui="<worker-name>"]` wrapper exists inside the chat DOM.
 - When the domain has live data (ADE-only surfaces): live updates reach an open ADE surface without a reload: mutate through a function from outside the UI and watch it change.
 - When the domain has records (ADE-only surfaces): a record opens as its own pane in the same workspace tab through `host.panels.open`. In every case the page adapts when the tab splits (narrow mode).

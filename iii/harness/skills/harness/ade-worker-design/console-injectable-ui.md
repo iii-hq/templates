@@ -41,7 +41,7 @@ Composition recipes for record-shaped UIs: `patterns`.
 
 ## How it works
 
-A worker observes `console::ui::asset` once per asset, with args
+A worker observes `ade::ui::asset` once per asset, with args
 `{ kind: 'script' | 'style' | 'module', path }` naming the asset and its content
 function as the target, which serves `{content}` for `{path}`. The console
 calls the content function through the observer, hashes and serves those
@@ -63,7 +63,7 @@ teardown.
     src/          # page, renderers, config form, widgets
   web/            # scaffold: the public page users open (App.tsx, app.css), plain React, not part of the ADE
   src/
-    ui.ts         # Node delivery: one content function + one `console::ui::asset` observer per asset
+    ui.ts         # Node delivery: one content function + one `ade::ui::asset` observer per asset
   dist/ui/        # page.js + styles.css — the bytes the worker serves
 ```
 
@@ -290,7 +290,7 @@ consoles: feature-detect them.
 
 | Surface | What it is |
 |---|---|
-| `host.pages` | `register({ id, title, configurationId?, render })` registers a page the workspace opens through `host.panels.open` or `console::workspace::open { screen: "ext:<id>" }`, plus a nav entry; `#/worker/<scope>[/<id>]` renders it alone (Testing, below). `render` receives `PageRenderProps` (below). Set `configurationId` when the worker has a configuration entry; the host places the one settings action in `PageHeader`. Never mount `WorkerConfigurationDialog` yourself. |
+| `host.pages` | `register({ id, title, configurationId?, render })` registers a page the workspace opens through `host.panels.open` or `ade::workspace::open { screen: "ext:<id>" }`, plus a nav entry; `#/worker/<scope>[/<id>]` renders it alone (Testing, below). `render` receives `PageRenderProps` (below). Set `configurationId` when the worker has a configuration entry; the host places the one settings action in `PageHeader`. Never mount `WorkerConfigurationDialog` yourself. |
 | `host.functionCalls` | Chat/trace renderers. Match only the worker's function ids; return `null` to fall through. `message.description` is the harness's short activity label. **`message.output` is not the function's return value**: the harness wraps results in an envelope `{ content: [...], details: <function result> }` and failures carry an `error` key — read it through `unwrapEnvelope` from `@iii-dev/console-ui/format`, and return `null` for error envelopes so the host's error view wins; `message.input` is the payload as sent. `metadata: { display: true }` keeps a successful rich artifact visible while raw details stay collapsed: `tryRenderDisplay` is the compact card the chat keeps in collapsed call groups, `tryRender` the expanded view. If raw data can contain secrets, implement a pure, total, cycle-safe `redactRaw`; the raw tab and copy action otherwise expose the original input/output. |
 | `host.observerRenderers?` | Layered observer presentation: match the observed `functionId`; see below. |
 | `host.configForms` | The deliberate form for one configuration entry in global Settings. There is no schema-generated fallback: every configurable worker registers one. The host owns dirty tracking, validation, save, reset and the SaveBar; honor `focusField`. `{ layout: 'full' }` only for a workbench that owns its scrolling. Form anatomy and primitives: Configuration forms, below. |
@@ -489,7 +489,7 @@ await buildWorkerUi({ scope: 'mywork', root: import.meta.dirname, outdir: '../di
 | Option | Default | Purpose |
 |---|---|---|
 | `scope` | required | The `data-iii-ui` value — first asset path segment, normally the worker name |
-| `entryPoints` | `['page.tsx', 'styles.css']` | Extra scripts each need their own `console::ui::asset` observer (`kind: 'script'`) and a default `setup` |
+| `entryPoints` | `['page.tsx', 'styles.css']` | Extra scripts each need their own `ade::ui::asset` observer (`kind: 'script'`) and a default `setup` |
 | `outdir`, `root` | `'dist'`, `process.cwd()` | Paths resolve against `root`; pass `import.meta.dirname` when invoked from elsewhere |
 | `keyframePrefixes` | `[scope, "<scope>-ui"]` | Allowed `@keyframes` name prefixes |
 | `allowUnscopedSelectors` | `[]` | Selector prefixes that are global on purpose (a portal root, vendor CSS such as `.xterm`) |
@@ -550,10 +550,10 @@ The baseline, floor and radius the rules check are the values in
 ## 4. Registration (the worker side)
 
 One content function serving all of the worker's assets (dispatch on
-`path`), one `console::ui::asset` observer per asset. A Node worker
+`path`), one `ade::ui::asset` observer per asset. A Node worker
 implements the wire contract directly: one function mapping `{path}` to
 `{content, content_type?}`, then
-`iii.observe({ function_id: 'console::ui::asset', args: { kind, path } }, '<worker>::ui-content')`
+`iii.observe({ function_id: 'ade::ui::asset', args: { kind, path } }, '<worker>::ui-content')`
 per asset. The scaffold's `src/ui.ts` is written in
 `harness/iii-node/index` › Worker-side asset delivery; keep the first path
 segment equal to the worker name and reject unknown paths.
@@ -567,7 +567,7 @@ a worker on an `iii-sdk` before 0.26 serves no page and gets no error.
 
 | | |
 |---|---|
-| Function | `console::ui::asset`; never observe the tab-only `console::ui::on-assets-changed` |
+| Function | `ade::ui::asset`; never observe the tab-only `ade::ui::on-assets-changed` |
 | Args | `{ "kind": "script" \| "style" \| "module", "path": string }`, nothing else: `script` is ESM JS imported at mount, `style` is CSS, `module` is served and imported on demand with `host.importModule` |
 | Target | the worker's content function, called through the observer once it is active |
 | Path rules | lowercase `[a-z0-9._-]` segments, no leading slash, no `.`/`..` segments, ≤ 512 chars; extension must match the kind (`.js` / `.css`); **convention: first segment = worker name** — it becomes the `data-iii-ui` scope and the only human-readable attribution |
@@ -752,7 +752,7 @@ project's own command before you build.
 | Build exits 1 on `design-rule error(s)` | a lint error (or a warning under `strict`) — fix it or `lint-allow` it with a reason |
 | Observer rejected with a path error (`INVALID_ARGS`) | path violates the rules table (wrong extension, uppercase, `..`, …) |
 | Observer rejected with `UI_ASSET_FETCH_FAILED` | the content function threw, returned no string `content`, or timed out |
-| Page missing, no error anywhere | the worker still registers `console:script`/`console:style` triggers (an `iii-sdk` before 0.26); a 0.26 engine drops them, so port it to `console::ui::asset` observers |
+| Page missing, no error anywhere | the worker still registers `console:script`/`console:style` triggers (an `iii-sdk` before 0.26); a 0.26 engine drops them, so port it to `ade::ui::asset` observers |
 | "Invalid hook call" in the tab | a second React in the bundle — a custom build dropped an external |
 | `import()` fails on a bare specifier | a dependency imports a react-family subpath outside the six shared specifiers |
 | Styles apply on the page but not in a custom portal | a custom `document.body` portal must carry `data-iii-ui="<worker>"` on its root |
@@ -764,7 +764,7 @@ project's own command before you build.
 | A dragged card vanishes and never comes back | the list removed the card while dragging and `dragend` never fired; keep it mounted (dimmed) and clear state from document-level `dragend`/`drop` |
 | Detail opened inside the board instead of a new pane | use `host.panels.open({ pageId })` with a separately registered page rather than local selection state |
 
-Inspect `console::ui-manifest` (or `GET <ADE URL>/ui`),
+Inspect `ade::ui-manifest` (or `GET <ADE URL>/ui`),
 `/ui/<path>`, the worker's observers (`engine::workers::info { "name": "<worker>" }`),
 and `[iii-ui]` browser logs in that order.
 The manifest is authoritative; its `warnings` must be empty.
@@ -799,7 +799,7 @@ Validate all four layers; a green build alone is not enough.
    display, complete-detail lifecycle fidelity, action fallback, fail-closed
    redaction, and disable/disconnect fallback.
 
-**The page alone: `<url>/#/worker/<scope>[/<page-id>][?context=<json>]`, with `url` from `console::status` (never an assumed 3113).** The
+**The page alone: `<url>/#/worker/<scope>[/<page-id>][?context=<json>]`, with `url` from `ade::status` (never an assumed 3113).** The
 console renders that one page over the full viewport — no tab strip, chat or
 palette; the tab title is `iii - <scope>` — and never reads or writes the
 shared workspace layout, so a Playwright or `browser`-worker session can open
@@ -812,7 +812,7 @@ place), the page's keyed commands, hot reload and the worker's overlays.
 `host.panels.open` delivers context in place for the page on screen and opens
 any other page in a new browser tab. `#/traces` renders the traces explorer
 the same way. Chat slots and the palette are out of its scope: validate those
-in the full console, opened through `console::workspace::open`.
+in the full console, opened through `ade::workspace::open`.
 
 ### Interaction matrix
 

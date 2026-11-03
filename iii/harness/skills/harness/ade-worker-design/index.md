@@ -11,7 +11,7 @@ description: >-
 # ade-worker-design
 
 The ADE console is the host every worker can inject UI into at runtime: a
-worker observes `console::ui::asset` once for its script and once for its
+worker observes `ade::ui::asset` once for its script and once for its
 style, every open tab imports the module, calls its `setup(host)`, and
 hot-reloads it when the asset changes. No console rebuild, no iframe. This
 skill is the designer's half of building such a worker: what the host
@@ -38,7 +38,7 @@ three documents:
   driver with its six externals and design lint, the bundling `/hooks` and
   `/format` subpaths, `lucide-react` icons, scoping, hot reload, debugging,
   behaviour across widths, the configuration-form grammar, testing (a page
-  alone at `<url>/#/worker/<scope>[/<page-id>]`, `url` from `console::status`) and the delivery checks.
+  alone at `<url>/#/worker/<scope>[/<page-id>]`, `url` from `ade::status`) and the delivery checks.
 - `console-design` — the iii Schematic design system: surface ramp, tokens,
   typography, radius, motion, the one Numbers table, every shared component
   with its do/don't, hooks and formatters, the UX patterns table and the
@@ -63,12 +63,12 @@ Fetch any of them with `directory::skills::get { "id": "harness/ade-worker-desig
   `[data-iii-ui="<worker>"]`; an unscoped rule restyles the whole console.
   The build driver refuses one and the manifest reports leftovers as
   `warnings`.
-- Assets are `console::ui::asset` observers made over the worker's own
+- Assets are `ade::ui::asset` observers made over the worker's own
   connection, so they leave with the worker; never observe the tab-only
-  `console::ui::on-assets-changed`.
+  `ade::ui::on-assets-changed`.
 - New surfaces must be seen in the running console at phone, narrow-split
   and wide widths, in both themes, with the manifest free of warnings: a
-  page alone at `<url>/#/worker/<scope>[/<page-id>]`, `url` from `console::status` for screenshots and
+  page alone at `<url>/#/worker/<scope>[/<page-id>]`, `url` from `ade::status` for screenshots and
   drive-through, the full console for chat slots and the palette. On
   corrections, recheck affected states and dependencies; reuse earlier
   observations only while they still apply. A build alone is not evidence
