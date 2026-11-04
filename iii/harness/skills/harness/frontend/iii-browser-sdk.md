@@ -90,7 +90,8 @@ Three routing modes — choose deliberately:
 
 ## Receiving live pushes (there is no polling story)
 
-Every function is observable: when a backend function runs, its observers run. A tab registers
+Functions are observable by default (a function can opt out with `observable: false`): when a
+backend function runs, its observers run. A tab registers
 a handler and observes the backend's event function with it:
 
 ```ts
@@ -222,8 +223,8 @@ function useLiveOrders() {
     })
     return () => {
       off()
-      void observer.dispose().catch(() => undefined)
-      fn.unregister()
+      // unregister only once disposal finishes, so no delivery targets a gone handler
+      void observer.dispose().finally(() => fn.unregister()).catch(() => undefined)
     }
   }, [iii, queryClient])
   return orders

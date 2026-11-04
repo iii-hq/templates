@@ -9,7 +9,7 @@ description: >-
 
 The `configuration` worker is a server-side registry of named entries. Every entry has an id (e.g. `iii-stream`, `billing-service`), a human-readable name and description, a JSON Schema describing the value shape, and a JSON value validated against that schema. Workers call `configuration::register` once at startup to declare their schema and `configuration::set` to publish values; consumers call `configuration::get` / `configuration::list` to read and observe `configuration::on-updated` to react to changes without polling.
 
-The default `fs` adapter persists one YAML file per id under `./data/configuration` and watches the directory for external edits, so manual edits to those files surface as `configuration:updated` events the same way SDK calls do. The `bridge` adapter delegates to a remote engine and re-broadcasts its events to local observers — the function surface is identical across adapters. The worker is enabled by default in `engine/config.yaml`.
+The default `fs` adapter persists one YAML file per id under `./config` in the engine's working directory (the project root) and watches the directory for external edits, so manual edits to those files surface as `configuration:updated` events the same way SDK calls do. The `bridge` adapter delegates to a remote engine and re-broadcasts its events to local observers — the function surface is identical across adapters. The worker is built into the engine and enabled by default.
 
 ## When to Use
 
@@ -66,6 +66,6 @@ iii.observe(
 
 `configuration::on-updated` takes no args; filters select the calls by `input.id` and `input.event_type`, each with an explicit operator.
 
-Mutations that call it: `configuration::register` (`:registered` on first call, `:updated` on re-registration), `configuration::set` (`:updated`), and external `fs` create/edit/delete events. Reads do **not** call it.
+Mutations that call it: `configuration::register` (`:registered` on first call, `:updated` on re-registration), `configuration::ensure` (`:registered` when it creates the entry, `:updated` when it refreshes an existing one — its seed is used only when nothing is stored), `configuration::set` (`:updated`), and external `fs` create/edit/delete events. Reads do **not** call it.
 
 For the event shape, call `engine::functions::info { function_id: "configuration::on-updated" }`: its `response_schema` (the `response_format` the configuration worker registered) is the event.

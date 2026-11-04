@@ -44,7 +44,7 @@ Use the first two turns for this, and read nothing else first:
 - **The public API.** The public page calls `client.call('<fn>', payload)`, which is `POST /<name>/api/<fn>`. `src/web.ts` answers only for the short names in `API_FUNCTIONS`. List only what the public may call. The `api` handler turns any throw into a 500, so answer 400 for your own validation errors.
 - **Extra HTTP routes** (a short link, a webhook): add a handler to `webHandlers` in `src/web.ts`, register it as an internal `<name>::http-<route>` function, and observe `http::on-request` with `args: { "method": "GET", "path": "/<name>/go/:code" }` and that function as the target. A redirect returns `{ status_code: 302, headers: { location: <url> }, body: '' }`. The first segment after `/<name>` must be static: `/<name>/:file` already serves the assets and `/<name>/api/:fn` the API.
 - **`web/App.tsx` and `web/app.css`** are the public page: plain React and `lucide-react`, through `client.call`, with its own design (see `iii-node` › Public page and ADE admin page).
-- **`ui/WorkerPage.tsx`** is the admin page in the ADE, built to the spec in the next section from `@iii-dev/console-ui` components. It calls functions with `host.iii.trigger('<name>::<fn>', payload)`.
+- **`ui/WorkerPage.tsx`** is the admin page in the ADE, built to the spec in the next section from `@iii-dev/console-ui` components. It calls functions with `host.iii.call('<name>::<fn>', payload)`.
 - **Leave as they are:** `ui/page.tsx`, `src/ui-assets.ts`, `test/ui-assets.test.ts`, `scripts/` and the build configuration.
 
 ## The admin page
