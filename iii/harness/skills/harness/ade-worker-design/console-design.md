@@ -99,7 +99,7 @@ border, text or a selection/status state; `neutral` means the glyph keeps `ink-g
 | `--font-sans` | **Inter**, ui-sans-serif, system-ui | Human copy and controls (400/500/600 loaded) |
 | `--font-mono` | Geist Mono, Chivo Mono, ui-monospace | Machine values in chrome: IDs, times, eyebrows, keys |
 | `--font-code` | Monaco, SF Mono, Menlo, Consolas | Editor, terminal, `pre`, `code` — not the chrome mono |
-| `--font-geist-mono` | Geist Mono, ui-monospace | Alias used by function-trigger chrome |
+| `--font-geist-mono` | Geist Mono, ui-monospace | Alias used by function-call chrome |
 
 Ligatures are off on every mono/code surface (`liga clig calt dlig 0`). Do not add a family.
 
@@ -314,11 +314,11 @@ ones in `index.d.ts`. State is expressed with `data-*` attributes (`data-selecte
 | `useContainerNarrow({ below })` | `{ ref, narrow }` from a ResizeObserver on the pane (default 720) |
 | `usePaneState(key, initial)` | `useState` mirrored to localStorage; key it by `paneId` |
 | `useCopyFlash(text, ms)` | `{ state: idle\|copied\|failed, copy }` |
-| `useWorkerLive({ iii, triggers, fetch, handlerId })` | Fetch once, refetch on trigger events (`'type'` or `{ type, config }` for a stream), poll only while not live |
+| `useWorkerLive({ iii, sources, fetch, handlerId })` | Fetch once, refetch on every call of an observed function (`'fn::id'` or `{ function_id, args?, filters? }`), re-read on tab focus while not live |
 | `useDebounce(value, ms)` | The value once it stops changing for `ms` (remote queries) |
 | `useSplitDrag({ horizontal, begin, move, step })` | Pointer + arrow-key handlers for a `role="separator"` |
 | `formatRelative`, `formatDuration`, `formatBytes` | `42s`, `2m 05s`, `1.0 MiB` — binary units with a space |
-| `errorCode`, `errorMessage`, `copyText` | Readable errors from a rejected `iii.trigger`; clipboard with fallback |
+| `errorCode`, `errorMessage`, `copyText` | Readable errors from a rejected `iii.call`; clipboard with fallback |
 | `unwrapEnvelope(value)` | `{ content, details }` harness envelope → `details`; flat input passes through |
 
 The six hooks are `@iii-dev/console-ui/hooks`; the formatters are `@iii-dev/console-ui/format`
@@ -339,7 +339,7 @@ The six hooks are `@iii-dev/console-ui/hooks`; the formatters are `@iii-dev/cons
 | Eyebrows | `Eyebrow` for section labels and key/value keys; no other uppercase |
 | Icons | `lucide-react` through the import map, 16px; never inline `<svg>` or text glyphs (`✓`, `×`) |
 | Narrow panes | `useContainerNarrow` / `PageSidebar narrowBelow`; `data-narrow` on trees; never viewport queries |
-| Live data | `useWorkerLive` with the worker's trigger types; show `live` quietly, never a banner |
+| Live data | `useWorkerLive` with the worker's event functions; show `live` quietly, never a banner |
 | Formatting | The `format` subpath; bytes binary with a space (`3.2 MiB`), durations `1.4s` / `2m 05s` |
 | Pane state | `usePaneState` keyed by `PageRenderProps.paneId`; two panes of one page stay separate |
 | Keyboard | `PageRenderProps.commands.register([...])` in an effect; no document listeners; no bare keys |
