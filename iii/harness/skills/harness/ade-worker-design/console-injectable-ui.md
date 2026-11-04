@@ -47,8 +47,8 @@ function as the target, which serves `{content}` for `{path}`. The console
 calls the content function through the observer, hashes and serves those
 bytes, then pushes changes to open tabs. Tabs `import()` scripts and call
 their default `setup(host)`; styles load as scoped `<link>` assets. A new
-observer of a path hot-reloads it. Observing is deployment; disconnect is
-teardown.
+observer of a path with a changed content hash hot-reloads it; unchanged
+content is a no-op. Observing is deployment; disconnect is teardown.
 
 ## Project layout
 

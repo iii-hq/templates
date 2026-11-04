@@ -243,10 +243,11 @@ A worker-to-worker call still routes through iii:
 async function configurationCall<T>(
   functionId: string,
   payload: Record<string, unknown>,
+  namespace?: string, // 'default' for configuration::* under a Compose namespace; omit for project workers
 ): Promise<T> {
   return iii.call({
     function_id: functionId,
-    namespace: 'default',
+    ...(namespace ? { namespace } : {}),
     payload,
     timeoutMs: 10_000,
   }) as Promise<T>

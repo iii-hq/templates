@@ -57,7 +57,7 @@ The admin page is the operator's console for the app, not a list. `PageShell` �
 4. **Record detail:** clicking a row opens the record (`ade-worker-design` › patterns, Record screen): a properties rail of label/value rows, edits per field that save on change through `::update`, the created and updated times, and Delete through `ConfirmDialog`.
 5. **Creation:** a `Dialog` (patterns › Creation modal) with the record's fields, validated by the same rules as the backend. The new record opens on success.
 6. **Endpoints:** keep the template's Endpoints section, updated with the app's functions and its HTTP routes (method and path).
-7. **States and live updates:** `Skeleton` rows while loading, an `EmptyState` with the **New <record>** action when there are none, a `StatusPanel` with Retry on errors, and `useWorkerLive` (`@iii-dev/console-ui/hooks`) on `<name>:change` so the summary and the table update without a reload.
+7. **States and live updates:** `Skeleton` rows while loading, an `EmptyState` with the **New <record>** action when there are none, a `StatusPanel` with Retry on errors, and `useWorkerLive({ sources: ['<name>::on-change'] })` (`@iii-dev/console-ui/hooks`) so the summary and the table update without a reload.
 
 ## Workflow
 

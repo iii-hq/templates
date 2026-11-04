@@ -119,7 +119,7 @@ That is the whole real-time design: the backend calls its event function after e
 the open tab updates. Do not add polling, SSE, or a second socket alongside it.
 
 - A function id has one host per namespace: a second tab that registers the same id is refused
-  (`FUNCTION_NAMESPACE_CONFLICT`). A handler that one tab observes with carries a per-tab suffix.
+  (`FUNCTION_NAMESPACE_CONFLICT`). A handler observed by one tab carries a per-tab suffix.
 - `observe` returns an `ObserverHandle` at once (`id`, `state`, `ready()`, `onStateChange`,
   `dispose()`); the observer is `pending` until the observed function's worker is connected,
   and the SDK observes it again after a reconnect.
