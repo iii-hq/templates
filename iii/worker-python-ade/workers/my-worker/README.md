@@ -7,9 +7,9 @@ A Python worker with two pages: the public page users open over HTTP, with its o
 | `my-worker::hello`: `{ name? }` → `{ message }` | `src/main.py` |
 | `my-worker::info`: internal, `{}` → `{ web_url, web_path, greeting }` (`web_url` is `null` unless `III_HTTP_URL` is set), feeds the ADE page's **Open public page** button | `src/main.py` |
 | `my-worker::set-greeting`: internal, `{ greeting }` → `{ greeting }` (trimmed, 1 to 40 characters), saves it in the `my-worker` configuration; the ADE page's Save calls it, it is not on the HTTP allowlist | `src/main.py` |
-| The `my-worker` configuration (`greeting`), reloaded on `configuration:updated` | `src/main.py` |
-| The `my-worker:hello` trigger type, fired after every `my-worker::hello` | `src/main.py` |
-| ADE assets: `my-worker::ui-content` with `console:script` / `console:style` | `src/main.py`, `ui/page.tsx` |
+| The `my-worker` configuration (`greeting`), reloaded by observing `configuration::on-updated` | `src/main.py` |
+| The private `my-worker::on-hello` event function, called after every `my-worker::hello` (observe it to react) | `src/main.py` |
+| ADE assets: `my-worker::ui-content`, the target of two `ade::ui::asset` observers (`kind` `script` for `my-worker/page.js`, `kind` `style` for `my-worker/styles.css`) | `src/main.py`, `ui/page.tsx` |
 | `GET /my-worker`, `GET /my-worker/:file`, `POST /my-worker/api/:fn` | `src/main.py`, `web/` |
 | The ADE page, the worker's admin (Settings, Test, Endpoints), from the console's components | `ui/WorkerPage.tsx` |
 | The public page, plain React with its own design | `web/App.tsx`, `web/app.css` |

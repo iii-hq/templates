@@ -38,7 +38,7 @@
 #     for attempt in range(1, 31):
 #         try:
 #             for sql in SCHEMA:
-#                 worker.trigger(
+#                 worker.call(
 #                     {"function_id": "database::execute", "payload": {"db": DB, "sql": sql}}
 #                 )
 #             return
@@ -52,7 +52,7 @@
 #     # The day the link was created (UTC), not the day this copy arrived.
 #     created_at = datetime.fromisoformat(data["created_at"].replace("Z", "+00:00"))
 #     day = created_at.astimezone(timezone.utc).strftime("%Y-%m-%d")
-#     worker.trigger(
+#     worker.call(
 #         {
 #             "function_id": "database::execute",
 #             "payload": {
@@ -69,12 +69,10 @@
 # ensure_schema()
 #
 # worker.register_function("analytics::on_link_created", on_link_created)
-# worker.register_trigger(
-#     {
-#         "type": "durable:subscriber",
-#         "function_id": "analytics::on_link_created",
-#         "config": {"topic": "link.created"},
-#     }
+# worker.observe(
+#     {"function_id": "queue::on-message", "args": {"topic": "link.created"}},
+#     "analytics::on_link_created",
+#     {"id": "analytics-link-created"},
 # )
 #
 # print("Analytics worker started")

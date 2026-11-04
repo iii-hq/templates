@@ -50,7 +50,7 @@ containers:
     worker: package://cron
     version: "latest"
 
-  ade: # the ADE web UI (registers console::*)
+  ade: # the ADE web UI (registers ade::*)
     worker: package://ade
     version: "latest"
 

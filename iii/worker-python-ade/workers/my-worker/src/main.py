@@ -1,17 +1,15 @@
-"""my-worker: my-worker::hello, its settings, its own trigger type, an admin page
+"""my-worker: my-worker::hello, its settings, its own event function, an admin page
 in the ADE, and the public page users open at /my-worker on the http worker (http::status reports its address)."""
 
 from __future__ import annotations
 
-import asyncio
 import os
 import signal
 import threading
 from pathlib import Path
 from typing import Any
 
-from iii import InitOptions, TriggerAction, register_worker
-from iii.triggers import TriggerConfig, TriggerHandler
+from iii import CallAction, InitOptions, register_worker
 
 NAME = "my-worker"
 WEB_PATH = f"/{NAME}"
@@ -93,45 +91,12 @@ def web_url(base: str | None = None) -> str | None:
     return f"{base.rstrip('/')}{WEB_PATH}" if base else None
 
 
-class HelloTriggers(TriggerHandler):
-    """Provider of the `my-worker:hello` trigger type: fires after every my-worker::hello."""
-
-    def __init__(self) -> None:
-        self.bindings: dict[str, TriggerConfig] = {}
-
-    async def register_trigger(self, config: TriggerConfig) -> None:
-        self.bindings[config.id] = config
-
-    async def unregister_trigger(self, config: TriggerConfig) -> None:
-        self.bindings.pop(config.id, None)
-
-    async def emit(self, iii: Any, event: dict[str, Any]) -> None:
-        calls = []
-        for binding in list(self.bindings.values()):
-            config = binding.config if isinstance(binding.config, dict) else {}
-            calls.append(
-                iii.trigger_async(
-                    {
-                        "function_id": binding.function_id,
-                        "namespace": binding.namespace,
-                        "payload": event,
-                        # The subscriber's metadata (its config's first) reaches the handler as its
-                        # second argument; it is never merged into the payload.
-                        "metadata": config.get("metadata", binding.metadata),
-                        "action": TriggerAction.Void(),
-                    }
-                )
-            )
-        # Fire-and-forget: a subscriber that went away must not fail the call that emitted.
-        await asyncio.gather(*calls, return_exceptions=True)
-
-
 def load_settings(iii: Any) -> dict[str, Any]:
     """Seed the `my-worker` configuration once, then return its effective value."""
 
     def call(function_id: str, payload: dict[str, Any]) -> Any:
         # configuration::* runs in the engine's `default` namespace, whatever this worker's is.
-        return iii.trigger({"function_id": function_id, "namespace": "default", "payload": payload})
+        return iii.call({"function_id": function_id, "namespace": "default", "payload": payload})
 
     # ensure seeds initial_value only while no value is stored: a restart keeps every edit.
     call(
@@ -148,14 +113,23 @@ def load_settings(iii: Any) -> dict[str, Any]:
 
 
 def register(iii: Any, dist: Path = DIST) -> None:
-    """Register every function, trigger type and trigger of this worker."""
+    """Register every function and observer of this worker."""
     settings = load_settings(iii)
-    hello_triggers = HelloTriggers()
+    on_hello: Any = None  # the FunctionRef of NAME::on-hello, set below
+
+    async def emit_hello(event: dict[str, Any]) -> None:
+        # Only when someone observes it; fire-and-forget, so a slow observer never delays hello.
+        if on_hello is None or not on_hello.is_observed():
+            return
+        try:
+            await iii.call_async({"function_id": f"{NAME}::on-hello", "payload": event, "action": CallAction.Void()})
+        except Exception as error:  # an emit failure must not fail the greeting
+            print(f"[{NAME}] emit failed: {error}", flush=True)
 
     async def hello(payload: dict[str, Any]) -> dict[str, str]:
         name = str(payload.get("name") or "").strip() or "World"
         result = build_greeting(settings["greeting"], name)
-        await hello_triggers.emit(iii, {"name": name, **result})
+        await emit_hello({"name": name, **result})
         return result
 
     def info(_payload: dict[str, Any]) -> dict[str, str | None]:
@@ -167,9 +141,9 @@ def register(iii: Any, dist: Path = DIST) -> None:
 
     async def set_greeting(payload: dict[str, Any]) -> dict[str, str]:
         greeting = normalize_greeting(payload.get("greeting"))
-        # configuration::* runs in the engine's `default` namespace; the configuration trigger
-        # below reloads `settings` after the write too.
-        await iii.trigger_async(
+        # configuration::* runs in the engine's `default` namespace; the configuration::on-updated
+        # observer below reloads `settings` after the write too.
+        await iii.call_async(
             {
                 "function_id": "configuration::set",
                 "namespace": "default",
@@ -218,7 +192,7 @@ def register(iii: Any, dist: Path = DIST) -> None:
         body = request.get("body")
         payload = body if isinstance(body, dict) else {}
         try:
-            result = await iii.trigger_async({"function_id": f"{NAME}::{fn}", "payload": payload})
+            result = await iii.call_async({"function_id": f"{NAME}::{fn}", "payload": payload})
         except Exception as error:  # the page shows the message, as the Node template does
             return {"status_code": 500, "headers": JSON_HEADERS, "body": {"error": str(error)}}
         return {"status_code": 200, "headers": JSON_HEADERS, "body": result}
@@ -226,25 +200,29 @@ def register(iii: Any, dist: Path = DIST) -> None:
     iii.register_function(
         f"{NAME}::hello",
         hello,
-        description=f"Greet `name` with the configured greeting. Fires {NAME}:hello.",
+        description=f"Greet `name` with the configured greeting. Calls {NAME}::on-hello.",
         request_format=HELLO_REQUEST,
         response_format=HELLO_RESPONSE,
     )
-    iii.register_trigger_type(
-        {
-            "id": f"{NAME}:hello",
-            "description": (
-                f"Fires after every {NAME}::hello with {{name, message}}. Config: {{metadata?}}. "
-                "The metadata (the config's, else the binding's) reaches the handler as its second argument."
-            ),
-            "trigger_request_format": {"type": "object", "properties": {"metadata": {}}},
-            "call_request_format": {
-                "type": "object",
-                "properties": {"name": {"type": "string"}, "message": {"type": "string"}},
-                "required": ["name", "message"],
-            },
-        },
-        hello_triggers,
+    # A private function that returns the event it is called with: only this worker calls it,
+    # anyone may observe it, and an observer's metadata reaches its target without this worker
+    # forwarding anything.
+    hello_event = {
+        "type": "object",
+        "properties": {"name": {"type": "string"}, "message": {"type": "string"}},
+        "required": ["name", "message"],
+    }
+
+    def on_hello_event(event: dict[str, Any]) -> dict[str, Any]:
+        return event
+
+    on_hello = iii.register_function(
+        f"{NAME}::on-hello",
+        on_hello_event,
+        description=f"Called after every {NAME}::hello with {{name, message}}. No args; filter on input.name.",
+        request_format=hello_event,
+        response_format=hello_event,
+        private=True,
     )
     iii.register_function(
         f"{NAME}::info",
@@ -270,12 +248,15 @@ def register(iii: Any, dist: Path = DIST) -> None:
         request_format=ANY_OBJECT,
         response_format=ANY_OBJECT,
     )
-    iii.register_trigger(
+    # configuration::on-updated takes no args: choose the entry and the event with filters, and
+    # deliver the event itself (not the Observed envelope) to config_changed.
+    iii.observe(
         {
-            "type": "configuration",
-            "function_id": f"{NAME}::config-changed",
-            "config": {"configuration_id": NAME, "event_types": ["configuration:updated"]},
-        }
+            "function_id": "configuration::on-updated",
+            "filters": {"input.id": {"$eq": NAME}, "input.event_type": {"$eq": "configuration:updated"}},
+            "deliver": "input",
+        },
+        f"{NAME}::config-changed",
     )
     iii.register_function(
         f"{NAME}::ui-content",
@@ -289,8 +270,8 @@ def register(iii: Any, dist: Path = DIST) -> None:
             "required": ["content", "content_type"],
         },
     )
-    for trigger_type, path in (("console:script", f"{NAME}/page.js"), ("console:style", f"{NAME}/styles.css")):
-        iii.register_trigger({"type": trigger_type, "function_id": f"{NAME}::ui-content", "config": {"path": path}})
+    for kind, path in (("script", f"{NAME}/page.js"), ("style", f"{NAME}/styles.css")):
+        iii.observe({"function_id": "ade::ui::asset", "args": {"kind": kind, "path": path}}, f"{NAME}::ui-content")
     for function_id, handler, api_path, method in (
         (f"{NAME}::http-page", page, f"/{NAME}", "GET"),
         (f"{NAME}::http-asset", web_file, f"/{NAME}/:file", "GET"),
@@ -304,9 +285,7 @@ def register(iii: Any, dist: Path = DIST) -> None:
             request_format=ANY_OBJECT,
             response_format=ANY_OBJECT,
         )
-        iii.register_trigger(
-            {"type": "http", "function_id": function_id, "config": {"api_path": api_path, "http_method": method}}
-        )
+        iii.observe({"function_id": "http::on-request", "args": {"method": method, "path": api_path}}, function_id)
 
 
 def main() -> None:

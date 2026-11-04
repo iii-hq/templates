@@ -91,7 +91,7 @@ Compose can also be controlled like any other iii worker. Start the daemon
 with `iii compose`, then bring the project up with:
 
 ```bash
-iii trigger compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000
+iii call compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000
 ```
 
 Edits to `.env` apply while the project runs: the `secrets` worker reads the
@@ -108,7 +108,7 @@ start it keeps the port in its configuration entry. Compose names that entry
 second terminal, from the project folder, run:
 
 ```bash
-iii trigger configuration::get id=default-ade
+iii call configuration::get id=default-ade
 ```
 
 Then open `http://127.0.0.1:<http_port>`, using the `http_port` value it
@@ -191,9 +191,9 @@ survive a refresh and need no external services or extra accounts.
 
 | Problem | What to do |
 | --- | --- |
-| The model picker shows no models, or the ADE asks you to configure a provider | Connect a key in the ADE (step 1): **Set up the harness** in the command palette (`Ctrl+K`), or **Configure** in the model picker. `iii trigger router::provider::list` shows which providers report `configured: true`, and `credential_error` says why a key does not resolve. |
+| The model picker shows no models, or the ADE asks you to configure a provider | Connect a key in the ADE (step 1): **Set up the harness** in the command palette (`Ctrl+K`), or **Configure** in the model picker. `iii call router::provider::list` shows which providers report `configured: true`, and `credential_error` says why a key does not resolve. |
 | A key in `.env` or exported in your shell is not used | Nothing reads them by themselves: connect the provider in the ADE (step 1), which finds them. |
-| The selected model fails or is unavailable | Choose another model in the model picker next to the message box. `iii trigger router::models::list` lists the models your configured providers offer. |
+| The selected model fails or is unavailable | Choose another model in the model picker next to the message box. `iii call router::models::list` lists the models your configured providers offer. |
 | The agent works in the wrong folder | Select the folder name next to the message box and choose your project folder before sending (step 4). |
 | http://127.0.0.1:3113 does not open | Keep `iii compose --up` running and find the ADE's actual address (step 3). |
 | The `http` container stops with `Address in use`, or `http://127.0.0.1:3111/<name>` answers with another project's page or a `NOT_FOUND` error | Another project already serves port 3111. Give this project's `http` container another port: [Ports and network access](#ports-and-network-access). |
@@ -262,7 +262,7 @@ prompts:
       - { provider: openai, model: gpt-6.1-sol }
 ```
 
-`provider` and `model` are the ids `iii trigger router::models::list`
+`provider` and `model` are the ids `iii call router::models::list`
 prints; a bare model id also matches the id a provider prefixes
 (`claude-sonnet-5-5` matches `claude-code/claude-sonnet-5-5`). The first
 model this machine has is selected, with its reasoning `effort` (`minimal`,
@@ -318,7 +318,7 @@ and what it did not verify.
 The profiles ship without a `model`, so each session uses the model selected
 when the message is sent. To pin one, add `model: <provider>::<model>` (and
 optionally `reasoning_effort`) to a profile's frontmatter;
-`iii trigger router::models::list` prints the catalog. Skill ids are prefixed
+`iii call router::models::list` prints the catalog. Skill ids are prefixed
 `harness/` because `iii-directory` only lists skills whose namespace is a
 worker in this compose file.
 
@@ -346,7 +346,7 @@ the provider you connect (`provider-<name>`, see
 builds (its worker, plus `http` for public pages).
 
 Container names are not always function namespaces: `ade` registers
-`console::*`, `ide` registers `shell::*` and `coder::*`, `llm-router`
+`ade::*`, `ide` registers `shell::*` and `coder::*`, `llm-router`
 registers `router::*`, and `iii-directory` registers `directory::*`.
 
 ### Model providers
@@ -357,7 +357,7 @@ adds the one you pick to `worker-compose.yaml`, and connects its key the same
 way as in step 1. From a terminal:
 
 ```bash
-iii trigger compose::add worker=provider-anthropic
+iii call compose::add worker=provider-anthropic
 ```
 
 then connect its key with **Configure** in the model picker. Add the container
@@ -383,7 +383,7 @@ machine; add GitHub Copilot with `compose::add`.
 | ------------------------- | -------------------- |
 | `provider-claude-code`    | Reads `~/.claude/.credentials.json`, written by the Claude Code CLI when you sign in there |
 | `provider-openai-codex`   | Reads `~/.codex/auth.json`, written by the Codex CLI when you sign in there |
-| `provider-github-copilot` | A GitHub device flow. Call `iii trigger provider::github-copilot::login::start`, enter the `user_code` it returns at the verification URL, then call `iii trigger provider::github-copilot::login::poll`. |
+| `provider-github-copilot` | A GitHub device flow. Call `iii call provider::github-copilot::login::start`, enter the `user_code` it returns at the verification URL, then call `iii call provider::github-copilot::login::poll`. |
 
 ### Judge
 
@@ -420,8 +420,8 @@ reference is written to the option's entry: `secret://TYPESAFE_API_KEY` in
 From a terminal:
 
 ```bash
-iii trigger compose::add worker=judge-typesafe
-iii trigger compose::add worker=judge
+iii call compose::add worker=judge-typesafe
+iii call compose::add worker=judge
 ```
 
 then connect its key in the wizard's **Judge** step.
@@ -437,7 +437,7 @@ Three addresses can collide with another iii project on the same machine:
 | Public pages | port `3111` | `port` of the `http` container (configuration entry `http`), added with the first app |
 
 The engine port is changed only in `worker-compose.yaml`: edit `engine.url`
-and start the project again. `iii trigger` and `iii compose` commands run
+and start the project again. `iii call` and `iii compose` commands run
 from the project folder read the address from there.
 
 The ADE and `http` ports can be changed in two ways.
@@ -469,7 +469,7 @@ from the worker's published defaults plus the fields under `config_override`;
 the stored entry (`config/<entry>.yaml`) is not used while an override is
 set, so changes made in the ADE's Configuration page or with
 `configuration::set` last only until the next start. Read the active value
-with `iii trigger configuration::get`. For the ADE, which keeps its trace
+with `iii call configuration::get`. For the ADE, which keeps its trace
 views and other preferences in its entry, option 2 keeps them.
 
 **Option 2: `configuration::set`, while the project runs.** The change
@@ -478,8 +478,8 @@ applies at once, without a restart, and is saved in `config/<entry>.yaml`.
 and write it back (this uses `jq`):
 
 ```bash
-iii trigger configuration::set --json "$(iii trigger configuration::get id=http | jq -c '.value.port = 3121')"
-iii trigger configuration::set --json "$(iii trigger configuration::get id=default-ade | jq -c '.value.http_port = 3123')"
+iii call configuration::set --json "$(iii call configuration::get id=http | jq -c '.value.port = 3121')"
+iii call configuration::set --json "$(iii call configuration::get id=default-ade | jq -c '.value.http_port = 3123')"
 ```
 
 A container that has a `config_override` starts from it again at its next

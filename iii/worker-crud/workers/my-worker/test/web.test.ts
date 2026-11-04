@@ -155,16 +155,16 @@ describe('public routes', () => {
 
   function fakeIii() {
     const functions = new Map<string, (req: HttpRequest) => Promise<unknown>>()
-    const triggers: { type: string; function_id: string; config: Record<string, unknown> }[] = []
+    const observers: { source: { function_id: string; args: Record<string, unknown> }; target: string }[] = []
     return {
       functions,
-      triggers,
+      observers,
       iii: {
         registerFunction(id: string, handler: (req: HttpRequest) => Promise<unknown>) {
           functions.set(id, handler)
         },
-        registerTrigger(trigger: { type: string; function_id: string; config: Record<string, unknown> }) {
-          triggers.push(trigger)
+        observe(source: { function_id: string; args: Record<string, unknown> }, target: string) {
+          observers.push({ source, target })
         },
       },
     }
@@ -174,15 +174,15 @@ describe('public routes', () => {
     assert.doesNotThrow(() => checkRoutes(PUBLIC_ROUTES))
   })
 
-  it('wires one internal function and one http trigger per route, and the route answers', async () => {
+  it('wires one internal function and one http::on-request observer per route, and the route answers', async () => {
     const fake = fakeIii()
     const failing: PublicRoute<Ctx> = { method: 'POST', path: '/hooks/in/', handler: async () => { throw new Error('boom') } }
     const ids = registerRoutes(fake.iii, [ping, failing], { label: 'ctx' })
     assert.deepEqual(ids, ['my-worker::route::get::ping-x', 'my-worker::route::post::hooks-in'])
     assert.equal(routeId(ping), ids[0])
-    assert.deepEqual(fake.triggers, [
-      { type: 'http', function_id: ids[0], config: { api_path: `${WEB_PATH}/ping/:x`, http_method: 'GET' } },
-      { type: 'http', function_id: ids[1], config: { api_path: `${WEB_PATH}/hooks/in`, http_method: 'POST' } },
+    assert.deepEqual(fake.observers, [
+      { source: { function_id: 'http::on-request', args: { method: 'GET', path: `${WEB_PATH}/ping/:x` } }, target: ids[0] },
+      { source: { function_id: 'http::on-request', args: { method: 'POST', path: `${WEB_PATH}/hooks/in` } }, target: ids[1] },
     ])
     const answer = await fake.functions.get(ids[0])?.({ path_params: { x: 'abc' } })
     assert.deepEqual(answer, { status_code: 200, headers: { 'content-type': 'application/json' }, body: { x: 'abc', ctx: 'ctx' } })

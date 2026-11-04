@@ -97,9 +97,9 @@ containers:
   #   provider-claude-code     reads ~/.claude/.credentials.json, written by the
   #                            Claude Code CLI when you sign in there.
   #   provider-github-copilot  runs a GitHub device flow. Run
-  #                            iii trigger provider::github-copilot::login::start,
+  #                            iii call provider::github-copilot::login::start,
   #                            enter the user_code at the verification URL, then
-  #                            iii trigger provider::github-copilot::login::poll.
+  #                            iii call provider::github-copilot::login::poll.
 
   #  provider-openai-codex:
   #    worker: package://provider-openai-codex

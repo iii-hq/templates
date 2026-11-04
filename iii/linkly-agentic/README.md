@@ -34,7 +34,7 @@ as it reaches each chapter.
 3. Add your provider (Anthropic shown; swap the name for yours):
 
    ```bash
-   iii trigger compose::add worker=provider-anthropic
+   iii call compose::add worker=provider-anthropic
    ```
 
 4. Open the console at [http://127.0.0.1:3113](http://127.0.0.1:3113) and start a session.

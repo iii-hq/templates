@@ -69,7 +69,7 @@ containers:
   #   worker: path://./analytics
   #   start_after: [database, queue]
 
-  # Ch. 5: the live click feed, a trigger type owned by click-streamer.
+  # Ch. 5: the live click feed, an event function owned by click-streamer.
   # click-streamer:
   #   worker: path://./click-streamer
 
@@ -95,6 +95,7 @@ containers:
   #         - match("link::create")
   #         - match("link::request_delete")
   #         - match("link::click_summary")
+  #         - match("click-streamer::on-click")
   # auth:
   #   worker: path://./auth
   #   env_file: ['./.env']

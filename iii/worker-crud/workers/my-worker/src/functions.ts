@@ -1,6 +1,6 @@
 // Generic CRUD from the model: my-worker::<resource>::list|get|create|update|remove
 // and my-worker::model. Kept in the state worker at my-worker/<resource>; every
-// write emits on my-worker:change (src/store.ts). No edits needed per app:
+// write calls my-worker::on-change (src/store.ts). No edits needed per app:
 // change src/model.ts, and add domain actions in src/actions.ts.
 import { randomUUID } from 'node:crypto'
 import type { IIIClient } from 'iii-sdk'

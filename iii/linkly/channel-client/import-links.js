@@ -22,7 +22,7 @@
 // channel.writer.stream.write(Buffer.from(csv));
 // channel.writer.stream.end();
 //
-// const result = await worker.trigger({
+// const result = await worker.call({
 //   function_id: "bulk-importer::import_csv",
 //   payload: { reader: channel.readerRef },
 // });
