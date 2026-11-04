@@ -7,7 +7,7 @@ A minimal Node/TypeScript worker project with one function, `hello-node::greet`.
 - iii 0.26.0 or newer
 - Node.js 20 or newer with npm
 
-The Console container is commented out in `worker-compose.yaml`; `http://127.0.0.1:3113` is available only after you enable that container.
+The ADE container is commented out in `worker-compose.yaml`; `http://127.0.0.1:3113` is available only after you enable that container.
 
 ## Automatic host setup
 

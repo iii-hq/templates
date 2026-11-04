@@ -7,7 +7,7 @@ A minimal Python worker project with one function, `hello-python::greet`. Develo
 - iii 0.26.0 or newer
 - Python 3.11 or newer, including the standard-library `venv` module
 
-The Console container is commented out in `worker-compose.yaml`; `http://127.0.0.1:3113` is available only after you enable that container.
+The ADE container is commented out in `worker-compose.yaml`; `http://127.0.0.1:3113` is available only after you enable that container.
 
 ## Automatic host setup
 
