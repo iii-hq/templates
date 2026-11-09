@@ -153,7 +153,8 @@ def register(iii: Any, dist: Path = DIST) -> None:
         settings["greeting"] = greeting
         return {"greeting": greeting}
 
-    def config_changed(event: dict[str, Any]) -> dict[str, bool]:
+    def config_changed(payload: dict[str, Any]) -> dict[str, bool]:
+        event = payload.get("input") or {}
         settings["greeting"] = stored_greeting(event.get("new_value"))
         return {"ok": True}
 
@@ -249,12 +250,12 @@ def register(iii: Any, dist: Path = DIST) -> None:
         response_format=ANY_OBJECT,
     )
     # configuration::on-updated takes no args: choose the entry and the event with filters, and
-    # deliver the event itself (not the Observed envelope) to config_changed.
+    # capture only its input: config_changed reads the event from payload["input"].
     iii.observe(
         {
             "function_id": "configuration::on-updated",
             "filters": {"input.id": {"$eq": NAME}, "input.event_type": {"$eq": "configuration:updated"}},
-            "deliver": "input",
+            "capture": ["input"],
         },
         f"{NAME}::config-changed",
     )

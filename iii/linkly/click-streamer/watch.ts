@@ -15,15 +15,15 @@
 //
 // type Click = { id: number; code: string; clicked_at: string };
 //
-// worker.registerFunction("click-watcher::print", async (click: Click) => {
+// worker.registerFunction("click-watcher::print", async ({ output: click }: { output: Click }) => {
 //   console.log(`click #${click.id}: ${click.code} at ${click.clicked_at}`);
 //   return null;
 // });
 //
 // // Observe first, then read the total, so no click falls between the two.
-// // deliver: "output" hands click-watcher::print the click the feed returned.
+// // capture: ["output"] hands click-watcher::print the click the feed returned, as `output`.
 // await worker
-//   .observe({ function_id: "click-streamer::on-click", deliver: "output" }, "click-watcher::print")
+//   .observe({ function_id: "click-streamer::on-click", capture: ["output"] }, "click-watcher::print")
 //   .ready();
 //
 // const summary = await worker.call<Record<string, never>, { total: number; last_id: number }>({
