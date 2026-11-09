@@ -98,7 +98,7 @@ a handler and observes the backend's event function with it:
 const tab = crypto.randomUUID().slice(0, 8)
 const handlerId = `ui::orders-changed::${tab}`
 
-const handler = iii.registerFunction(handlerId, async (event: OrderEvent) => {
+const handler = iii.registerFunction(handlerId, async ({ output: event }: { output: OrderEvent }) => {
   store.upsert(event.order)
   return null
 })
@@ -107,7 +107,7 @@ const observer = iii.observe(
   {
     function_id: 'orders::on-change',
     filters: { 'input.customer_id': { $eq: customerId } },
-    deliver: 'output', // the handler receives the event itself
+    capture: ['output'], // the handler reads the event from payload.output
   },
   handlerId,
 )
@@ -127,8 +127,13 @@ the open tab updates. Do not add polling, SSE, or a second socket alongside it.
 - `filters` select calls by `input`, `output`, `error`, `caller` and `metadata`, each with an
   explicit operator (`$eq`, `$in`, `$gte`, …). `args` go to the worker that hosts the function,
   for a function whose `args_format` takes them.
-- `deliver` picks what the handler receives: the `Observed` envelope (default), the call's
-  `input`, or its `output`. An event function returns its event, so `'output'` is the event.
+- `capture` decides both what the handler receives and when it runs. The handler always gets the
+  `Observed` payload (ids, `status`, timings) plus the captured fields: `input` and `output` fire
+  on success, `error` fires on failure, and `caller` and `metadata` only add fields. The default
+  is `['input', 'output', 'caller']`, so failures are not observed unless `capture` names
+  `error`; a non-empty `capture` must name `input`, `output` or `error`. An event function
+  returns its event, so with `capture: ['output']` the event is `payload.output`. There is no
+  `on` or `deliver` in 0.26: the SDK refuses them with `INVALID_ARGS`.
 - Options set the observer's `id`, `metadata` (the handler's second argument), `max_fires`,
   `expires_in_ms` and `max_in_flight`.
 - The engine's own events are functions too: `EngineSources.FUNCTIONS_CHANGED`
@@ -214,8 +219,8 @@ function useLiveOrders() {
       refetch()
       return null
     })
-    // deliver: 'output' hands the handler the event the function returned.
-    const observer = iii.observe({ function_id: 'orders::on-change', deliver: 'output' }, handlerId)
+    // Runs after each successful call; the handler only refetches, so it ignores payload.output.
+    const observer = iii.observe({ function_id: 'orders::on-change', capture: ['output'] }, handlerId)
     // Fires now with the current state, then on every transition: the read after observing
     // covers a change that landed before the observer, and a reconnect re-reads.
     const off = iii.addConnectionStateListener((state) => {

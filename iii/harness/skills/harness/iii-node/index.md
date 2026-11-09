@@ -159,7 +159,7 @@ RemoteFunctionHandler<TInput = any, TOutput = any>: (data: TInput, metadata?: Js
 RegisterFunctionOptions: { description?; request_format?; response_format?; metadata?: Record<string, unknown>; invocation?: HttpInvocationConfig; args_format?; private?: boolean; observable?: boolean; localDispatch?: boolean }  // no standby: 0.26 does not retry a refused registration (decision 21)
 FunctionRef<I, O>: { readonly id: string; onObserverAdded(hook); onObserverRemoved(hook); onObservationMatch(hook); onObservationDeliver(hook); observers(): readonly Observer[]; isObserved(call?): boolean; unregister(): void }  // hook setters return the ref
 IIIClient.observe: (source: string | ObserveSource, target: Target, options?: ObserverOptions) => ObserverHandle
-ObserveSource: { function_id: string; namespace?: string; args?: Record<string, unknown>; filters?: Filter; on?: 'success' | 'error' | 'complete'; capture?: Capture[]; deliver?: 'envelope' | 'input' | 'output' }
+ObserveSource: { function_id: string; namespace?: string; args?: Record<string, unknown>; filters?: Filter; capture?: Capture[] }  // Capture: 'input' | 'output' | 'error' | 'caller' | 'metadata'; default ['input', 'output', 'caller']. capture decides when the target runs (input/output: success; error: failure) and what the Observed payload carries; caller/metadata only add fields, so a non-empty capture must name input, output or error. 0.26 has no on/deliver: Node and browser refuse them with INVALID_ARGS
 Target: string | { function_id: string; namespace?: string }
 ObserverOptions: { id?: string; max_fires?: number; expires_in_ms?: number; max_in_flight?: number; metadata?: Record<string, unknown> }
 ObserverHandle: { readonly id: string; readonly state: 'pending' | 'active' | 'suspended' | 'error' | 'disposed'; readonly reason?: { code: string; message: string }; ready(): Promise<void>; onStateChange(listener): () => void; dispose(): Promise<void> }
@@ -231,7 +231,7 @@ Follow [`configuration.md`](./configuration.md). For a configurable worker:
 3. Call `configuration::register` at startup with an id, name, description, JSON Schema, and an `initial_value` only when no value exists.
 4. Read and validate the effective value before constructing resources that depend on it.
 5. Register an internal reload function with accurate request/response schemas and `metadata: { internal: true }` when appropriate.
-6. Observe `configuration::on-updated` with that function as the target, filtered on `input.id` and `input.event_type`, with `deliver: 'output'`.
+6. Observe `configuration::on-updated` with that function as the target, filtered on `input.id` and `input.event_type`, with `capture: ['output']`; the function reads the event from `payload.output`.
 7. In the UI, register a purpose-built form with `host.configForms.register(...)`; never fall back to a raw JSON textarea.
 8. Set `configurationId` on the page registration so the Console exposes the standard settings action.
 
@@ -261,7 +261,7 @@ Contract details the live registry does not advertise:
 - `configuration::register` is hidden from `engine::functions::list` and `engine::functions::info` reports it as not available; it still exists (see `engine::workers::info { name: 'configuration' }`). Its payload is `{ id, name, description, schema, initial_value?, metadata: { ui_form: '<configuration-id>' } }`. Re-registering with `initial_value` **replaces** the stored value, so pass it only when the read below returned nothing.
 - `configuration::get { id }` throws when the id is not registered yet; treat that error as “no value” during startup, register, then read again (with defaults expanded) to obtain the effective value.
 - The persisted file is `<config dir>/<id>.yaml` with `id`, `name`, `description`, `metadata`, and `value`.
-- `configuration::on-updated` is called with `{ type: 'configuration', event_type, id, name, description, schema, old_value, new_value, metadata }`; observe it with `filters: { 'input.id': { $eq: '<configuration-id>' }, 'input.event_type': { $eq: 'configuration:updated' } }` and `deliver: 'output'`.
+- `configuration::on-updated` is called with `{ type: 'configuration', event_type, id, name, description, schema, old_value, new_value, metadata }`; observe it with `filters: { 'input.id': { $eq: '<configuration-id>' }, 'input.event_type': { $eq: 'configuration:updated' } }` and `capture: ['output']`; the target reads the event from `payload.output`.
 - Relative paths in configuration should resolve from a stable root. Resolve them against the project root (the nearest ancestor of the worker directory that contains `worker-compose.yaml`, overridable by an env var), not the process cwd, and expose the resolved path through a small `<worker-name>::config::info` function so the settings form can show it.
 
 ## Live updates (the worker's event function)
@@ -304,7 +304,7 @@ iii.observe(
   {
     function_id: '<worker-name>::on-change',
     filters: { 'input.record_id': { $eq: recordId } },
-    deliver: 'output', // the target receives the event itself
+    capture: ['output'], // runs after successful calls; the target reads the event from payload.output
   },
   'other-worker::on-record-change',
   { metadata: { reason: 'sync' } },

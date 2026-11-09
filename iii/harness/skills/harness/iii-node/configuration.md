@@ -58,11 +58,13 @@ iii.observe(
       'input.id': { $eq: 'iii-stream' },                         // optional. Omit to receive every id.
       'input.event_type': { $eq: 'configuration:updated' },      // optional. configuration:registered|updated|deleted.
     },
-    deliver: 'output',                                          // the handler receives the event itself
+    capture: ['output'],                                        // the handler reads the event from payload.output
   },
   'stream::on-config-change',
 )
 ```
+
+The handler receives the `Observed` payload: the event is its `output` (`capture: ['output']`). 0.26 SDKs have no `deliver` or `on`; `capture` decides both what the payload carries and when the handler runs (`input`/`output` on success, `error` on failure).
 
 `configuration::on-updated` takes no args; filters select the calls by `input.id` and `input.event_type`, each with an explicit operator.
 
