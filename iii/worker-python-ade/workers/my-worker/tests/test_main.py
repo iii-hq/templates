@@ -50,7 +50,7 @@ def test_info_gives_the_page_path_and_the_live_greeting(bus, dist, monkeypatch):
     info = bus.functions[f"{NAME}::info"]
     assert info({}) == {"web_url": None, "web_path": f"/{NAME}", "greeting": "Hello"}
     monkeypatch.setenv("III_HTTP_URL", "https://iii.example.com/")
-    bus.functions[f"{NAME}::config-changed"]({"new_value": {"greeting": "Hey"}})
+    bus.functions[f"{NAME}::config-changed"]({"input": {"new_value": {"greeting": "Hey"}}})
     assert info({}) == {"web_url": f"https://iii.example.com/{NAME}", "web_path": f"/{NAME}", "greeting": "Hey"}
 
 
@@ -75,10 +75,10 @@ def test_settings_update_changes_the_greeting(bus, dist):
     assert observer["source"] == {
         "function_id": "configuration::on-updated",
         "filters": {"input.id": {"$eq": NAME}, "input.event_type": {"$eq": "configuration:updated"}},
-        "deliver": "input",
+        "capture": ["input"],
     }
     assert "args" not in observer["source"], "configuration::on-updated takes no args"
-    bus.functions[observer["target"]]({"new_value": {"greeting": "Hey"}})
+    bus.functions[observer["target"]]({"input": {"new_value": {"greeting": "Hey"}}})
     assert hello(bus, {}) == {"message": "Hey, World!"}
 
 
@@ -88,10 +88,10 @@ def test_an_empty_stored_greeting_falls_back_to_the_default(bus, dist, stored):
     register(bus, dist)
     assert hello(bus, {"name": "Ada"}) == {"message": "Hello, Ada!"}
     target = config_observer(bus)["target"]
-    bus.functions[target]({"new_value": {"greeting": " Hey "}})
+    bus.functions[target]({"input": {"new_value": {"greeting": " Hey "}}})
     assert hello(bus, {}) == {"message": "Hey, World!"}
     for bad in ({"greeting": ""}, "not a value", None):
-        bus.functions[target]({"new_value": bad})
+        bus.functions[target]({"input": {"new_value": bad}})
         assert hello(bus, {}) == {"message": "Hello, World!"}
 
 

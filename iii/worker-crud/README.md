@@ -47,11 +47,11 @@ Expected list response:
 
 ## React to changes
 
-Observe `my-worker::on-change` with any function of yours; it receives `{ event, record, records }` after every write. Filters pick the events, and `metadata` reaches your function as its second argument:
+Observe `my-worker::on-change` with any function of yours; with `capture: ['output']` it receives `{ output: { event, record, records } }` after every write. Filters pick the events, and `metadata` reaches your function as its second argument:
 
 ```ts
 iii.observe(
-  { function_id: 'my-worker::on-change', filters: { 'input.event': { $in: ['created'] } }, deliver: 'output' },
+  { function_id: 'my-worker::on-change', filters: { 'input.event': { $in: ['created'] } }, capture: ['output'] },
   '<your function>',
   { metadata: { from: 'me' } },
 )

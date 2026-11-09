@@ -43,13 +43,13 @@
 //   }
 // });
 //
-// // Runs each time link::record_click runs, with the click it returned.
-// worker.registerFunction("click-streamer::announce", async (click: Click) => {
+// // Runs each time link::record_click runs, with the click it returned as `output`.
+// worker.registerFunction("click-streamer::announce", async ({ output: click }: { output: Click }) => {
 //   await worker.call({ function_id: "click-streamer::on-click", payload: click });
 //   return null;
 // });
 // worker.observe(
-//   { function_id: "link::record_click", deliver: "output" },
+//   { function_id: "link::record_click", capture: ["output"] },
 //   "click-streamer::announce",
 // );
 //
