@@ -382,8 +382,10 @@ with open(sys.argv[1]) as handle:
         else:
             print(line)
 PYEOF
-# Compose rewrites a VM container the file does not place (spec: migration on
-# run), so an unchanged file proves every block is already explicit.
+# A VM container the file does not place is due for Compose's rewrite. The first
+# build writes the lock and would rewrite such a container; the file must come
+# out unchanged. `--frozen` never edits the file and fails with
+# VM_SCRIPTS_MISSING on any due rewrite, whatever the first build did.
 if explicit_vm_mode_supported; then
   (
     cd "$LINKLY_DIR"
@@ -394,6 +396,7 @@ if explicit_vm_mode_supported; then
       diff -u "$TMP_DIR/linkly-all-on.yaml" ./all-on.yaml >&2 || true
       exit 1
     fi
+    iii compose build --frozen --file all-on.yaml
     rm -f ./all-on.yaml
   )
 else
@@ -431,16 +434,20 @@ assert_contains "$LA_DIR/worker-compose.yaml" "worker: package://provider-anthro
 assert_contains "$LA_DIR/worker-compose.yaml" "worker: package://provider-openai"
 
 # The shipped file resolves: the agent stack plus the Ch. 1 workers. Its VM
-# blocks are commented, so it loads with or without the explicit VM mode, and
-# with it Compose has nothing to rewrite.
+# blocks are commented, so it loads with or without the explicit VM mode. With
+# it, the file must come out of the first build unchanged, and the frozen build
+# fails with VM_SCRIPTS_MISSING on any due rewrite.
 (
   cd "$LA_DIR"
   cp worker-compose.yaml "$TMP_DIR/la-shipped.yaml"
   iii compose build --file worker-compose.yaml
-  if explicit_vm_mode_supported && ! cmp -s worker-compose.yaml "$TMP_DIR/la-shipped.yaml"; then
-    echo "error: Compose rewrote the shipped linkly-agentic file:" >&2
-    diff -u "$TMP_DIR/la-shipped.yaml" worker-compose.yaml >&2 || true
-    exit 1
+  if explicit_vm_mode_supported; then
+    if ! cmp -s worker-compose.yaml "$TMP_DIR/la-shipped.yaml"; then
+      echo "error: Compose rewrote the shipped linkly-agentic file:" >&2
+      diff -u "$TMP_DIR/la-shipped.yaml" worker-compose.yaml >&2 || true
+      exit 1
+    fi
+    iii compose build --frozen --file worker-compose.yaml
   fi
 )
 

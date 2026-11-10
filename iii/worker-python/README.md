@@ -107,6 +107,13 @@ entire host block (`pre_run`, `pre_run_timeout`, and `run`), remove `sandbox-lib
 and restart the project with `iii call compose::restart`. The hook recreates the venv if needed
 and installs dependencies before the host worker starts.
 
+The `sandbox-libkrun` container that Compose added stays in `worker-compose.yaml`, and Compose
+keeps starting it. Once no container runs in a VM, remove it:
+
+```sh
+iii call compose::remove worker=sandbox-libkrun
+```
+
 ## Publishing the worker
 
 Publication requires more than this checkout working. Add the repository's private catalog metadata and an explicit bundle `include` list, run the repository's static validator, build the real bundle, and test that packaged artifact in the target VM environment. Static validation checks manifest shape; a checkout VM test checks the source tree; only a real bundle test catches missing `include` files or packaging differences. No new CI gate is implied by this template.
