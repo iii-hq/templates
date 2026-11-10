@@ -56,9 +56,9 @@ allowlists, and the Compose declaration.
 asset hashes and hot-reloads the open console. Declare through `compose::add`
 under a wake, never by editing `worker-compose.yaml` or restarting the stack.
 
-UI assets use SDK Message-path `console:script` and `console:style` triggers,
-not durable engine registrations. Both asset paths start with the worker
-name; every stylesheet selector is scoped under `[data-iii-ui="<worker>"]`.
+UI assets are observers of `ade::ui::asset` (`args: { kind, path }`,
+one per asset) that the worker creates with its SDK client, so they are
+replayed on reconnect. Both asset paths start with the worker name; every stylesheet selector is scoped under `[data-iii-ui="<worker>"]`.
 React, `@iii-dev/console-ui` and `lucide-react` remain external in the console
 assets, which `ui/build.mjs` builds with the shared `buildWorkerUi` driver, not
 hand-rolled esbuild; only the public page's bundle uses esbuild directly.

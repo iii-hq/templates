@@ -18,7 +18,7 @@ Plan the user outcome and the surface needed to reach it.
 | Browse or act on a collection | A worker page |
 | Inspect one record | A record screen opened in its own pane |
 | Understand a function call in chat | A function renderer |
-| Inspect a trigger event | A trigger-activity renderer |
+| Inspect an observer event | An observer-activity renderer |
 | Change operator settings | A configuration form |
 
 Within a page, use a board for status lanes, a catalog for comparable
