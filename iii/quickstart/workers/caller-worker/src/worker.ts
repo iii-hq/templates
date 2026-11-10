@@ -11,7 +11,7 @@ worker.registerFunction(
   async (payload: { a: number; b: number }) => {
     logger.info('math::add_two_numbers called in TypeScript', payload);
 
-    const result = await worker.trigger<
+    const result = await worker.call<
       { a: number; b: number },
       { c: number; running_total?: number }
     >({
@@ -27,11 +27,14 @@ worker.registerFunction(
   },
 );
 
-// --- Uncomment after: iii trigger compose::add worker=http ---
+// --- Uncomment after: iii call compose::add worker=http ---
 // worker.registerFunction(
 //   "http::add_two_numbers",
 //   async (payload: { body: { a: number; b: number } }) => {
-//     const result = await worker.trigger<{ a: number; b: number }, { c: number; running_total: number }>({
+//     const result = await worker.call<
+//       { a: number; b: number },
+//       { c: number; running_total: number }
+//     >({
 //       function_id: "math::add_two_numbers",
 //       payload: payload.body,
 //     });
@@ -43,10 +46,12 @@ worker.registerFunction(
 //   },
 // );
 //
-// worker.registerTrigger({
-//   type: "http",
-//   function_id: "http::add_two_numbers",
-//   config: { api_path: "/math/add-two-numbers", http_method: "POST" },
-// });
+// worker.observe(
+//   {
+//     function_id: "http::on-request",
+//     args: { method: "POST", path: "/math/add-two-numbers" },
+//   },
+//   "http::add_two_numbers",
+// );
 
 console.log('Caller worker started - listening for calls');

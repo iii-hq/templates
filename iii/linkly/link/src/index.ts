@@ -55,7 +55,7 @@
 // }
 
 // --- Ch. 4 | prelude (replaces Ch. 3) ---
-// import { InvocationError, registerWorker, TriggerAction } from "iii-sdk";
+// import { CallAction, InvocationError, registerWorker } from "iii-sdk";
 // import { Logger } from "@iii-dev/helpers/observability";
 //
 // const worker = registerWorker(process.env.III_URL ?? "ws://localhost:49134", {
@@ -80,9 +80,7 @@
 //   // resolved relative to /s/:code.
 //   const url = /^https?:\/\//i.test(payload.url) ? payload.url : `https://${payload.url}`;
 //   const taken = async (c: string) =>
-//     Boolean(
-//       await worker.trigger({ function_id: "state::get", payload: { scope: "links", key: c } }),
-//     );
+//     Boolean(await worker.call({ function_id: "state::get", payload: { scope: "links", key: c } }));
 //   let code = payload.code;
 //   if (code) {
 //     // A requested code must be free; creating never overwrites an existing link.
@@ -93,7 +91,7 @@
 //       code = makeCode();
 //     } while (await taken(code));
 //   }
-//   await worker.trigger({
+//   await worker.call({
 //     function_id: "state::set",
 //     payload: { scope: "links", key: code, value: { url } },
 //   });
@@ -108,7 +106,7 @@
 //   const url = /^https?:\/\//i.test(payload.url) ? payload.url : `https://${payload.url}`;
 //   // ON CONFLICT DO NOTHING turns a taken code into zero inserted rows instead
 //   // of a database error, so link::create can say so in its own words.
-//   const { affected_rows } = await worker.trigger<
+//   const { affected_rows } = await worker.call<
 //     { db: string; sql: string; params: string[] },
 //     { affected_rows: number }
 //   >({
@@ -120,7 +118,7 @@
 //     },
 //   });
 //   if (affected_rows === 0) throw new Error(`code \`${code}\` is already taken`);
-//   await worker.trigger({
+//   await worker.call({
 //     function_id: "state::set",
 //     payload: { scope: "links", key: code, value: { url } },
 //   });
@@ -137,7 +135,7 @@
 //   const created_at = new Date().toISOString();
 //   // ON CONFLICT DO NOTHING turns a taken code into zero inserted rows instead
 //   // of a database error, so link::create can say so in its own words.
-//   const { affected_rows } = await worker.trigger<
+//   const { affected_rows } = await worker.call<
 //     { db: string; sql: string; params: string[] },
 //     { affected_rows: number }
 //   >({
@@ -149,11 +147,11 @@
 //     },
 //   });
 //   if (affected_rows === 0) throw new Error(`code \`${code}\` is already taken`);
-//   await worker.trigger({
+//   await worker.call({
 //     function_id: "state::set",
 //     payload: { scope: "links", key: code, value: { url } },
 //   });
-//   await worker.trigger({
+//   await worker.call({
 //     function_id: "iii::durable::publish",
 //     payload: { topic: "link.created", data: { code, url, created_at } },
 //   });
@@ -164,7 +162,7 @@
 // --- Ch. 1 | link::resolve ---
 // // THIS CODE WILL BE REMOVED AND REPLACED LATER WITH THE CODE FROM CHAPTER 3
 // worker.registerFunction("link::resolve", async (payload: { code: string }) => {
-//   const stored = await worker.trigger<{ scope: string; key: string }, { url: string } | null>({
+//   const stored = await worker.call<{ scope: string; key: string }, { url: string } | null>({
 //     function_id: "state::get",
 //     payload: { scope: "links", key: payload.code },
 //   });
@@ -177,7 +175,7 @@
 
 // --- Ch. 3 | link::resolve (replaces Ch. 1) ---
 // worker.registerFunction("link::resolve", async (payload: { code: string }) => {
-//   const cached = await worker.trigger<{ scope: string; key: string }, { url: string } | null>({
+//   const cached = await worker.call<{ scope: string; key: string }, { url: string } | null>({
 //     function_id: "state::get",
 //     payload: { scope: "links", key: payload.code },
 //   });
@@ -185,7 +183,7 @@
 //     logger.info("link resolved", { code: payload.code, found: true });
 //     return { url: cached.url };
 //   }
-//   const { rows } = await worker.trigger<
+//   const { rows } = await worker.call<
 //     { db: string; sql: string; params: string[] },
 //     { rows: Array<{ url: string }> }
 //   >({
@@ -194,7 +192,7 @@
 //   });
 //   const url = rows[0]?.url ?? null;
 //   if (url) {
-//     await worker.trigger({
+//     await worker.call({
 //       function_id: "state::set",
 //       payload: { scope: "links", key: payload.code, value: { url } },
 //     });
@@ -214,7 +212,7 @@
 //     };
 //   }
 //   try {
-//     const link = await worker.trigger<{ url: string; code?: string }, { code: string; url: string }>({
+//     const link = await worker.call<{ url: string; code?: string }, { code: string; url: string }>({
 //       function_id: "link::create",
 //       payload: { url, code },
 //     });
@@ -247,17 +245,16 @@
 // });
 
 // --- Ch. 1 | POST /links ---
-// worker.registerTrigger({
-//   type: "http",
-//   function_id: "http::create",
-//   config: { api_path: "/links", http_method: "POST" },
-// });
+// worker.observe(
+//   { function_id: "http::on-request", args: { method: "POST", path: "/links" } },
+//   "http::create",
+// );
 
 // --- Ch. 1 | http::redirect ---
 // // THIS CODE WILL BE REMOVED AND REPLACED LATER WITH THE CODE FROM CHAPTER 3
 // worker.registerFunction("http::redirect", async (req) => {
 //   const code = req.path_params.code;
-//   const { url } = await worker.trigger<{ code: string }, { url: string | null }>({
+//   const { url } = await worker.call<{ code: string }, { url: string | null }>({
 //     function_id: "link::resolve",
 //     payload: { code },
 //   });
@@ -272,24 +269,23 @@
 // });
 
 // --- Ch. 1 | GET /s/:code ---
-// worker.registerTrigger({
-//   type: "http",
-//   function_id: "http::redirect",
-//   config: { api_path: "/s/:code", http_method: "GET" },
-// });
+// worker.observe(
+//   { function_id: "http::on-request", args: { method: "GET", path: "/s/:code" } },
+//   "http::redirect",
+// );
 
 // --- Ch. 3 | ensureSchema ---
 // async function ensureSchema(): Promise<void> {
 //   for (let attempt = 1; ; attempt++) {
 //     try {
-//       await worker.trigger({
+//       await worker.call({
 //         function_id: "database::execute",
 //         payload: {
 //           db: DB,
 //           sql: "CREATE TABLE IF NOT EXISTS links (code TEXT PRIMARY KEY, url TEXT NOT NULL, created_at TEXT NOT NULL)",
 //         },
 //       });
-//       await worker.trigger({
+//       await worker.call({
 //         function_id: "database::execute",
 //         payload: {
 //           db: DB,
@@ -312,7 +308,7 @@
 // worker.registerFunction(
 //   "link::record_click",
 //   async (payload: { code: string; clicked_at: string }) => {
-//     await worker.trigger({
+//     await worker.call({
 //       function_id: "database::execute",
 //       payload: {
 //         db: DB,
@@ -328,7 +324,7 @@
 // worker.registerFunction(
 //   "link::record_click",
 //   async (payload: { code: string; clicked_at: string }) => {
-//     const { last_insert_id } = await worker.trigger<
+//     const { last_insert_id } = await worker.call<
 //       { db: string; sql: string; params: string[] },
 //       { last_insert_id: string | null }
 //     >({
@@ -339,19 +335,14 @@
 //         params: [payload.code, payload.clicked_at],
 //       },
 //     });
-//     // The row is committed. Announce it, without waiting on the listeners.
-//     worker.trigger({
-//       function_id: "click-streamer::broadcast",
-//       payload: { id: Number(last_insert_id), code: payload.code, clicked_at: payload.clicked_at },
-//       action: TriggerAction.Void(),
-//     });
-//     return { recorded: true };
+//     // The row is committed. Observers of link::record_click receive this click.
+//     return { id: Number(last_insert_id), code: payload.code, clicked_at: payload.clicked_at };
 //   },
 // );
 
 // --- Ch. 5 | link::click_summary ---
 // worker.registerFunction("link::click_summary", async () => {
-//   const { rows } = await worker.trigger<
+//   const { rows } = await worker.call<
 //     { db: string; sql: string },
 //     { rows: Array<{ total: number; last_id: number | null }> }
 //   >({
@@ -365,7 +356,7 @@
 // // THIS CODE WILL BE REMOVED AND REPLACED LATER WITH THE CODE FROM CHAPTER 4
 // worker.registerFunction("http::redirect", async (req) => {
 //   const code = req.path_params.code;
-//   const { url } = await worker.trigger<{ code: string }, { url: string | null }>({
+//   const { url } = await worker.call<{ code: string }, { url: string | null }>({
 //     function_id: "link::resolve",
 //     payload: { code },
 //   });
@@ -376,8 +367,8 @@
 //       headers: { "Content-Type": "application/json" },
 //     };
 //   }
-//   // This Trigger is slow because it waits on link::record_click's completion, we'll move its work to a queue soon
-//   await worker.trigger({
+//   // This call waits for link::record_click to finish; Chapter 4 moves the work to a queue
+//   await worker.call({
 //     function_id: "link::record_click",
 //     payload: { code, clicked_at: new Date().toISOString() },
 //   });
@@ -387,7 +378,7 @@
 // --- Ch. 4 | http::redirect (replaces Ch. 3) ---
 // worker.registerFunction("http::redirect", async (req) => {
 //   const code = req.path_params.code;
-//   const { url } = await worker.trigger<{ code: string }, { url: string | null }>({
+//   const { url } = await worker.call<{ code: string }, { url: string | null }>({
 //     function_id: "link::resolve",
 //     payload: { code },
 //   });
@@ -398,10 +389,10 @@
 //       headers: { "Content-Type": "application/json" },
 //     };
 //   }
-//   await worker.trigger({
+//   await worker.call({
 //     function_id: "link::record_click",
 //     payload: { code, clicked_at: new Date().toISOString() },
-//     action: TriggerAction.Enqueue({ queue: "clicks" }),
+//     action: CallAction.Enqueue({ queue: "clicks" }),
 //   });
 //   return { status_code: 302, headers: { Location: url } };
 // });
@@ -409,7 +400,7 @@
 // --- Ch. 4 | link::update ---
 // worker.registerFunction("link::update", async (payload: { code: string; url: string }) => {
 //   const url = /^https?:\/\//i.test(payload.url) ? payload.url : `https://${payload.url}`;
-//   await worker.trigger({
+//   await worker.call({
 //     function_id: "database::execute",
 //     payload: {
 //       db: DB,
@@ -417,7 +408,7 @@
 //       params: [url, payload.code],
 //     },
 //   });
-//   await worker.trigger({
+//   await worker.call({
 //     function_id: "iii::durable::publish",
 //     payload: { topic: "link.updated", data: { code: payload.code, url } },
 //   });
@@ -435,7 +426,7 @@
 //       headers: { "Content-Type": "application/json" },
 //     };
 //   }
-//   const link = await worker.trigger<{ code: string; url: string }, { code: string; url: string }>({
+//   const link = await worker.call<{ code: string; url: string }, { code: string; url: string }>({
 //     function_id: "link::update",
 //     payload: { code, url },
 //   });
@@ -443,33 +434,32 @@
 // });
 
 // --- Ch. 4 | PUT /links/:code ---
-// worker.registerTrigger({
-//   type: "http",
-//   function_id: "http::update",
-//   config: { api_path: "/links/:code", http_method: "PUT" },
-// });
+// worker.observe(
+//   { function_id: "http::on-request", args: { method: "PUT", path: "/links/:code" } },
+//   "http::update",
+// );
 
 // --- Ch. 4 | link::on_link_updated ---
 // worker.registerFunction("link::on_link_updated", async (data: { code: string; url: string }) => {
-//   await worker.trigger({
+//   await worker.call({
 //     function_id: "state::set",
 //     payload: { scope: "links", key: data.code, value: { url: data.url } },
 //   });
 // });
 //
-// worker.registerTrigger({
-//   type: "durable:subscriber",
-//   function_id: "link::on_link_updated",
-//   config: { topic: "link.updated" },
-// });
+// worker.observe(
+//   { function_id: "queue::on-message", args: { topic: "link.updated" } },
+//   "link::on_link_updated",
+//   { id: "link-cache-refresher" },
+// );
 
 // --- Ch. 7 | link::delete ---
 // worker.registerFunction("link::delete", async (payload: { code: string }) => {
-//   await worker.trigger({
+//   await worker.call({
 //     function_id: "database::execute",
 //     payload: { db: DB, sql: "DELETE FROM links WHERE code = ?", params: [payload.code] },
 //   });
-//   await worker.trigger({
+//   await worker.call({
 //     function_id: "state::delete",
 //     payload: { scope: "links", key: payload.code },
 //   });
@@ -481,7 +471,7 @@
 // worker.registerFunction(
 //   "link::request_delete",
 //   async (payload: { code: string; session: string }) => {
-//     const { confirmed } = await worker.trigger<
+//     const { confirmed } = await worker.call<
 //       { code: string; action: string },
 //       { confirmed: boolean }
 //     >({
@@ -493,7 +483,7 @@
 //     if (!confirmed) {
 //       return { deleted: false };
 //     }
-//     await worker.trigger({ function_id: "link::delete", payload: { code: payload.code } });
+//     await worker.call({ function_id: "link::delete", payload: { code: payload.code } });
 //     return { deleted: true };
 //   },
 // );

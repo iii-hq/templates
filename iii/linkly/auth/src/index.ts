@@ -34,9 +34,6 @@
 //       throw new Error("missing session");
 //     }
 //     return {
-//       allow_trigger_type_registration: false,
-//       // The tab may listen to the live click feed and nothing else.
-//       allowed_trigger_types: ["click-streamer::click"],
 //       allow_function_registration: true,
 //       namespaces: {
 //         [`browser-${session}`]: ["ui::on_click", "user::confirm_destructive_op"],

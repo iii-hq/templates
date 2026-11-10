@@ -29,7 +29,7 @@ Compose can also be controlled like any other iii worker, for example here's wha
 would run if you started `iii compose` without the `--up flag`:
 
 ```bash
-iii trigger compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000
+iii call compose::up --namespace default file=./worker-compose.yaml --timeout-ms 300000
 ```
 
 ## Use the harness
@@ -41,7 +41,7 @@ $ iii compose --namespace default
 compose serving
   engine: ws://127.0.0.1:49134
   namespace: default
-  start a project: iii trigger compose::up --namespace default file=./worker-compose.yaml
+  start a project: iii call compose::up --namespace default file=./worker-compose.yaml
 [compose] project /Users/tony/iii/projects/testing/compose/harness/worker-compose.yaml loaded into default
 ✓ state ready (1.4s)
 ✓ queue ready (1.2s)
@@ -92,7 +92,7 @@ human keys (`KAN-1`), and every mutation is a `kanban::*` function, so the board
 can also be driven from the CLI:
 
 ```bash
-iii trigger kanban::ticket::create title="Search filters persist" priority=high
+iii call kanban::ticket::create title="Search filters persist" priority=high
 ```
 
 The worker package also carries five agent profiles — `product-manager`,
@@ -127,4 +127,4 @@ Three providers authenticate without an API Key. These are experimental.
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `provider-claude-code`    | Reads `~/.claude/.credentials.json`, written by the Claude Code CLI when you sign in there                                                                                                                |
 | `provider-openai-codex`   | Reads `~/.codex/auth.json`, written by the Codex CLI when you sign in there                                                                                                                               |
-| `provider-github-copilot` | A GitHub device flow. Call `iii trigger provider::github-copilot::login::start`, enter the `user_code` it returns at the verification URL, then call `iii trigger provider::github-copilot::login::poll`. |
+| `provider-github-copilot` | A GitHub device flow. Call `iii call provider::github-copilot::login::start`, enter the `user_code` it returns at the verification URL, then call `iii call provider::github-copilot::login::poll`. |

@@ -1,7 +1,7 @@
 # bare: a minimal compose project
 
 The smallest iii project. A small `worker-compose.yaml` that starts the
-web console.
+web console (the `ade` worker).
 
 There's a lot of functionality you can bring up in iii by uncommenting
 the relevant workers in `worker-compose.yaml`. Plus many more workers on
@@ -44,7 +44,7 @@ iii compose
 In a third terminal, bring the project up:
 
 ```bash
-iii trigger compose::up
+iii call compose::up
 ```
 
 ## Use the console
@@ -65,7 +65,7 @@ compose serving
   namespace: default
 
 [compose] project /path/to/worker-compose.yaml loaded into default
-✓ console ready (1.1s)
+✓ ade ready (1.1s)
 up: 1 of 1 changed in 1.1s
 ```
 

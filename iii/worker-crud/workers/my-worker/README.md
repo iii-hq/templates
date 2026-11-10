@@ -33,10 +33,10 @@ export const MODEL = {
 | Function | `my-worker::<resource>::remove` | `{ id }` → `{ record }` |
 | Action | `my-worker::<resource>::toggle` | `{ id, field }` → `{ record }`: flip a boolean field. Public |
 | Function | `my-worker::model` | Internal. `{}` → `{ model, public_actions }` for the pages |
-| Trigger type | `my-worker:change` | Fires after every persisted write with `{ event, record, records }` (`created`, `updated`, `removed`). Config `{ events?, metadata? }`; the binding's metadata is merged with `config.metadata` (config wins) |
+| Event function | `my-worker::on-change` | Called after every persisted write with `{ event, record, records }` (`created`, `updated`, `removed`). Private: only this worker calls it. Observe it, with `filters: { 'input.event': { $in: ['created'] } }` to pick events; an observer's `metadata` reaches its target |
 | State | scope `my-worker`, key `<resource>` | The records as one JSON array |
 | HTTP | `GET /my-worker`, `GET /my-worker/:file`, `POST /my-worker/api/:fn` | `fn` is a name in `PUBLIC_CRUD` (ships `list`, `create` and `remove`), `model`, or a name in `PUBLIC_ACTIONS`. The ADE page reaches every function through the engine |
-| HTTP | `/my-worker/<path>` per `PUBLIC_ROUTES` entry | One internal function `my-worker::route::<method>::<path>` and one http trigger each; none by default |
+| HTTP | `/my-worker/<path>` per `PUBLIC_ROUTES` entry | One internal function `my-worker::route::<method>::<path>` and one `http::on-request` observer each; none by default |
 
 ## Files
 
@@ -48,7 +48,7 @@ export const MODEL = {
 | `web/client.ts` | no | `call(name, payload)` and `createApi(client)`: `api.list()`, `api.create(...)`, … |
 | `src/record.ts` | no | `Model`, `checkModel`, validation, create/update/remove, parse, sort, counts, schemas |
 | `src/functions.ts` | no | `registerDomain`: CRUD and `my-worker::model` from the model |
-| `src/store.ts` | no | `createCollection`: state, one write queue, the `my-worker:change` trigger type |
+| `src/store.ts` | no | `createCollection`: state, one write queue, the `my-worker::on-change` event function |
 | `src/web.ts` | no | HTTP handlers; `API_FUNCTIONS` derived from the model, `PUBLIC_CRUD` and `PUBLIC_ACTIONS` |
 | `src/routes.ts` | no | `PUBLIC_ROUTES` plumbing: `PublicRoute`, `redirect`, `checkRoutes`, `registerRoutes`; imports nothing from the app, so actions can use it without a cycle |
 | `src/index.ts` | no | Plumbing: worker, `info`, ADE assets, HTTP routes, shutdown |

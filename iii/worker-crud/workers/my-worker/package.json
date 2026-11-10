@@ -2,7 +2,7 @@
   "name": "my-worker",
   "version": "0.1.0",
   "private": true,
-  "description": "Model-driven record app on iii: src/model.ts drives CRUD functions, a change trigger type and the ADE admin page; a public page over HTTP",
+  "description": "Model-driven record app on iii: src/model.ts drives CRUD functions, a change event function and the ADE admin page; a public page over HTTP",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -15,7 +15,7 @@
     "typecheck": "tsc -p tsconfig.json && tsc -p ui/tsconfig.json"
   },
   "dependencies": {
-    "iii-sdk": "^0.24.2",
+    "iii-sdk": "0.26.0",
     "tsx": "^4.19.0"
   },
   "devDependencies": {

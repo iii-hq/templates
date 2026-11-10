@@ -6,7 +6,7 @@
 #   iii compose --up
 #
 # The quickstart tutorial adds workers into this file as you go, with
-#   iii trigger compose::add worker=<path-or-name>
+#   iii call compose::add worker=<path-or-name>
 namespace: default
 
 engine:

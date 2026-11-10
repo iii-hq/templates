@@ -47,9 +47,9 @@ const ENDPOINTS = [
     description: 'Greets a name with the saved greeting.',
   },
   {
-    label: 'Trigger type',
-    value: 'my-worker:hello',
-    description: 'Fires after every greeting with { name, message }.',
+    label: 'Event function',
+    value: 'my-worker::on-hello',
+    description: 'Called after every greeting with { name, message }; observe it to react.',
   },
   {
     label: 'Public page',

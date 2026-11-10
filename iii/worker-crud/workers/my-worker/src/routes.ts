@@ -34,7 +34,7 @@ export type PublicRoute<Ctx = unknown> = {
 /** The part of the SDK client route registration needs (a test passes a fake). */
 export type RouteIii = {
   registerFunction(id: string, handler: (req: HttpRequest) => Promise<HttpResponse>, options?: { description?: string; metadata?: Record<string, unknown> }): unknown
-  registerTrigger(trigger: { type: string; function_id: string; config: Record<string, unknown> }): unknown
+  observe(source: { function_id: string; args: Record<string, unknown> }, target: string): unknown
 }
 
 /** A redirect answer for a route handler: `302` (or `status`) to `location`. */
@@ -86,7 +86,7 @@ export function checkRoutes(routes: readonly Pick<PublicRoute, 'method' | 'path'
   }
 }
 
-/** Registers one internal function and one http trigger per route, at
+/** Registers one internal function and one http::on-request observer per route, at
     WEB_PATH/<path>. A handler that throws answers 500 with its message. */
 export function registerRoutes<Ctx>(iii: RouteIii, routes: readonly PublicRoute<Ctx>[], ctx: Ctx): string[] {
   checkRoutes(routes)
@@ -104,7 +104,7 @@ export function registerRoutes<Ctx>(iii: RouteIii, routes: readonly PublicRoute<
       },
       { description: `${route.method} ${WEB_PATH}/${path}: a public route from src/actions.ts.`, metadata: { internal: true } },
     )
-    iii.registerTrigger({ type: 'http', function_id: id, config: { api_path: `${WEB_PATH}/${path}`, http_method: route.method } })
+    iii.observe({ function_id: 'http::on-request', args: { method: route.method, path: `${WEB_PATH}/${path}` } }, id)
     return id
   })
 }

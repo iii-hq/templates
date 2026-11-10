@@ -10,7 +10,7 @@ An iii worker with one function and two pages: the public page users open in a b
 | Function | `my-worker::info` | Internal. `{}` → `{ web_url, web_path, greeting }`: where the public page answers (`web_url` is `III_HTTP_URL` plus `/my-worker`, or `null` when it is unset; `web_path` is `/my-worker`) and the live greeting. Feeds the ADE page's **Open public page** button |
 | Function | `my-worker::set-greeting` | Internal. `{ greeting }` → `{ greeting }`: trimmed, 1 to 40 characters, saved in the `my-worker` configuration. The ADE page's Save calls it; it is not on the HTTP allowlist |
 | Configuration | `my-worker` | `{ greeting }`, seeded with `Hello`, reloaded by `my-worker::config-changed` |
-| Trigger type | `my-worker:hello` | Fires after every greeting with `{ name, message }`; a binding's `metadata` is passed through |
+| Event function | `my-worker::on-hello` | Called after every greeting with `{ name, message }`; observe it (`iii.observe('my-worker::on-hello', '<your function>')`), and an observer's `metadata` reaches its target |
 | ADE assets | `my-worker/page.js`, `my-worker/styles.css` | Served by `my-worker::ui-content` from `dist/ui` |
 | HTTP | `GET /my-worker`, `GET /my-worker/:file`, `POST /my-worker/api/:fn` | Page, `app.js`/`styles.css`, allowlisted functions |
 
@@ -18,7 +18,7 @@ An iii worker with one function and two pages: the public page users open in a b
 
 | Path | Role |
 |---|---|
-| `src/index.ts` | Registrations: functions, configuration, trigger type, ADE assets, HTTP routes |
+| `src/index.ts` | Registrations: functions, configuration, event function, ADE asset observers, HTTP route observers |
 | `src/hello.ts` | Pure domain logic (the greeting and its validation), tested without an engine |
 | `src/ui-assets.ts` | `my-worker::ui-content`: reads `dist/ui` on request, so a start without a build still runs |
 | `src/web.ts` | HTTP handlers and their allowlists |

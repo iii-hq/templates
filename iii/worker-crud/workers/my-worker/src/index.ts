@@ -1,6 +1,6 @@
 // Plumbing only. The app is src/model.ts; src/functions.ts registers CRUD
 // from it, src/actions.ts the domain actions, src/store.ts the state and the
-// my-worker:change trigger type, src/record.ts the generic rules.
+// my-worker::on-change event function, src/record.ts the generic rules.
 import { fileURLToPath } from 'node:url'
 import { registerWorker } from 'iii-sdk'
 import type { RegisterFunctionFormat } from 'iii-sdk/protocol'
@@ -19,7 +19,7 @@ const iii = registerWorker(process.env.III_URL, {
   workerDescription: 'Records described by src/model.ts, kept in the state worker: a live list in the ADE and a public page over HTTP.',
 })
 
-// --- The domain: my-worker::<resource>::*, my-worker::model and the my-worker:change trigger type ---
+// --- The domain: my-worker::<resource>::*, my-worker::model and the my-worker::on-change event function ---
 
 const ctx = registerDomain(iii)
 
@@ -51,7 +51,7 @@ iii.registerFunction('my-worker::info', async () => ({ web_url: WEB_URL, web_pat
   metadata: { internal: true },
 })
 
-// --- Admin page in the ADE: the console loads dist/ui through console:script/console:style ---
+// --- Admin page in the ADE: the console loads dist/ui through ade::ui::asset observers ---
 
 iii.registerFunction('my-worker::ui-content', uiContent(fileURLToPath(new URL('dist/ui', root))), {
   description: 'Serve this worker’s ADE page assets.',
@@ -59,13 +59,13 @@ iii.registerFunction('my-worker::ui-content', uiContent(fileURLToPath(new URL('d
   response_format: UI_CONTENT_RESPONSE,
   metadata: { internal: true },
 })
-iii.registerTrigger({ type: 'console:script', function_id: 'my-worker::ui-content', config: { path: 'my-worker/page.js' } })
-iii.registerTrigger({ type: 'console:style', function_id: 'my-worker::ui-content', config: { path: 'my-worker/styles.css' } })
+iii.observe({ function_id: 'ade::ui::asset', args: { kind: 'script', path: 'my-worker/page.js' } }, 'my-worker::ui-content')
+iii.observe({ function_id: 'ade::ui::asset', args: { kind: 'style', path: 'my-worker/styles.css' } }, 'my-worker::ui-content')
 
 // --- Public page over HTTP (the http worker; http::status reports its address) ---
 
 const web = webHandlers(fileURLToPath(new URL('dist/web', root)), (fn, payload) =>
-  iii.trigger({ function_id: `my-worker::${fn}`, payload }),
+  iii.call({ function_id: `my-worker::${fn}`, payload }),
 )
 iii.registerFunction('my-worker::http-page', web.page, {
   description: 'GET /my-worker: the public page.',
@@ -79,9 +79,9 @@ iii.registerFunction('my-worker::http-api', web.api, {
   description: 'POST /my-worker/api/:fn: call an allowlisted my-worker function.',
   metadata: { internal: true },
 })
-iii.registerTrigger({ type: 'http', function_id: 'my-worker::http-page', config: { api_path: '/my-worker', http_method: 'GET' } })
-iii.registerTrigger({ type: 'http', function_id: 'my-worker::http-asset', config: { api_path: '/my-worker/:file', http_method: 'GET' } })
-iii.registerTrigger({ type: 'http', function_id: 'my-worker::http-api', config: { api_path: '/my-worker/api/:fn', http_method: 'POST' } })
+iii.observe({ function_id: 'http::on-request', args: { method: 'GET', path: '/my-worker' } }, 'my-worker::http-page')
+iii.observe({ function_id: 'http::on-request', args: { method: 'GET', path: '/my-worker/:file' } }, 'my-worker::http-asset')
+iii.observe({ function_id: 'http::on-request', args: { method: 'POST', path: '/my-worker/api/:fn' } }, 'my-worker::http-api')
 
 // --- Public routes from src/actions.ts (PUBLIC_ROUTES), each on /my-worker/<path> ---
 

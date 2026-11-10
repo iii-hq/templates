@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { type ChangeConfig, type CollectionIii, createCollection } from '../src/store.js'
+import { type CollectionIii, createCollection } from '../src/store.js'
 
 // A tiny local record type: the store is generic and knows nothing of the model.
 type Item = { id: string; title: string; done: boolean; created_at: string }
@@ -17,21 +17,20 @@ function updateItem(current: Item[], input: { id: string; done: boolean }) {
   return { record, records: current.map((item) => (item.id === record.id ? record : item)) }
 }
 
-type Call = { function_id: string; namespace?: string; payload: unknown; metadata?: unknown }
-type Handlers = {
-  registerTrigger: (binding: unknown) => Promise<void>
-  unregisterTrigger: (binding: unknown) => Promise<void>
-}
+type Call = { function_id: string; namespace?: string; payload: unknown; action?: unknown }
+type Registered = { id: string; options?: { private?: boolean; description?: string } }
 
-/** A fake engine: state in a Map, every trigger call recorded, and the
-    trigger type's handlers captured so a test can bind to it. */
+/** A fake engine: state in a Map, every call recorded, and the registered
+    functions captured; `observed` says whether the event function has an
+    observer, as FunctionRef.isObserved() would. */
 function fakeIii(options: { delayMs?: number } = {}) {
   const state = new Map<string, unknown>()
   const calls: Call[] = []
-  const types: { id: string; handlers: Handlers }[] = []
+  const functions: Registered[] = []
+  const fake = { observed: false }
   const sleep = () => new Promise((resolve) => setTimeout(resolve, options.delayMs ?? 0))
   const iii = {
-    async trigger(request: Call) {
+    async call(request: Call) {
       calls.push(request)
       const { scope, key, value } = (request.payload ?? {}) as { scope?: string; key?: string; value?: unknown }
       if (request.function_id === 'state::get') {
@@ -45,12 +44,12 @@ function fakeIii(options: { delayMs?: number } = {}) {
       }
       return undefined
     },
-    registerTriggerType(info: { id: string }, handlers: Handlers) {
-      types.push({ id: info.id, handlers })
-      return { unregister() {} }
+    registerFunction(id: string, _handler: unknown, options?: Registered['options']) {
+      functions.push({ id, options })
+      return { id, isObserved: () => fake.observed, unregister() {} }
     },
   }
-  return { iii: iii as unknown as CollectionIii, state, calls, types }
+  return Object.assign(fake, { iii: iii as unknown as CollectionIii, state, calls, functions })
 }
 
 function collection(fake: ReturnType<typeof fakeIii>) {
@@ -61,13 +60,10 @@ const emitted = (fake: ReturnType<typeof fakeIii>) =>
   fake.calls.filter((call) => !call.function_id.startsWith('state::'))
 
 describe('createCollection', () => {
-  it('registers the my-worker:change trigger type', () => {
+  it('registers the private my-worker::on-change event function', () => {
     const fake = fakeIii()
     collection(fake)
-    assert.deepEqual(
-      fake.types.map((type) => type.id),
-      ['my-worker:change'],
-    )
+    assert.deepEqual(fake.functions.map((fn) => [fn.id, fn.options?.private]), [['my-worker::on-change', true]])
   })
 
   it('reads an absent key as an empty list and persists through state::set without a namespace', async () => {
@@ -100,45 +96,25 @@ describe('createCollection', () => {
     assert.equal((await items.list()).length, 1)
   })
 
-  it('emits { event, record, records } with config metadata laid over binding metadata', async () => {
+  it('calls my-worker::on-change with { event, record, records } only while it is observed', async () => {
     const fake = fakeIii()
     const items = collection(fake)
-    const { handlers } = fake.types[0]
-    const bind = (id: string, config: ChangeConfig, metadata?: Record<string, unknown>) =>
-      handlers.registerTrigger({ id, function_id: `fn::${id}`, namespace: 'ns', config, metadata })
-    await bind('one', { metadata: { from: 'config' } }, { from: 'binding', route: 'wake' })
-    await bind('two', {}, { from: 'binding' })
-    await bind('three', {})
-    await bind('four', { events: ['removed'] })
+    await items.mutate('created', (current) => createItem(current, { title: 'a' }, 'id-1', 'now'))
+    assert.deepEqual(emitted(fake), [], 'nothing observes it yet')
 
-    const { record } = await items.mutate('created', (current) => createItem(current, { title: 'a' }, 'id-1', 'now'))
+    fake.observed = true
+    const { record } = await items.mutate('updated', (current) => updateItem(current, { id: 'id-1', done: true }))
     const calls = emitted(fake)
-    assert.deepEqual(
-      calls.map((call) => call.function_id),
-      ['fn::one', 'fn::two', 'fn::three'],
-    )
-    for (const call of calls) {
-      assert.equal(call.namespace, 'ns')
-      assert.deepEqual(call.payload, { event: 'created', record, records: [record] })
-    }
-    // Config wins on a shared key; the binding's own keys (a wake's routing) survive.
-    assert.deepEqual(calls[0].metadata, { from: 'config', route: 'wake' })
-    assert.deepEqual(calls[1].metadata, { from: 'binding' })
-    assert.equal('metadata' in calls[2], false)
-
-    await handlers.unregisterTrigger({ id: 'one' })
-    fake.calls.length = 0
-    await items.mutate('updated', (current) => updateItem(current, { id: 'id-1', done: true }))
-    assert.deepEqual(
-      emitted(fake).map((call) => call.function_id),
-      ['fn::two', 'fn::three'],
-    )
+    assert.deepEqual(calls.map((call) => call.function_id), ['my-worker::on-change'])
+    assert.deepEqual(calls[0].payload, { event: 'updated', record, records: [record] })
+    assert.deepEqual(calls[0].action, { type: 'void' }, 'fire-and-forget: a slow observer never blocks a write')
+    assert.equal(calls[0].namespace, undefined)
   })
 
   it('emits nothing when the change fails', async () => {
     const fake = fakeIii()
+    fake.observed = true
     const items = collection(fake)
-    await fake.types[0].handlers.registerTrigger({ id: 'one', function_id: 'fn::one', config: {} })
     await assert.rejects(items.mutate('removed', () => {
       throw new Error('nope')
     }), /nope/)

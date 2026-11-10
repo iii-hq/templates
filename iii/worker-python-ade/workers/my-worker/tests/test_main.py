@@ -1,4 +1,4 @@
-"""my-worker::hello, its settings, its trigger type and its ADE assets, on the fake bus."""
+"""my-worker::hello, its settings, its event function and its ADE assets, on the fake bus."""
 
 import asyncio
 import os
@@ -6,7 +6,6 @@ import signal
 import threading
 
 import pytest
-from iii.triggers import TriggerConfig
 
 import src.main
 from src.main import NAME, SETTINGS_SCHEMA, WEB_PATH, build_greeting, normalize_greeting, register, web_url
@@ -16,14 +15,9 @@ def hello(bus, payload):
     return asyncio.run(bus.functions[f"{NAME}::hello"](payload))
 
 
-def subscribe(bus, binding_id, function_id, config, metadata=None):
-    binding = TriggerConfig(id=binding_id, function_id=function_id, config=config, metadata=metadata)
-    asyncio.run(bus.trigger_types[f"{NAME}:hello"].register_trigger(binding))
-    return binding
-
-
-def fired(bus):
-    return {call["function_id"]: call for call in bus.calls if call["function_id"].startswith("sub::")}
+def config_observer(bus):
+    (observer,) = [o for o in bus.observers if o["source"]["function_id"] == "configuration::on-updated"]
+    return observer
 
 
 def test_build_greeting():
@@ -56,7 +50,7 @@ def test_info_gives_the_page_path_and_the_live_greeting(bus, dist, monkeypatch):
     info = bus.functions[f"{NAME}::info"]
     assert info({}) == {"web_url": None, "web_path": f"/{NAME}", "greeting": "Hello"}
     monkeypatch.setenv("III_HTTP_URL", "https://iii.example.com/")
-    bus.functions[f"{NAME}::config-changed"]({"new_value": {"greeting": "Hey"}})
+    bus.functions[f"{NAME}::config-changed"]({"input": {"new_value": {"greeting": "Hey"}}})
     assert info({}) == {"web_url": f"https://iii.example.com/{NAME}", "web_path": f"/{NAME}", "greeting": "Hey"}
 
 
@@ -77,9 +71,14 @@ def test_settings_are_ensured_then_read(bus, dist):
 
 def test_settings_update_changes_the_greeting(bus, dist):
     register(bus, dist)
-    (binding,) = [trigger for trigger in bus.triggers if trigger["type"] == "configuration"]
-    assert binding["config"] == {"configuration_id": NAME, "event_types": ["configuration:updated"]}
-    bus.functions[binding["function_id"]]({"new_value": {"greeting": "Hey"}})
+    observer = config_observer(bus)
+    assert observer["source"] == {
+        "function_id": "configuration::on-updated",
+        "filters": {"input.id": {"$eq": NAME}, "input.event_type": {"$eq": "configuration:updated"}},
+        "capture": ["input"],
+    }
+    assert "args" not in observer["source"], "configuration::on-updated takes no args"
+    bus.functions[observer["target"]]({"input": {"new_value": {"greeting": "Hey"}}})
     assert hello(bus, {}) == {"message": "Hey, World!"}
 
 
@@ -88,11 +87,11 @@ def test_an_empty_stored_greeting_falls_back_to_the_default(bus, dist, stored):
     bus.settings = stored
     register(bus, dist)
     assert hello(bus, {"name": "Ada"}) == {"message": "Hello, Ada!"}
-    (binding,) = [trigger for trigger in bus.triggers if trigger["type"] == "configuration"]
-    bus.functions[binding["function_id"]]({"new_value": {"greeting": " Hey "}})
+    target = config_observer(bus)["target"]
+    bus.functions[target]({"input": {"new_value": {"greeting": " Hey "}}})
     assert hello(bus, {}) == {"message": "Hey, World!"}
     for bad in ({"greeting": ""}, "not a value", None):
-        bus.functions[binding["function_id"]]({"new_value": bad})
+        bus.functions[target]({"input": {"new_value": bad}})
         assert hello(bus, {}) == {"message": "Hello, World!"}
 
 
@@ -114,20 +113,18 @@ def test_set_greeting_refuses_a_bad_greeting_without_saving_it(bus, dist):
     assert hello(bus, {}) == {"message": "Hello, World!"}
 
 
-def test_hello_fires_the_trigger_type_with_the_subscriber_metadata(bus, dist):
+def test_hello_calls_its_private_event_function_only_while_it_is_observed(bus, dist):
     register(bus, dist)
-    first = subscribe(bus, "t1", "sub::first", {"metadata": {"from": "config"}}, {"from": "binding"})
-    subscribe(bus, "t2", "sub::second", {}, {"from": "binding"})
-
+    assert bus.options[f"{NAME}::on-hello"]["private"] is True
     hello(bus, {"name": "Ada"})
-    assert fired(bus)["sub::first"]["payload"] == {"name": "Ada", "message": "Hello, Ada!"}
-    assert fired(bus)["sub::first"]["metadata"] == {"from": "config"}
-    assert fired(bus)["sub::second"]["metadata"] == {"from": "binding"}
+    assert not bus.called(f"{NAME}::on-hello"), "nothing observes it yet"
 
-    asyncio.run(bus.trigger_types[f"{NAME}:hello"].unregister_trigger(first))
-    bus.calls.clear()
+    bus.observed.add(f"{NAME}::on-hello")
     hello(bus, {"name": "Ada"})
-    assert list(fired(bus)) == ["sub::second"]
+    (call,) = bus.called(f"{NAME}::on-hello")
+    assert call["payload"] == {"name": "Ada", "message": "Hello, Ada!"}
+    assert call["action"].type == "void", "fire-and-forget: a slow observer never delays hello"
+    assert "metadata" not in call, "iii delivers an observer's metadata; the worker forwards none"
 
 
 def test_ui_content_serves_both_assets_and_rejects_others(bus, dist):
@@ -140,8 +137,15 @@ def test_ui_content_serves_both_assets_and_rejects_others(bus, dist):
     assert content({"path": f"{NAME}/styles.css"})["content_type"] == "text/css"
     with pytest.raises(ValueError, match="Unknown UI asset"):
         content({"path": f"{NAME}/../../pyproject.toml"})
-    assets = {(t["type"], t["config"]["path"]) for t in bus.triggers if t["type"].startswith("console:")}
-    assert assets == {("console:script", f"{NAME}/page.js"), ("console:style", f"{NAME}/styles.css")}
+    assets = {
+        (o["source"]["args"]["kind"], o["source"]["args"]["path"], o["target"])
+        for o in bus.observers
+        if o["source"]["function_id"] == "ade::ui::asset"
+    }
+    assert assets == {
+        ("script", f"{NAME}/page.js", f"{NAME}::ui-content"),
+        ("style", f"{NAME}/styles.css", f"{NAME}::ui-content"),
+    }
 
 
 def test_ui_content_names_the_fix_when_the_build_is_missing(bus, dist):
@@ -152,9 +156,13 @@ def test_ui_content_names_the_fix_when_the_build_is_missing(bus, dist):
         bus.functions[f"{NAME}::ui-content"]({"path": f"{NAME}/page.js"})
 
 
-def test_every_function_but_hello_is_internal(bus, dist):
+def test_every_function_but_hello_is_internal_or_private(bus, dist):
     register(bus, dist)
-    public = [fid for fid, options in bus.options.items() if not (options.get("metadata") or {}).get("internal")]
+    public = [
+        fid
+        for fid, options in bus.options.items()
+        if not (options.get("metadata") or {}).get("internal") and not options.get("private")
+    ]
     assert public == [f"{NAME}::hello"]
 
 

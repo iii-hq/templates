@@ -15,9 +15,9 @@ API = ("POST", f"/{NAME}/api/:fn")
 def routes(bus, dist):
     register(bus, dist)
     return {
-        (t["config"]["http_method"], t["config"]["api_path"]): bus.functions[t["function_id"]]
-        for t in bus.triggers
-        if t["type"] == "http"
+        (o["source"]["args"]["method"], o["source"]["args"]["path"]): bus.functions[o["target"]]
+        for o in bus.observers
+        if o["source"]["function_id"] == "http::on-request"
     }
 
 

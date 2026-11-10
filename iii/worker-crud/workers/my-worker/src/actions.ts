@@ -19,7 +19,7 @@ export const PUBLIC_CRUD: readonly ('list' | 'get' | 'create' | 'update' | 'remo
 export const PUBLIC_ACTIONS: readonly string[] = ['toggle']
 
 /** Routes on their own public paths, relative to /my-worker; the plumbing
-    (registerRoutes in src/routes.ts) registers each with an http trigger. The
+    (registerRoutes in src/routes.ts) observes http::on-request for each. The
     first segment must be static (`go/:slug`, not `:slug`); `api/...` and a
     one-segment GET (the asset route `:file`) are refused at startup, as are
     two routes that match the same URLs. A route answers with what its handler

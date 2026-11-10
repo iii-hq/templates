@@ -4,10 +4,10 @@ A minimal Python worker project with one function, `hello-python::greet`. Develo
 
 ## Prerequisites
 
-- iii 0.23.0 or newer
+- iii 0.26.0 or newer
 - Python 3.11 or newer, including the standard-library `venv` module
 
-The Console container is commented out in `worker-compose.yaml`; `http://127.0.0.1:3113` is available only after you enable that container.
+The ADE container is commented out in `worker-compose.yaml`; `http://127.0.0.1:3113` is available only after you enable that container.
 
 ## Automatic host setup
 
@@ -45,7 +45,7 @@ iii compose --up
 In terminal 2, also from the generated project root, call the worker:
 
 ```sh
-iii trigger hello-python::greet name=World
+iii call hello-python::greet name=World
 ```
 
 Expected response:
@@ -82,10 +82,10 @@ Do this before publishing a bundle so the guest install and start recipes are ex
 3. Restart only this worker:
 
    ```sh
-   iii trigger compose::restart container=hello-python
+   iii call compose::restart container=hello-python
    ```
 
-4. Inspect `iii trigger engine::workers::list` and require `isolation: libkrun` for `hello-python`, then call `hello-python::greet` again. If startup fails, inspect the actual Compose logs; do not rely on a mode banner.
+4. Inspect `iii call engine::workers::list` and require `isolation: libkrun` for `hello-python`, then call `hello-python::greet` again. If startup fails, inspect the actual Compose logs; do not rely on a mode banner.
 
 The guest runs `python -m pip install -e .` and then the manifest start command. It does not use `.venv`. You do not normally need to remove host dependencies. If a platform-specific dependency is unexpectedly shared into the guest, stop this worker, move `.venv` temporarily outside the worker directory, retry, and restore it before returning to host mode.
 
