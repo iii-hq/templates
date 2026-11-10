@@ -10,6 +10,12 @@
 #
 # Each chapter has its own block. As the agent builds a chapter, it creates that
 # chapter's worker and uncomments the block here.
+#
+# Those workers run in microVMs, and their `scripts` say so: `iii sandbox build`
+# builds a worker's image into .build/<container>/ on its first start, and
+# `iii sandbox run` boots that image. Each one's iii.worker.yaml sets
+# runtime.base_image. sandbox-libkrun, in the Ch. 1 block, is the adapter that
+# builds and boots them.
 namespace: default
 startup_timeout: 360s
 
@@ -35,10 +41,21 @@ containers:
 
   # Ch. 1: your link worker. Build it, install its deps, then add it with
   # `iii call compose::add worker=./link`. http and state above are ready for it.
+  # The two blocks below are what compose::add writes: link and the
+  # sandbox-libkrun adapter that runs it. To enable link by hand, uncomment both.
   # link:
   #   worker: path://./link
-  #   # Ch. 3: the schema is created at startup, after database is up.
-  #   # start_after: [database]
+  #   start_after:
+  #     - sandbox-libkrun
+  #     # Ch. 3: the schema is created at startup, after database is up.
+  #     # - database
+  #   scripts:
+  #     build: iii sandbox build
+  #     run: iii sandbox run
+  # added by compose::add
+  # sandbox-libkrun:
+  #   worker: package://api.workers.iii.dev/sandbox-libkrun
+  #   version: "0.4.0"
 
   # The agent stack. llm-router and the providers read your keys from .env. The
   # Anthropic and OpenAI providers ship enabled; add another after `iii compose
@@ -180,16 +197,26 @@ containers:
   # events on durable topics with iii::durable::publish.
   # analytics:
   #   worker: path://./analytics
-  #   start_after: [database, queue]
+  #   start_after: [database, queue, sandbox-libkrun]
+  #   scripts:
+  #     build: iii sandbox build
+  #     run: iii sandbox run
 
   # Ch. 5: the live click feed, an event function owned by click-streamer.
   # click-streamer:
   #   worker: path://./click-streamer
+  #   start_after: [sandbox-libkrun]
+  #   scripts:
+  #     build: iii sandbox build
+  #     run: iii sandbox run
 
   # Ch. 6: bulk CSV import over a channel.
   # bulk-importer:
   #   worker: path://./bulk-importer
-  #   start_after: [link]
+  #   start_after: [link, sandbox-libkrun]
+  #   scripts:
+  #     build: iii sandbox build
+  #     run: iii sandbox run
 
   # Ch. 7: browser connections. The rbac-proxy worker fronts a public port and
   # admits browsers via auth::browser; the engine's 49134 stays the trusted
@@ -211,3 +238,7 @@ containers:
   #         - match("click-streamer::on-click")
   # auth:
   #   worker: path://./auth
+  #   start_after: [sandbox-libkrun]
+  #   scripts:
+  #     build: iii sandbox build
+  #     run: iii sandbox run
