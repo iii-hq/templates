@@ -69,7 +69,7 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=workers/hello-python \
 
 ## Optional: run this checkout in a VM
 
-Do this before publishing a bundle so the guest install and start recipes are exercised. Compose resolves a non-empty `runtime.base_image` to a VM even when `scripts.run` exists, but remove the host override as well so the test uses the exact manifest `scripts.start` command that a bundle uses.
+Do this before publishing a bundle so the guest install and start recipes are exercised. In a VM, Compose builds an image of the worker with the manifest's `scripts.install` (`iii sandbox build`) and boots it with the manifest's `scripts.start` (`iii sandbox run`), the commands a bundle uses. This needs an iii release that has `iii sandbox build`.
 
 1. In `workers/hello-python/iii.worker.yaml`, uncomment:
 
@@ -78,20 +78,33 @@ Do this before publishing a bundle so the guest install and start recipes are ex
      base_image: docker.io/iiidev/python:latest
    ```
 
-2. In `worker-compose.yaml`, remove or comment the complete `scripts:` block under `hello-python`, including `pre_run`, `pre_run_timeout`, and `run`. Compose hooks execute on the host even for a VM worker; leaving `pre_run` enabled would unnecessarily prepare host dependencies.
-3. Restart only this worker:
+2. In `worker-compose.yaml`, remove or comment the complete `scripts:` block under `hello-python`, including `pre_run`, `pre_run_timeout`, and `run`. Compose hooks execute on the host even for a VM worker; leaving `pre_run` enabled would unnecessarily prepare host dependencies. A `run` left in place would keep running, inside the VM, as `iii sandbox run --command '<run>'` instead of the manifest's `scripts.start`.
+3. Restart the project so Compose reads the change:
 
    ```sh
-   iii call compose::restart container=hello-python
+   iii call compose::restart
    ```
+
+   With `runtime.base_image` set and no `scripts.build`, Compose moves the container into a VM. It writes the VM mode into `worker-compose.yaml` and adds the `sandbox-libkrun` container, the adapter that builds and boots the VM:
+
+   ```yaml
+     hello-python:
+       worker: path://./workers/hello-python
+       start_after: [sandbox-libkrun]
+       scripts:
+         build: iii sandbox build
+         run: iii sandbox run
+   ```
+
+   The first start builds the image into `.build/hello-python/`, which git ignores; later starts boot it without installing anything. After changing dependencies in `pyproject.toml`, run `iii sandbox build hello-python`, then `iii call compose::restart container=hello-python`.
 
 4. Inspect `iii call engine::workers::list` and require `isolation: libkrun` for `hello-python`, then call `hello-python::greet` again. If startup fails, inspect the actual Compose logs; do not rely on a mode banner.
 
-The guest runs `python -m pip install -e .` and then the manifest start command. It does not use `.venv`. You do not normally need to remove host dependencies. If a platform-specific dependency is unexpectedly shared into the guest, stop this worker, move `.venv` temporarily outside the worker directory, retry, and restore it before returning to host mode.
+The build and the live sync of your source leave out `.venv`, so host dependencies never reach the guest.
 
-To return to host development, comment the `runtime`/`base_image` block, restore the
-entire Compose `scripts` block (`pre_run`, `pre_run_timeout`, and `run`), and restart
-only `hello-python` with the command above. The hook recreates the venv if needed
+To return to host development, comment the `runtime`/`base_image` block, replace the VM `scripts` with the
+entire host block (`pre_run`, `pre_run_timeout`, and `run`), remove `sandbox-libkrun` from `start_after`,
+and restart the project with `iii call compose::restart`. The hook recreates the venv if needed
 and installs dependencies before the host worker starts.
 
 ## Publishing the worker
