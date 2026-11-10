@@ -176,9 +176,8 @@ export function WorkerPage({ host, onClose }: { host: Host; onClose?: () => void
 
   const { data, loading, refresh } = useWorkerLive({
     iii: host.iii,
-    triggers: ['my-worker:change'],
+    sources: ['my-worker::on-change'],
     fetch: fetchList,
-    pollMs: 3000,
     handlerId: 'iii::my-worker-ui::events',
   })
   // The first fetch can run before the model arrives; fetch again once it has.
