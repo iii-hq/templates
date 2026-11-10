@@ -3,6 +3,10 @@
 .env.*
 data/
 config/
+# iii Compose: package copies (.workers/, rebuilt from worker-compose.lock) and
+# builds (.build/, VM images included, rebuilt by scripts.build)
+.workers/
+.build/
 
 #Sqlite
 *.db
