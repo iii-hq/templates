@@ -180,6 +180,56 @@ static_python_ade_checks() {
 }
 static_python_ade_checks
 
+# Compose's explicit VM mode: a worker whose iii.worker.yaml sets
+# runtime.base_image runs in a VM only when its container says so (the adapter
+# in start_after, scripts.build: iii sandbox build, scripts.run: iii sandbox
+# run); without scripts.build, Compose rewrites the file on the next run. Every
+# Linkly worker sets base_image, so every Linkly path:// block, live or
+# commented, carries all three, and the adapter is declared as compose::add
+# writes it.
+assert_count() {
+  local path="$1" pattern="$2" expected="$3" found
+  found="$(grep -Ec -- "$pattern" "$path" || true)"
+  if [[ "$found" != "$expected" ]]; then
+    echo "error: expected $expected lines matching '$pattern' in $path, found $found" >&2
+    exit 1
+  fi
+}
+
+static_vm_checks() {
+  local gitignore="$TEMPLATE_DIR/default-gitignore"
+  local entry template compose workers worker
+  for entry in .iii/workers/ .iii/build/; do
+    if ! grep -qxF "$entry" "$gitignore"; then
+      echo "error: $gitignore does not ignore $entry" >&2
+      exit 1
+    fi
+  done
+  for worker in link analytics click-streamer bulk-importer auth; do
+    if ! grep -Eq '^[[:space:]]+base_image:' "$TEMPLATE_DIR/linkly/$worker/iii.worker.yaml"; then
+      echo "error: linkly/$worker no longer sets runtime.base_image; revisit its compose block" >&2
+      exit 1
+    fi
+  done
+  for template in linkly linkly-agentic; do
+    compose="$TEMPLATE_DIR/$template/worker-compose.yaml"
+    workers="$(grep -Ec '^  (# )?  worker: path://' "$compose" || true)"
+    assert_count "$compose" '^  (# )?    build: iii sandbox build$' "$workers"
+    assert_count "$compose" '^  (# )?    run: iii sandbox run$' "$workers"
+    assert_count "$compose" '^  (# )?  start_after: \[(.*, )?sandbox-libkrun\]$|^  (# )?    - sandbox-libkrun$' "$workers"
+    assert_count "$compose" '^  (# )?sandbox-libkrun:$' 1
+    if ! grep -B1 -E '^  (# )?sandbox-libkrun:$' "$compose" | head -1 | grep -qxF '  # added by compose::add'; then
+      echo "error: the sandbox-libkrun block in $compose is not marked '# added by compose::add'" >&2
+      exit 1
+    fi
+    assert_contains "$compose" 'worker: package://api.workers.iii.dev/sandbox-libkrun'
+    assert_contains "$compose" 'version: "0.4.0"'
+  done
+  # Ch. 1 ships link live in linkly, so its adapter is live too.
+  assert_count "$TEMPLATE_DIR/linkly/worker-compose.yaml" '^  sandbox-libkrun:$' 1
+}
+static_vm_checks
+
 if [[ "${1:-}" == "--static-only" ]]; then
   echo "static template checks passed"
   exit 0
@@ -189,6 +239,14 @@ if ! command -v iii >/dev/null 2>&1; then
   echo "error: iii is not installed or not on PATH" >&2
   exit 127
 fi
+
+# The explicit VM mode (scripts.build, `iii sandbox build`) ships after 0.26.
+# A Linkly file with a live VM worker uses scripts.build, which an older
+# Compose refuses, so its `iii compose build` checks only run when the
+# installed iii has `iii sandbox build`.
+explicit_vm_mode_supported() {
+  iii sandbox build --help >/dev/null 2>&1
+}
 
 # `iii worker` was removed in 0.23: worker lifecycle moved to Worker Compose and
 # the worker-bare scaffolder is no longer reachable from the CLI. Older channels
@@ -287,6 +345,9 @@ done
 
 # Chapter 1 is live; every later chapter is commented out.
 assert_contains "$LINKLY_DIR/worker-compose.yaml" "worker: path://./link"
+assert_contains "$LINKLY_DIR/worker-compose.yaml" "      build: iii sandbox build"
+assert_contains "$LINKLY_DIR/worker-compose.yaml" "      run: iii sandbox run"
+assert_contains "$LINKLY_DIR/.gitignore" ".iii/build/"
 assert_contains "$LINKLY_DIR/worker-compose.yaml" "  # database:"
 
 # Every source file carries a tagged block for each chapter that touches it.
@@ -321,12 +382,26 @@ with open(sys.argv[1]) as handle:
         else:
             print(line)
 PYEOF
-(
-  cd "$LINKLY_DIR"
-  cp "$TMP_DIR/linkly-all-on.yaml" ./all-on.yaml
-  iii compose build --file all-on.yaml
-  rm -f ./all-on.yaml
-)
+# A VM container the file does not place is due for Compose's rewrite. The first
+# build writes the lock and would rewrite such a container; the file must come
+# out unchanged. `--frozen` never edits the file and fails with
+# VM_SCRIPTS_MISSING on any due rewrite, whatever the first build did.
+if explicit_vm_mode_supported; then
+  (
+    cd "$LINKLY_DIR"
+    cp "$TMP_DIR/linkly-all-on.yaml" ./all-on.yaml
+    iii compose build --file all-on.yaml
+    if ! cmp -s ./all-on.yaml "$TMP_DIR/linkly-all-on.yaml"; then
+      echo "error: Compose rewrote the all-chapters Linkly file:" >&2
+      diff -u "$TMP_DIR/linkly-all-on.yaml" ./all-on.yaml >&2 || true
+      exit 1
+    fi
+    iii compose build --frozen --file all-on.yaml
+    rm -f ./all-on.yaml
+  )
+else
+  echo "Skipping the Linkly compose build: the installed iii has no explicit VM mode (iii sandbox build)"
+fi
 
 echo "Testing iii project init --template linkly-agentic"
 (
@@ -358,10 +433,22 @@ assert_contains "$LA_DIR/worker-compose.yaml" "env_file: ['./.env']"
 assert_contains "$LA_DIR/worker-compose.yaml" "worker: package://provider-anthropic"
 assert_contains "$LA_DIR/worker-compose.yaml" "worker: package://provider-openai"
 
-# The shipped file resolves: the agent stack plus the Ch. 1 workers.
+# The shipped file resolves: the agent stack plus the Ch. 1 workers. Its VM
+# blocks are commented, so it loads with or without the explicit VM mode. With
+# it, the file must come out of the first build unchanged, and the frozen build
+# fails with VM_SCRIPTS_MISSING on any due rewrite.
 (
   cd "$LA_DIR"
+  cp worker-compose.yaml "$TMP_DIR/la-shipped.yaml"
   iii compose build --file worker-compose.yaml
+  if explicit_vm_mode_supported; then
+    if ! cmp -s worker-compose.yaml "$TMP_DIR/la-shipped.yaml"; then
+      echo "error: Compose rewrote the shipped linkly-agentic file:" >&2
+      diff -u "$TMP_DIR/la-shipped.yaml" worker-compose.yaml >&2 || true
+      exit 1
+    fi
+    iii compose build --frozen --file worker-compose.yaml
+  fi
 )
 
 echo "Testing iii project init --template harness-kanban"

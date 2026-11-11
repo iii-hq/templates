@@ -8,11 +8,13 @@ tags: [example, python]
 description: Minimal Python worker — hello-python::greet returns a greeting.
 
 # Host development is the default. For the optional VM check, uncomment this
-# block and remove the host scripts.run override from worker-compose.yaml.
+# block and remove the host scripts block from worker-compose.yaml; Compose then
+# writes the VM scripts (iii sandbox build/run) there. See README.md.
 # runtime:
 #   base_image: docker.io/iiidev/python:latest
 
 scripts:
-  # Compose skips this in host mode. It is the portable VM/bundle install recipe.
+  # Compose skips this in host mode. In a VM, `iii sandbox build` runs it into
+  # the worker's image; it is also the bundle install recipe.
   install: "python -m pip install -e ."
   start: "watchfiles 'python src/main.py'"
