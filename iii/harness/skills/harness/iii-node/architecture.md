@@ -63,7 +63,7 @@ React, `@iii-dev/console-ui` and `lucide-react` remain external in the console
 assets, which `ui/build.mjs` builds with the shared `buildWorkerUi` driver, not
 hand-rolled esbuild; only the public page's bundle uses esbuild directly.
 Installed public types are the authority for host methods and components;
-portable workers use the public npm package (`@iii-dev/console-ui@0.2.0` or
+portable workers use the public npm package (`@iii-dev/console-ui@0.4.0` or
 later) rather than monorepo links.
 
 The Frontend Engineer owns `ui/WorkerPage.tsx`, `ui/page.tsx`, `ui/styles.css`,

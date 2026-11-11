@@ -5,7 +5,7 @@
     "build": "tsc -p tsconfig.json && node build.mjs"
   },
   "devDependencies": {
-    "@iii-dev/console-ui": "0.2.0",
+    "@iii-dev/console-ui": "0.4.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "esbuild": "^0.25.0",

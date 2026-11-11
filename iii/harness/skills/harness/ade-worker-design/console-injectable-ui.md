@@ -31,9 +31,9 @@ Composition recipes for record-shaped UIs: `patterns`.
 > imports nothing from `@iii-dev/console-ui` at runtime, because those
 > components exist only in the ADE (`iii-node` › Public page and ADE admin
 > page). `@iii-dev/console-ui` is
-> installed from npm at **0.2.0 or later** — the release that ships the
-> `/hooks` and `/format` subpaths, `build-worker-ui` and `lint-worker-ui` —
-> and its types are read from `node_modules/@iii-dev/console-ui/`
+> installed from npm at **0.4.0 or later** — the first release whose types
+> declare `observe`; it ships the `/hooks` and `/format` subpaths,
+> `build-worker-ui` and `lint-worker-ui` — and its types are read from `node_modules/@iii-dev/console-ui/`
 > (`index.d.ts`, `hooks.d.mts`, `format.d.mts`). Monorepo paths this document
 > names (`packages/console-ui`, `ade/web`, `state/`, `browser/`, `cron/`) are
 > upstream examples, not files of this project: consult one only for a

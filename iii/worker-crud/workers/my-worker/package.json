@@ -19,7 +19,7 @@
     "tsx": "^4.19.0"
   },
   "devDependencies": {
-    "@iii-dev/console-ui": "0.2.0",
+    "@iii-dev/console-ui": "0.4.0",
     "@types/node": "^22.10.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
