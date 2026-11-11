@@ -7,10 +7,10 @@
 # are on, then restart Compose.
 #
 # The workers of this project run in microVMs, and their `scripts` say so:
-# `iii sandbox build` builds a worker's image into .build/<container>/ on its
-# first start, and `iii sandbox run` boots that image. sandbox-libkrun is the
-# adapter that does both. After you change a worker's dependencies, rebuild it
-# with `iii sandbox build <container>`, then restart it.
+# `iii sandbox build` builds a worker's image into .iii/build/<container>/ on
+# its first start, and `iii sandbox run` boots that image. sandbox-libkrun is
+# the adapter that does both. After you change a worker's dependencies, rebuild
+# it with `iii sandbox build <container>`, then restart it.
 namespace: default
 startup_timeout: 360s
 

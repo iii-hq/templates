@@ -3,10 +3,11 @@
 .env.*
 data/
 config/
-# iii Compose: package copies (.workers/, rebuilt from worker-compose.lock) and
-# builds (.build/, VM images included, rebuilt by scripts.build)
-.workers/
-.build/
+# iii Compose: package copies (.iii/workers/, rebuilt from worker-compose.lock)
+# and builds (.iii/build/, VM images included, rebuilt by scripts.build). The
+# rest of .iii/ holds project files such as project.ini.
+.iii/workers/
+.iii/build/
 
 #Sqlite
 *.db

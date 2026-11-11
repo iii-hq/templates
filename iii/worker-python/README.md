@@ -96,7 +96,7 @@ Do this before publishing a bundle so the guest install and start recipes are ex
          run: iii sandbox run
    ```
 
-   The first start builds the image into `.build/hello-python/`, which git ignores; later starts boot it without installing anything. After changing dependencies in `pyproject.toml`, run `iii sandbox build hello-python`, then `iii call compose::restart container=hello-python`.
+   The first start builds the image into `.iii/build/hello-python/`, which git ignores; later starts boot it without installing anything. After changing dependencies in `pyproject.toml`, run `iii sandbox build hello-python`, then `iii call compose::restart container=hello-python`.
 
 4. Inspect `iii call engine::workers::list` and require `isolation: libkrun` for `hello-python`, then call `hello-python::greet` again. If startup fails, inspect the actual Compose logs; do not rely on a mode banner.
 

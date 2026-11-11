@@ -199,7 +199,7 @@ assert_count() {
 static_vm_checks() {
   local gitignore="$TEMPLATE_DIR/default-gitignore"
   local entry template compose workers worker
-  for entry in .workers/ .build/; do
+  for entry in .iii/workers/ .iii/build/; do
     if ! grep -qxF "$entry" "$gitignore"; then
       echo "error: $gitignore does not ignore $entry" >&2
       exit 1
@@ -347,7 +347,7 @@ done
 assert_contains "$LINKLY_DIR/worker-compose.yaml" "worker: path://./link"
 assert_contains "$LINKLY_DIR/worker-compose.yaml" "      build: iii sandbox build"
 assert_contains "$LINKLY_DIR/worker-compose.yaml" "      run: iii sandbox run"
-assert_contains "$LINKLY_DIR/.gitignore" ".build/"
+assert_contains "$LINKLY_DIR/.gitignore" ".iii/build/"
 assert_contains "$LINKLY_DIR/worker-compose.yaml" "  # database:"
 
 # Every source file carries a tagged block for each chapter that touches it.

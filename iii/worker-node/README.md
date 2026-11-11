@@ -96,7 +96,7 @@ Do this before publishing a bundle so the guest install and start recipes are ex
          run: iii sandbox run
    ```
 
-   The first start builds the image into `.build/hello-node/`, which git ignores; later starts boot it without installing anything. After changing dependencies in `package.json`, run `iii sandbox build hello-node`, then `iii call compose::restart container=hello-node`.
+   The first start builds the image into `.iii/build/hello-node/`, which git ignores; later starts boot it without installing anything. After changing dependencies in `package.json`, run `iii sandbox build hello-node`, then `iii call compose::restart container=hello-node`.
 
 4. Inspect `iii call engine::workers::list` and require `isolation: libkrun` for `hello-node`, then call `hello-node::greet` again. If startup fails, inspect the actual Compose logs; do not rely on a mode banner.
 

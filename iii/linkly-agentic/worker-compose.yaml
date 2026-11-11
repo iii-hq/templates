@@ -12,7 +12,7 @@
 # chapter's worker and uncomments the block here.
 #
 # Those workers run in microVMs, and their `scripts` say so: `iii sandbox build`
-# builds a worker's image into .build/<container>/ on its first start, and
+# builds a worker's image into .iii/build/<container>/ on its first start, and
 # `iii sandbox run` boots that image. Each one's iii.worker.yaml sets
 # runtime.base_image. sandbox-libkrun, in the Ch. 1 block, is the adapter that
 # builds and boots them.
