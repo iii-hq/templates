@@ -128,7 +128,7 @@ static_template_checks() {
   assert_contains "$TEMPLATE_DIR/template.yaml" "  - worker-node-ade"
   assert_all_files_listed "$node_ade"
   assert_contains "$node_ade/worker-compose.yaml" "    worker: package://http"
-  assert_contains "$node_ade/workers/my-worker/package.json" '"@iii-dev/console-ui": "0.2.0"'
+  assert_contains "$node_ade/workers/my-worker/package.json" '"@iii-dev/console-ui": "0.4.0"'
   assert_contains "$node_ade/README.md" "http://127.0.0.1:3111/my-worker"
   assert_contains "$node_ade/README.md" "never expose that port"
   assert_no_active_base_image "$node_ade/workers/my-worker/iii.worker.yaml"
@@ -163,7 +163,7 @@ static_python_ade_checks() {
   assert_no_active_base_image "$ade/workers/my-worker/iii.worker.yaml"
   assert_contains "$ade/workers/my-worker/iii.worker.yaml" "#   base_image: docker.io/iiidev/python:latest"
   assert_contains "$ade/workers/my-worker/pyproject.toml" '"iii-sdk=='
-  assert_contains "$ade/workers/my-worker/ui/package.json" '"@iii-dev/console-ui": "0.2.0"'
+  assert_contains "$ade/workers/my-worker/ui/package.json" '"@iii-dev/console-ui": "0.4.0"'
   assert_file "$ade/workers/my-worker/scripts/start.sh"
   sh -n "$ade/workers/my-worker/scripts/start.sh"
   assert_contains "$ade/workers/my-worker/scripts/start.sh" '(cd ui && pnpm install && pnpm build)'

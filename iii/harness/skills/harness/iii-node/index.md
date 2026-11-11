@@ -31,7 +31,7 @@ This file and the `worker-node-ade` template it scaffolds are the source of trut
 The injectable UI reference may describe repository-internal `workspace:*` dependencies, local `file:` dependencies, a root workspace file, or a separate `<worker>/ui/package.json`. Those instructions do **not** apply to this portable Node scaffold. Use one package at the worker root and consume the public npm package:
 
 ```json
-"@iii-dev/console-ui": "0.2.0"
+"@iii-dev/console-ui": "0.4.0"
 ```
 
 Do not use `file:`, `link:`, or `workspace:*` for this dependency.
@@ -564,7 +564,7 @@ evidence only while it remains applicable; broaden checks if impact is unclear.
 
 - No `my-worker` token remains in any path or file of the worker, and no angle-bracket placeholder copied from this file remains.
 - No example project name or repository-specific absolute path leaked into identifiers, scripts, or documentation.
-- `pnpm install` succeeds and the lockfile resolves `@iii-dev/console-ui` from npm at `0.2.0`, not through `file:`, `link:`, or `workspace:`.
+- `pnpm install` succeeds and the lockfile resolves `@iii-dev/console-ui` from npm at `0.4.0`, not through `file:`, `link:`, or `workspace:`.
 - `pnpm typecheck`, `pnpm test`, and `pnpm build` pass.
 - `pnpm dev` builds all outputs before starting watchers, shuts down cleanly, and exits when the worker crashes.
 - The worker appears in the engine with every intended function, and `engine::workers::info` lists its asset observers.
