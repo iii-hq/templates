@@ -121,7 +121,7 @@ jobs:
       - name: Run init smoke tests
         run: |
           set -o pipefail
-          scripts/smoke-init.sh 2>&1 | tee artifacts/init-smoke.log
+          bash scripts/smoke-init.sh 2>&1 | tee artifacts/init-smoke.log
 
       - name: Record init smoke with VHS
         if: always()
