@@ -498,8 +498,8 @@ for entry in entries:
         sys.exit(f"FAIL: {path}: {title.group(1)} uses missing agent {name}")
 PYEOF
 
-# The printed next steps lead to the setup wizard's example, not to a profile.
-assert_contains "$TMP_DIR/harness-init.log" "Build an expense tracker"
+# The printed next steps lead to the setup wizard, not to a profile.
+assert_contains "$TMP_DIR/harness-init.log" "continue with the setup wizard"
 if grep -Eq 'Tech Lead|engineers' "$TMP_DIR/harness-init.log"; then
   echo "FAIL: harness next steps name hidden profiles" >&2
   exit 1
