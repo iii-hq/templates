@@ -187,7 +187,31 @@ survive a refresh and need no external services or extra accounts.
   project, code changes, debugging, or anything the other choices do not
   cover.
 
-## Troubleshooting
+## Use the project from Claude Code
+
+The project serves MCP at `http://127.0.0.1:3111/mcp` as soon as it runs, through
+`mcp-server` behind `rbac-proxy`. Nothing to set up.
+
+For Claude Code, install the iii plugin: it adds the project's tools, starts each
+session on the `default-mcp` agent profile, and gives you `/iii:profile`,
+`/iii:skills` and `/iii:<profile>`:
+
+```
+/plugin marketplace add iii-hq/agent-plugins-claude
+/plugin install iii@iii
+```
+
+Any other MCP client connects to the same address, for example
+`claude mcp add --transport http iii http://127.0.0.1:3111/mcp`.
+
+Agents reach every function in the project (`expose_functions` under
+`rbac-proxy` in `worker-compose.yaml`), except `secrets::resolve`. Narrow
+`expose_functions` to limit them, then stop the project (`Ctrl+C` in the
+terminal running `iii compose --up`) and start it again: Compose reads
+`config_override` at each start, and the new rules apply to new connections. See
+[rbac-proxy](https://github.com/iii-hq/workers/tree/main/rbac-proxy) and
+[mcp-server](https://github.com/iii-hq/workers/tree/main/mcp-server).
+
 
 | Problem | What to do |
 | --- | --- |
@@ -337,13 +361,16 @@ them into `~/.iii/compose/packages`; later starts use that cache.
 | `ade` | The ADE web UI and its `/ws` connection to the engine |
 | `ide` | Files and commands for agents and the ADE |
 | `browser` | Chromium sessions and page fetches that agents use to verify their work. It uses the Chrome or Chromium installed on this machine; when there is none, the setup wizard's **Browser** step downloads one |
+| `http` | Serves the pages agents build and the MCP endpoint, on port `3111`, on this machine only |
+| `rbac-proxy` | The access-control door for MCP clients: decides what they may call. It admits connections from this machine only (`loopback_auth`) |
+| `mcp-server` | The MCP server at `http://127.0.0.1:3111/mcp`, for Claude Code and other MCP clients (see [Use the project from Claude Code](#use-the-project-from-claude-code)) |
 
 No model provider is listed. Containers are added as you use the project,
 each at the end of `worker-compose.yaml` under `# added by compose::add`:
 the provider you connect (`provider-<name>`, see
 [Model providers](#model-providers)), Judge if you set it up (`judge` and
 `judge-<option>`, see [Judge](#judge)), and every app or tool an agent
-builds (its worker, plus `http` for public pages).
+builds (its worker).
 
 Container names are not always function namespaces: `ade` registers
 `ade::*`, `ide` registers `shell::*` and `coder::*`, `llm-router`
@@ -434,7 +461,8 @@ Three addresses can collide with another iii project on the same machine:
 | --- | --- | --- |
 | Engine | `ws://127.0.0.1:49134` | `engine.url` in `worker-compose.yaml` |
 | ADE | port `3113` | `http_port` of the `ade` container (configuration entry `default-ade`) |
-| Public pages | port `3111` | `port` of the `http` container (configuration entry `http`), added with the first app |
+| Pages and MCP | port `3111` | `port` of the `http` container (configuration entry `http`) |
+| rbac-proxy | port `49200` | `port` under the `rbac-proxy` container's `config_override` |
 
 The engine port is changed only in `worker-compose.yaml`: edit `engine.url`
 and start the project again. `iii call` and `iii compose` commands run
@@ -453,13 +481,12 @@ project:
     config_override:
       http_port: 3123
 
-  # Added by the first app; declare it yourself to choose its port before
-  # that, or add config_override to the entry the agent added.
   http:
     worker: package://http
     version: "latest"
     config_name: http
     config_override:
+      host: 127.0.0.1
       port: 3121
 ```
 
@@ -485,12 +512,16 @@ iii call configuration::set --json "$(iii call configuration::get id=default-ade
 A container that has a `config_override` starts from it again at its next
 start: change the port there instead.
 
-**Network access.** The ADE and the `http` container listen on every network
-interface (`0.0.0.0`) by default, so other devices on your network can open
-them at `http://<this machine's address>:3113` and `:3111`. The ADE also
+**Network access.** The ADE listens on every network interface (`0.0.0.0`) by
+default, so other devices on your network can open it at
+`http://<this machine's address>:3113`. The `http` container listens on this
+machine only (`host: 127.0.0.1` in `worker-compose.yaml`): set `host: 0.0.0.0`
+there to open agents' pages at `:3111` from other devices, which is risky on a
+machine connected directly to the internet or on a public network, and turns
+the MCP endpoint off (mcp-server serves only while `http` is on this machine). The ADE also
 forwards the engine's WebSocket (`/ws`) without authentication: whoever can
 open the ADE can call every function in the project, and public pages have
 no authentication either. On a network you do not trust, limit both to this
 machine with either option above: `http_host: 127.0.0.1` for the ADE (applied
-at its next start) and `host: 127.0.0.1` for `http`. Never expose these
+at its next start), and keep `host: 127.0.0.1` for `http`. Never expose these
 ports through a public proxy or tunnel.
