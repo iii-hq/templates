@@ -74,3 +74,60 @@ containers:
   browser: # Chromium sessions + one-shot fetches (browser::fetch) for verification
     worker: package://browser
     version: "latest"
+
+  # Serves the pages agents build and mcp-server's /mcp endpoint, on port
+  # 3111 (configuration entry `http`).
+  #
+  # Bound to this machine only. To open the pages from other devices on your
+  # network, set `host: 0.0.0.0` instead. That is risky: on a machine connected
+  # directly to the internet, or on a public network (cafe, hotel, airport),
+  # anyone who can reach this machine can then open them, and the pages have
+  # no authentication. mcp-server also stops serving /mcp while http listens
+  # beyond this machine.
+  http:
+    worker: package://http
+    version: "latest"
+    config_name: http
+    config_override:
+      host: 127.0.0.1
+
+  # The access-control door mcp-server connects through: it decides what MCP
+  # clients (Claude Code, Codex, Cursor, ...) may call. `loopback_auth` admits
+  # connections from this machine only, with no auth function or token to set
+  # up: every local process can already reach the engine port directly.
+  # `expose_functions` is what agents may call; narrow it to limit them.
+  rbac-proxy:
+    worker: package://rbac-proxy
+    version: "latest"
+    config_override:
+      host: 127.0.0.1
+      port: 49200
+      engine_url: ws://127.0.0.1:49134
+      rbac:
+        loopback_auth:
+          worker_names: [mcp-server]
+          # mcp-server registers its own functions; under a prefix, so no local
+          # process can take a function id another worker is meant to hold.
+          allow_function_registration: true
+          function_registration_prefix: mcp
+          # Agents store secrets with iii_secret_store; none may read one back.
+          # This applies to loopback connections only: if you add an
+          # rbac.auth_function_id, its result must forbid secrets::resolve too,
+          # since expose_functions below allows every function.
+          forbidden_functions: ["secrets::resolve"]
+        expose_endpoints: ['match("/")', 'match("/ws/channels/*")', 'match("/otel")']
+        expose_functions: ['match("*")']
+
+  # MCP server for this project at http://127.0.0.1:3111/mcp: the iii plugin
+  # for Claude Code (iii-hq/agent-plugins-claude) and any MCP client connect
+  # here. It reaches the engine through rbac-proxy.
+  mcp-server:
+    worker: package://mcp-server
+    version: "latest"
+    start_after:
+      - http
+      - rbac-proxy
+      - secrets
+      - iii-directory
+    environment:
+      III_MCP_ENGINE_URL: ws://127.0.0.1:49200
