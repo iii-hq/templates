@@ -228,13 +228,15 @@ PYEOF
 static_vm_checks() {
   local gitignore="$TEMPLATE_DIR/default-gitignore"
   local entry template compose workers worker adapter
+  # The tutorial's VM workers, in linkly and in linkly-agentic.
+  local vm_workers='link analytics click-streamer bulk-importer auth'
   for entry in .iii/workers/ .iii/build/; do
     if ! grep -qxF "$entry" "$gitignore"; then
       echo "error: $gitignore does not ignore $entry" >&2
       exit 1
     fi
   done
-  for worker in link analytics click-streamer bulk-importer auth; do
+  for worker in $vm_workers; do
     if ! grep -Eq '^[[:space:]]+base_image:' "$TEMPLATE_DIR/linkly/$worker/iii.worker.yaml"; then
       echo "error: linkly/$worker no longer sets runtime.base_image; revisit its compose block" >&2
       exit 1
@@ -242,7 +244,15 @@ static_vm_checks() {
   done
   for template in linkly linkly-agentic; do
     compose="$TEMPLATE_DIR/$template/worker-compose.yaml"
-    workers="$(grep -Ec '^  (# )?  worker: path://' "$compose" || true)"
+    # Each VM worker in exactly one block, and no other path:// worker: a
+    # block whose spacing changed drops out of a count derived from the file
+    # without failing it, but not out of this one.
+    workers=0
+    for worker in $vm_workers; do
+      assert_count "$compose" "^  (# )?$worker:\$" 1
+      workers=$((workers + 1))
+    done
+    assert_count "$compose" '^  (# )?  worker: path://' "$workers"
     assert_count "$compose" '^  (# )?    build: iii call sandbox::build worker=[^ ]+$' "$workers"
     assert_count "$compose" '^  (# )?    run: iii call sandbox::start worker=[^ ]+$' "$workers"
     assert_worker_names "$compose"
