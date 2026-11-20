@@ -111,6 +111,9 @@ containers:
           allow_function_registration: true
           function_registration_prefix: mcp
           # Agents store secrets with iii_secret_store; none may read one back.
+          # This applies to loopback connections only: if you add an
+          # rbac.auth_function_id, its result must forbid secrets::resolve too,
+          # since expose_functions below allows every function.
           forbidden_functions: ["secrets::resolve"]
         expose_endpoints: ['match("/")', 'match("/ws/channels/*")', 'match("/otel")']
         expose_functions: ['match("*")']
