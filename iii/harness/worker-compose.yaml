@@ -106,6 +106,10 @@ containers:
       rbac:
         loopback_auth:
           worker_names: [mcp-server]
+          # mcp-server registers its own functions; under a prefix, so no local
+          # process can take a function id another worker is meant to hold.
+          allow_function_registration: true
+          function_registration_prefix: mcp
           # Agents store secrets with iii_secret_store; none may read one back.
           forbidden_functions: ["secrets::resolve"]
         expose_endpoints: ['match("/")', 'match("/ws/channels/*")', 'match("/otel")']
