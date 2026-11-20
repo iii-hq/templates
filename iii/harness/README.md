@@ -459,14 +459,21 @@ Three addresses can collide with another iii project on the same machine:
 
 | What | Default | Where it is set |
 | --- | --- | --- |
-| Engine | `ws://127.0.0.1:49134` | `engine.url` in `worker-compose.yaml` |
+| Engine | `ws://127.0.0.1:49134` | `engine.url` in `worker-compose.yaml`, and `engine_url` under the `rbac-proxy` container's `config_override` |
 | ADE | port `3113` | `http_port` of the `ade` container (configuration entry `default-ade`) |
 | Pages and MCP | port `3111` | `port` of the `http` container (configuration entry `http`) |
-| rbac-proxy | port `49200` | `port` under the `rbac-proxy` container's `config_override` |
+| rbac-proxy | port `49200` | `port` under the `rbac-proxy` container's `config_override`, and `III_MCP_ENGINE_URL` under the `mcp-server` container's `environment` |
 
-The engine port is changed only in `worker-compose.yaml`: edit `engine.url`
-and start the project again. `iii call` and `iii compose` commands run
-from the project folder read the address from there.
+The engine port is changed only in `worker-compose.yaml`: edit `engine.url`,
+set rbac-proxy's `engine_url` to the same address, and start the project
+again. rbac-proxy does not follow `engine.url`; with the old address,
+mcp-server cannot reach this engine. `iii call` and `iii compose` commands
+run from the project folder read the address from there.
+
+To move rbac-proxy to another port, change its `port` and the port in
+mcp-server's `III_MCP_ENGINE_URL` together, then start the project again:
+mcp-server connects through that address, and refuses to start when
+nothing there is rbac-proxy.
 
 The ADE and `http` ports can be changed in two ways.
 
