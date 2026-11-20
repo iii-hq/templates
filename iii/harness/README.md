@@ -25,7 +25,7 @@ list: it builds and verifies the app in the same conversation (step 5).
 
 You need:
 
-- The iii CLI: `curl -fsSL https://install.iii.dev/iii/main/install.sh | sh`
+- The iii CLI. Install it via: `curl -fsSL https://iii.dev/registry/install/iii/latest.sh | sh`
 - A project created from this template: `iii project init <name> -t harness`
 - An API key for one AI provider, such as Anthropic, OpenAI or DeepSeek
 - To create apps and tools: Node.js 22 or later and pnpm 10 or later. They
