@@ -11,13 +11,13 @@ description: Example Python worker — my-worker::hello, settings, an event func
 # is available in the guest (the VM build and sync leave dist/ out, and the image
 # has no Node). To run in a VM, uncomment this block and remove the host scripts
 # block from worker-compose.yaml; Compose then writes the VM scripts
-# (iii sandbox build/run) there.
+# (iii call sandbox::build/start) there.
 # runtime:
 #   base_image: docker.io/iiidev/python:latest
 
 scripts:
-  # Compose skips install in host mode. In a VM, `iii sandbox build` runs it into
-  # the worker's image; it is also the bundle install recipe.
+  # Compose skips install in host mode. In a VM, `iii call sandbox::build` runs
+  # it into the worker's image; it is also the bundle install recipe.
   # Host mode runs start when the compose entry has no run of its own.
   install: "python -m pip install -e ."
   start: "sh scripts/start.sh"

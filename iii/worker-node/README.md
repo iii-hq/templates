@@ -69,7 +69,7 @@ The unit test imports the pure `buildGreeting` helper and does not need an engin
 
 ## Optional: run this checkout in a VM
 
-Do this before publishing a bundle so the guest install and start recipes are exercised. In a VM, Compose builds an image of the worker with the manifest's `scripts.install` (`iii sandbox build`) and boots it with the manifest's `scripts.start` (`iii sandbox run`), the commands a bundle uses. This needs an iii release that has `iii sandbox build`.
+Do this before publishing a bundle so the guest install and start recipes are exercised. In a VM, Compose builds an image of the worker with the manifest's `scripts.install` (`iii call sandbox::build`) and boots it with the manifest's `scripts.start` (`iii call sandbox::start`), the commands a bundle uses. This needs an iii release whose Compose runs VM workers through `iii call sandbox::build` and `iii call sandbox::start`.
 
 1. In `workers/hello-node/iii.worker.yaml`, uncomment:
 
@@ -78,7 +78,7 @@ Do this before publishing a bundle so the guest install and start recipes are ex
      base_image: docker.io/iiidev/node:latest
    ```
 
-2. In `worker-compose.yaml`, remove or comment the complete `scripts:` block under `hello-node`, including `pre_run`, `pre_run_timeout`, and `run`. Compose hooks execute on the host even for a VM worker; leaving `pre_run` enabled would unnecessarily prepare host dependencies. A `run` left in place would keep running, inside the VM, as `iii sandbox run --command '<run>'` instead of the manifest's `scripts.start`.
+2. In `worker-compose.yaml`, remove or comment the complete `scripts:` block under `hello-node`, including `pre_run`, `pre_run_timeout`, and `run`. Compose hooks execute on the host even for a VM worker; leaving `pre_run` enabled would unnecessarily prepare host dependencies. A `run` left in place would keep running, inside the VM, as `iii call sandbox::start worker=hello-node 'command=<run>'` instead of the manifest's `scripts.start`.
 3. Restart the project so Compose reads the change:
 
    ```sh
@@ -92,11 +92,11 @@ Do this before publishing a bundle so the guest install and start recipes are ex
        worker: path://./workers/hello-node
        start_after: [sandbox-libkrun]
        scripts:
-         build: iii sandbox build
-         run: iii sandbox run
+         build: iii call sandbox::build worker=hello-node
+         run: iii call sandbox::start worker=hello-node
    ```
 
-   The first start builds the image into `.iii/build/hello-node/`, which git ignores; later starts boot it without installing anything. After changing dependencies in `package.json`, run `iii sandbox build hello-node`, then `iii call compose::restart container=hello-node`.
+   The first start builds the image into `.iii/build/hello-node/`, which git ignores; later starts boot it without installing anything. After changing dependencies in `package.json`, run `iii call compose::build worker=hello-node` (follow it with `iii compose logs hello-node --follow`), then, once it built, `iii call compose::restart container=hello-node`.
 
 4. Inspect `iii call engine::workers::list` and require `isolation: libkrun` for `hello-node`, then call `hello-node::greet` again. If startup fails, inspect the actual Compose logs; do not rely on a mode banner.
 

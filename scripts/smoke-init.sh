@@ -182,11 +182,14 @@ static_python_ade_checks
 
 # Compose's explicit VM mode: a worker whose iii.worker.yaml sets
 # runtime.base_image runs in a VM only when its container says so (the adapter
-# in start_after, scripts.build: iii sandbox build, scripts.run: iii sandbox
-# run); without scripts.build, Compose rewrites the file on the next run. Every
-# Linkly worker sets base_image, so every Linkly path:// block, live or
-# commented, carries all three, and the adapter is declared as compose::add
-# writes it.
+# in start_after, scripts.build: iii call sandbox::build worker=<container>,
+# scripts.run: iii call sandbox::start worker=<container>); without
+# scripts.build, Compose rewrites the file on the next run. worker= names the
+# line's own container: Compose refuses another name with
+# SANDBOX_WORKER_MISMATCH. Every Linkly worker sets base_image, so every Linkly
+# path:// block, live or commented, carries all three, and the adapter is
+# declared as compose::add writes it, at a version in Compose's adapter range
+# (^0.5).
 assert_count() {
   local path="$1" pattern="$2" expected="$3" found
   found="$(grep -Ec -- "$pattern" "$path" || true)"
@@ -196,9 +199,35 @@ assert_count() {
   fi
 }
 
+# Each scripts.build and scripts.run line, live or commented, names in worker=
+# the container it belongs to.
+assert_worker_names() {
+  python3 - "$1" <<'PYEOF'
+import re
+import sys
+
+path = sys.argv[1]
+KEY = re.compile(r"^  (?:# )?([A-Za-z0-9][\w.-]*):$")
+SCRIPT = re.compile(
+    r"^  (?:# )?    (?:build: iii call sandbox::build|run: iii call sandbox::start)"
+    r" worker=(\S+)$"
+)
+key = None
+with open(path) as handle:
+    for number, line in enumerate(handle.read().splitlines(), 1):
+        match = KEY.match(line)
+        if match:
+            key = match.group(1)
+            continue
+        match = SCRIPT.match(line)
+        if match and match.group(1) != key:
+            sys.exit(f"error: {path}:{number}: worker={match.group(1)} is in container {key}")
+PYEOF
+}
+
 static_vm_checks() {
   local gitignore="$TEMPLATE_DIR/default-gitignore"
-  local entry template compose workers worker
+  local entry template compose workers worker adapter
   for entry in .iii/workers/ .iii/build/; do
     if ! grep -qxF "$entry" "$gitignore"; then
       echo "error: $gitignore does not ignore $entry" >&2
@@ -214,8 +243,9 @@ static_vm_checks() {
   for template in linkly linkly-agentic; do
     compose="$TEMPLATE_DIR/$template/worker-compose.yaml"
     workers="$(grep -Ec '^  (# )?  worker: path://' "$compose" || true)"
-    assert_count "$compose" '^  (# )?    build: iii sandbox build$' "$workers"
-    assert_count "$compose" '^  (# )?    run: iii sandbox run$' "$workers"
+    assert_count "$compose" '^  (# )?    build: iii call sandbox::build worker=[^ ]+$' "$workers"
+    assert_count "$compose" '^  (# )?    run: iii call sandbox::start worker=[^ ]+$' "$workers"
+    assert_worker_names "$compose"
     assert_count "$compose" '^  (# )?  start_after: \[(.*, )?sandbox-libkrun\]$|^  (# )?    - sandbox-libkrun$' "$workers"
     assert_count "$compose" '^  (# )?sandbox-libkrun:$' 1
     if ! grep -B1 -E '^  (# )?sandbox-libkrun:$' "$compose" | head -1 | grep -qxF '  # added by compose::add'; then
@@ -223,7 +253,13 @@ static_vm_checks() {
       exit 1
     fi
     assert_contains "$compose" 'worker: package://api.workers.iii.dev/sandbox-libkrun'
-    assert_contains "$compose" 'version: "0.4.0"'
+    # Compose updates a generated adapter outside ^0.5, which would rewrite
+    # the file, and --frozen refuses it with SANDBOX_ADAPTER_TOO_OLD.
+    adapter="$(grep -A2 -E '^  (# )?sandbox-libkrun:$' "$compose")"
+    if ! grep -Eq '^  (# )?  version: "0\.5\.[0-9]+"$' <<<"$adapter"; then
+      echo "error: the sandbox-libkrun version in $compose is outside ^0.5" >&2
+      exit 1
+    fi
   done
   # Ch. 1 ships link live in linkly, so its adapter is live too.
   assert_count "$TEMPLATE_DIR/linkly/worker-compose.yaml" '^  sandbox-libkrun:$' 1
@@ -240,12 +276,20 @@ if ! command -v iii >/dev/null 2>&1; then
   exit 127
 fi
 
-# The explicit VM mode (scripts.build, `iii sandbox build`) ships after 0.26.
-# A Linkly file with a live VM worker uses scripts.build, which an older
-# Compose refuses, so its `iii compose build` checks only run when the
-# installed iii has `iii sandbox build`.
+# The explicit VM mode (scripts.build) ships after 0.26 and runs VM workers
+# through `iii call sandbox::build` and `iii call sandbox::start`. A Linkly
+# file with a live VM worker uses scripts.build, which an older Compose
+# refuses, so its `iii compose build` checks only run when the installed iii
+# has that mode. The probe needs no engine and no network: that iii's
+# `iii call` binds streams (--stdout), and its `iii sandbox` command is
+# removed. 0.26, a 0.27 without the explicit VM mode, and the earlier builds of
+# that mode, which ran VM workers through `iii sandbox build` and
+# `iii sandbox run`, all still have `iii sandbox`.
 explicit_vm_mode_supported() {
-  iii sandbox build --help >/dev/null 2>&1
+  local help
+  help="$(iii call --help 2>&1)" || return 1
+  grep -qF -- '--stdout' <<<"$help" || return 1
+  ! iii sandbox --help >/dev/null 2>&1
 }
 
 # `iii worker` was removed in 0.23: worker lifecycle moved to Worker Compose and
@@ -345,8 +389,8 @@ done
 
 # Chapter 1 is live; every later chapter is commented out.
 assert_contains "$LINKLY_DIR/worker-compose.yaml" "worker: path://./link"
-assert_contains "$LINKLY_DIR/worker-compose.yaml" "      build: iii sandbox build"
-assert_contains "$LINKLY_DIR/worker-compose.yaml" "      run: iii sandbox run"
+assert_contains "$LINKLY_DIR/worker-compose.yaml" "      build: iii call sandbox::build worker=link"
+assert_contains "$LINKLY_DIR/worker-compose.yaml" "      run: iii call sandbox::start worker=link"
 assert_contains "$LINKLY_DIR/.gitignore" ".iii/build/"
 assert_contains "$LINKLY_DIR/worker-compose.yaml" "  # database:"
 
@@ -400,7 +444,7 @@ if explicit_vm_mode_supported; then
     rm -f ./all-on.yaml
   )
 else
-  echo "Skipping the Linkly compose build: the installed iii has no explicit VM mode (iii sandbox build)"
+  echo "Skipping the Linkly compose build: the installed iii does not run VM workers through iii call sandbox::* (no explicit VM mode)"
 fi
 
 echo "Testing iii project init --template linkly-agentic"

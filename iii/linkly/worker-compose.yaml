@@ -7,10 +7,11 @@
 # are on, then restart Compose.
 #
 # The workers of this project run in microVMs, and their `scripts` say so:
-# `iii sandbox build` builds a worker's image into .iii/build/<container>/ on
-# its first start, and `iii sandbox run` boots that image. sandbox-libkrun is
-# the adapter that does both. After you change a worker's dependencies, rebuild
-# it with `iii sandbox build <container>`, then restart it.
+# `iii call sandbox::build` builds a worker's image into .iii/build/<container>/
+# on its first start, and `iii call sandbox::start` boots that image.
+# sandbox-libkrun is the adapter that does both. After you change a worker's
+# dependencies, rebuild it with `iii call compose::build worker=<container>`
+# (follow it with `iii compose logs <container> --follow`), then restart it.
 namespace: default
 startup_timeout: 360s
 
@@ -41,14 +42,14 @@ containers:
       # Ch. 3: the schema is created at startup, after database is up.
       # - database
     scripts:
-      build: iii sandbox build
-      run: iii sandbox run
+      build: iii call sandbox::build worker=link
+      run: iii call sandbox::start worker=link
 
   # The sandbox adapter: it builds and boots each VM worker's image.
   # added by compose::add
   sandbox-libkrun:
     worker: package://api.workers.iii.dev/sandbox-libkrun
-    version: "0.4.0"
+    version: "0.5.0"
 
   # Ch. 2: the engine injects iii-observability. Nothing to add.
 
@@ -86,24 +87,24 @@ containers:
   #   worker: path://./analytics
   #   start_after: [database, queue, sandbox-libkrun]
   #   scripts:
-  #     build: iii sandbox build
-  #     run: iii sandbox run
+  #     build: iii call sandbox::build worker=analytics
+  #     run: iii call sandbox::start worker=analytics
 
   # Ch. 5: the live click feed, an event function owned by click-streamer.
   # click-streamer:
   #   worker: path://./click-streamer
   #   start_after: [sandbox-libkrun]
   #   scripts:
-  #     build: iii sandbox build
-  #     run: iii sandbox run
+  #     build: iii call sandbox::build worker=click-streamer
+  #     run: iii call sandbox::start worker=click-streamer
 
   # Ch. 6: bulk CSV import over a channel.
   # bulk-importer:
   #   worker: path://./bulk-importer
   #   start_after: [link, sandbox-libkrun]
   #   scripts:
-  #     build: iii sandbox build
-  #     run: iii sandbox run
+  #     build: iii call sandbox::build worker=bulk-importer
+  #     run: iii call sandbox::start worker=bulk-importer
 
   # Ch. 7: browser connections. The rbac-proxy worker fronts a public port and
   # admits browsers via auth::browser; the engine's 49134 stays the trusted
@@ -128,5 +129,5 @@ containers:
   #   start_after: [sandbox-libkrun]
   #   env_file: ['./.env']
   #   scripts:
-  #     build: iii sandbox build
-  #     run: iii sandbox run
+  #     build: iii call sandbox::build worker=auth
+  #     run: iii call sandbox::start worker=auth
