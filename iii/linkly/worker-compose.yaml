@@ -73,7 +73,7 @@ containers:
   # click-streamer:
   #   worker: path://./click-streamer
 
-  # Ch. 6: bulk CSV import over a channel.
+  # Ch. 6: bulk CSV import from a stream.
   # bulk-importer:
   #   worker: path://./bulk-importer
   #   start_after: [link]
