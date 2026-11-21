@@ -18,7 +18,7 @@ shortener that grows into a multi-tenant link platform, one worker at a time.
 | `link/` | 1, 3, 4, 5, 7 | Short codes, redirects, HTTP endpoints. |
 | `analytics/` | 4 | Python worker that counts links per day. |
 | `click-streamer/` | 5 | Hosts the private `click-streamer::on-click` feed: it observes `link::record_click` and calls the feed with every recorded click, which reaches every function that observes it. `watch.ts` prints the feed in a terminal. |
-| `bulk-importer/` | 6 | Imports a CSV of links over a channel. |
+| `bulk-importer/` | 6 | Imports a CSV of links from a stream. |
 | `channel-client/` | 6 | Script that uploads the CSV. |
 | `auth/` | 7 | Gates browser connections. |
 | `data/` | 3 | SQLite files. |
