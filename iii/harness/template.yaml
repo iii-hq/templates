@@ -18,27 +18,6 @@ files:
   - README.md
   - worker-compose.yaml
   - onboarding.yaml
-  - agents/ade-worker-builder.md
-  - agents/agent-profile-creator.md
-  - skills/harness/ade-worker-design/console-design.md
-  - skills/harness/ade-worker-design/console-injectable-ui.md
-  - skills/harness/ade-worker-design/index.md
-  - skills/harness/ade-worker-design/patterns.md
-  - skills/harness/ade-worker-design/planning.md
-  - skills/harness/frontend/frontend-testing.md
-  - skills/harness/frontend/iii-browser-sdk.md
-  - skills/harness/frontend/index.md
-  - skills/harness/frontend/react.md
-  - skills/harness/frontend/tanstack-query.md
-  - skills/harness/frontend/tanstack-router.md
-  - skills/harness/frontend/vite.md
-  - skills/harness/frontend/web-accessibility.md
-  - skills/harness/frontend/web-performance.md
-  - skills/harness/iii-node/architecture.md
-  - skills/harness/iii-node/configuration.md
-  - skills/harness/iii-node/index.md
-  - skills/harness/orchestration/index.md
-  - skills/harness/orchestration/report.md
 
 next_steps:
   - 'Run: iii compose --up'
