@@ -2,24 +2,18 @@
 
 This template starts the iii engine, AI agents, and the ADE: the workspace
 where you chat with agents and use the apps and tools they build. Start with a
-small app from the setup wizard's examples, create a reusable agent, or use
-Default for general work in your project.
+small app from the setup wizard's examples, or use Default for general work in
+your project.
 
 ## What you can do
 
-When you start a new conversation in the ADE, choose one of these:
+When you start a new conversation in the ADE, choose an agent from the
+gallery. **Default** answers general questions and helps with development
+tasks in your project. Agents come from the `iii-directory` worker, which
+downloads them on demand.
 
-| Choice | Use it to |
-| --- | --- |
-| **Create a custom agent** | Create a reusable agent with instructions and skills for a specific task. Once saved, it becomes a choice here too. |
-| **Default** | Ask general questions and get help with development tasks in your project. |
-
-You do not need to create a custom agent before using the ADE. The setup
-wizard's app examples run with **Onboarding**, a builder the gallery does not
-list: it builds and verifies the app in the same conversation (step 5).
-
-> **Default** is the built-in general agent. `iii-directory` versions that
-> predate it list the same agent as `iii-minimal`.
+> `iii-directory` versions that predate **Default** list the same agent as
+> `iii-minimal`.
 
 ## Get started
 
@@ -135,7 +129,7 @@ an agent from running commands or changing files elsewhere on your machine.
 ### 5. Try your first app
 
 On the setup wizard's last step, select **Build an expense tracker**. A new
-conversation starts with the **Onboarding** agent and a model this machine
+conversation starts with the agent the example names and a model this machine
 has, and sends this message:
 
 ```text
@@ -178,11 +172,6 @@ survive a refresh and need no external services or extra accounts.
 
 ## Other paths
 
-- **Create a custom agent.** Describe what the agent should help with and
-  what it should avoid doing, for example: "Create an agent that reviews my
-  workers and suggests useful tests." It shows a short summary and the full
-  profile file before saving anything, then writes `agents/<id>.md`. The new
-  agent appears in the new-conversation gallery without a restart.
 - **Default.** Use it for everything else: questions about iii or this
   project, code changes, debugging, or anything the other choices do not
   cover.
@@ -204,55 +193,20 @@ survive a refresh and need no external services or extra accounts.
 
 You do not need anything below to use the ADE.
 
-### Agents in this template
-
-`agents/` ships two profiles: **Onboarding**, the app builder the setup
-wizard's examples use (hidden from the gallery), and **Create a custom
-agent**. The app builder does the whole job itself in one session, so no
-specialist profiles are needed. **Default** and the other built-in profiles
-come from the `iii-directory` worker, not from this folder.
-
-Every profile here extends `iii-minimal` and preloads its skills from
-`skills/harness/…`; the harness freezes both into every session that runs as
-that profile. `iii-directory` versions with the built-in `default` profile
-show it as **Default** and keep `iii-minimal` as a hidden alias of it;
-earlier versions list `iii-minimal` itself. Extending `iii-minimal` resolves
-on both. Display names can change; the profile id (the file name) is what
-`extends`, saved sessions and `harness::send { options: { agent: "<id>" } }`
-use.
-
-**Create a custom agent** also sets `composer_placeholder`: the example request
-the ADE shows in the empty message box while that profile is selected. It is
-never sent, never added to the prompt and not inherited through `extends`
-(at most 200 characters of plain text). `iii-directory` versions without the
-field ignore it.
-
-```text
-default                           built-in, shown as Default
-└── iii-minimal                   built-in hidden alias of default
-    ├── ade-worker-builder        Onboarding (hidden): scaffolds a worker, opens its panel, reshapes it into your app
-    └── agent-profile-creator     Create a custom agent: plans a new profile with you and writes it beside these
-```
-
-| Profile id | Shown as | Role |
-| --- | --- | --- |
-| `ade-worker-builder` | Onboarding (hidden; the setup wizard's examples use it) | Scaffolds the `worker-node-ade` template with `coder::scaffold-worker` and opens its admin page in the ADE, then, in one session, reshapes its hello example into the app you asked for (the functions, the public page and the admin page) and verifies it with real calls and the rendered pages. |
-| `agent-profile-creator` | Create a custom agent | Plans a new profile with you, using the existing ones as the reference, and writes `agents/<id>.md`. |
-
 ### Example prompts
 
 `onboarding.yaml` lists the examples the setup wizard shows on its last
 step. Add, change or remove entries there; the ADE reads the file each time
 the step opens. Each entry has a `title`, an optional `description`, the
-`agent` profile the conversation uses (a file name in `agents/` without
-`.md`, or a built-in profile such as `default`), the `prompt` the
+`agent` profile the conversation uses (an id `iii-directory` serves, such
+as `default`), the `prompt` the
 conversation sends, and `models` in order of preference:
 
 ```yaml
 prompts:
   - title: Build a TODO app
     description: A todo list with notes, and a public page that counts what is still open
-    agent: ade-worker-builder
+    agent: default
     prompt: >-
       Build a TODO app. Each todo has a title, notes, and whether it is done.
       Show how many todos are still open.
@@ -270,57 +224,6 @@ model this machine has is selected, with its reasoning `effort` (`minimal`,
 default). When none is available, the conversation keeps its
 usual model. An invalid entry is skipped, and without the file the step
 shows no examples.
-
-### Orchestration
-
-The app builder does not orchestrate: it does the whole job in one session.
-`agent-profile-creator` uses orchestration for reference checks, and so can
-any profile you create that dispatches other agents. There is no board and
-no message bus between agents: orchestration is the `harness/orchestration`
-skill, two wires with one direction each:
-
-- **Downstream is `harness::spawn`.** The `task` is the child's whole brief:
-  the spec or architecture file by path, the project root, what is out of
-  scope, the checks that mean done, and the state key for its result. A
-  child that must spawn children of its own is spawned with
-  `options: { orchestrator: true }`.
-- **Upstream is `state`.** The child writes one result document
-  (`outcome`, `summary`, `evidence`, `files`, `questions`) to scope
-  `results`, key `<its session id>`, and stops. The parent armed a `state`
-  wake on that key before spawning, so the write starts its next turn. The
-  child never looks for a parent; feedback comes back as a new task in the
-  same session (`harness::spawn` with the same `session_id`).
-- Results are visible on the ADE's state page (`#/worker/state`, or the
-  State page in the workspace), scope `results`.
-- Reports keep those five fields and stay within 500 words (300 for
-  reference checks), with detailed observations in cited project
-  artifacts.
-
-### Context and verification
-
-The app builder preloads `harness/iii-node` and the contracts of the
-functions it calls. It reads the `worker-node-ade` files it reshapes in one
-batch (`src/index.ts`, `src/web.ts`, `src/hello.ts`, `web/App.tsx`,
-`web/app.css`, `ui/WorkerPage.tsx` and `test/web.test.ts`), replaces the
-`hello` example with a domain module and its test, and stores the app's data
-in the project's `state` worker. Shorter function preload lists do not narrow
-inherited permissions.
-
-It verifies against the running system: the type check, the tests and the
-build pass, every function it reports as verified answered a real call, and a
-browser snapshot of the public page shows
-the demo records. A public route of the app's own is proven on its URL with
-its own method. Its last message separates what it verified, what it assumed
-and what it did not verify.
-
-### Models and skills
-
-The profiles ship without a `model`, so each session uses the model selected
-when the message is sent. To pin one, add `model: <provider>::<model>` (and
-optionally `reasoning_effort`) to a profile's frontmatter;
-`iii call router::models::list` prints the catalog. Skill ids are prefixed
-`harness/` because `iii-directory` only lists skills whose namespace is a
-worker in this compose file.
 
 ### What runs in this project
 
