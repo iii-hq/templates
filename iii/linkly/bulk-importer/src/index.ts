@@ -5,7 +5,7 @@
 // Docs: https://iii.dev/docs/next/tutorials/linkly/channels
 
 // --- Ch. 6 | bulk-importer::import_csv ---
-// import { registerWorker } from "iii-sdk";
+// import { registerWorker, type InputStream } from "iii-sdk";
 // import { Logger } from "@iii-dev/helpers/observability";
 //
 // const worker = registerWorker(process.env.III_URL ?? "ws://localhost:49134", {
@@ -13,17 +13,16 @@
 // });
 // const logger = new Logger();
 //
-// worker.registerFunction("bulk-importer::import_csv", async (input) => {
-//   const chunks: Buffer[] = [];
-//   for await (const chunk of input.reader.stream) {
-//     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-//   }
-//   const csv = Buffer.concat(chunks).toString("utf-8");
-//   const rows = csv.trim().split("\n").slice(1); // skip the header row
-//
+// worker.registerFunction("bulk-importer::import_csv", async (input: { csv: InputStream }) => {
 //   let imported = 0;
 //   let skipped = 0;
-//   for (const row of rows) {
+//   let header = true;
+//   // Read the stream one line at a time, as the uploader sends it.
+//   for await (const row of input.csv.lines()) {
+//     if (header) {
+//       header = false; // skip the header row
+//       continue;
+//     }
 //     // Split on the first comma only, so commas inside the URL survive.
 //     const comma = row.indexOf(",");
 //     if (comma === -1) continue;
