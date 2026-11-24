@@ -12,8 +12,6 @@ gallery. **Default** answers general questions and helps with development
 tasks in your project. Agents come from the `iii-directory` worker, which
 downloads them on demand.
 
-> `iii-directory` versions that predate **Default** list the same agent as
-> `iii-minimal`.
 
 ## Get started
 
