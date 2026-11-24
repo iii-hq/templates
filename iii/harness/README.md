@@ -7,7 +7,7 @@ where you chat with agents and use the apps and tools they build.
 
 You need:
 
-- The iii CLI: `curl -fsSL https://install.iii.dev/iii/main/install.sh | sh`
+- The iii CLI: `curl -fsSL https://iii.dev/registry/install/iii/latest.sh | sh`
 - A project created from this template: `iii project init <name> -t harness`
 - An API key for one AI provider, such as Anthropic, OpenAI or DeepSeek
 - To create apps and tools: Node.js 22 or later and pnpm 10 or later
