@@ -98,7 +98,7 @@ containers:
   #     build: iii call sandbox::build worker=click-streamer
   #     run: iii call sandbox::start worker=click-streamer
 
-  # Ch. 6: bulk CSV import over a channel.
+  # Ch. 6: bulk CSV import from a stream.
   # bulk-importer:
   #   worker: path://./bulk-importer
   #   start_after: [link, sandbox-libkrun]
