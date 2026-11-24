@@ -419,43 +419,10 @@ while IFS= read -r listed; do
 done <"$TMP_DIR/harness-files.txt"
 assert_file "$HARNESS_DIR/.gitignore"
 
-# The two profiles keep their ids (the file names). The builder runs the
-# setup wizard's examples and stays out of the gallery; a single builder does
-# the whole job, so the former specialist profiles are no longer shipped.
-assert_contains "$HARNESS_DIR/agents/ade-worker-builder.md" "name: Onboarding"
-assert_contains "$HARNESS_DIR/agents/ade-worker-builder.md" "hidden: true"
-assert_contains "$HARNESS_DIR/agents/agent-profile-creator.md" "name: Create a custom agent"
-for profile in tech-lead backend-engineer frontend-engineer; do
-  assert_absent "$HARNESS_DIR/agents/$profile.md"
-done
-
-# Each gallery profile carries its own composer example (it is not inherited),
-# within iii-directory's 200-character limit after whitespace collapses, and
-# every skill a profile preloads ships with the template.
-for profile in ade-worker-builder agent-profile-creator; do
-  python3 - "$HARNESS_DIR/agents/$profile.md" "$HARNESS_DIR/skills" <<'PYEOF'
-import os
-import re
-import sys
-
-path, skills_dir = sys.argv[1], sys.argv[2]
-front = open(path).read().split("---\n", 2)[1]
-match = re.search(r'^composer_placeholder: "(.*)"$', front, re.M)
-if not re.search(r'^hidden: true$', front, re.M):
-    if not match:
-        sys.exit(f"FAIL: {path} has no composer_placeholder")
-    value = " ".join(match.group(1).split())
-    if not value or len(value) > 200:
-        sys.exit(f"FAIL: {path} composer_placeholder must be 1-200 characters")
-skills = re.search(r'^skills: \[(.*)\]$', front, re.M)
-for skill in (skills.group(1).split(",") if skills else []):
-    skill = skill.strip().strip('"')
-    # A folder id resolves to its index.md, as iii-directory serves it.
-    candidates = (skill + ".md", os.path.join(skill, "index.md"))
-    if skill and not any(os.path.isfile(os.path.join(skills_dir, c)) for c in candidates):
-        sys.exit(f"FAIL: {path} preloads missing skill {skill}")
-PYEOF
-done
+# Agent profiles and skills no longer ship with the template: iii-directory
+# downloads them on demand.
+assert_absent "$HARNESS_DIR/agents"
+assert_absent "$HARNESS_DIR/skills"
 
 # Provider keys are connected through the secrets worker, encrypted or as
 # env:// references to .env. No container reads .env by itself, and the
@@ -474,14 +441,13 @@ fi
 assert_not_contains "$HARNESS_DIR/worker-compose.yaml" "package://provider-"
 
 # The setup wizard's example prompts ship with the project, and every one
-# names a profile the template or iii-directory serves.
+# names a profile (iii-directory serves the profiles).
 assert_file "$HARNESS_DIR/onboarding.yaml"
-python3 - "$HARNESS_DIR/onboarding.yaml" "$HARNESS_DIR/agents" <<'PYEOF'
-import os
+python3 - "$HARNESS_DIR/onboarding.yaml" <<'PYEOF'
 import re
 import sys
 
-path, agents_dir = sys.argv[1], sys.argv[2]
+path = sys.argv[1]
 text = open(path).read()
 entries = re.split(r"^  - ", text.split("\nprompts:\n", 1)[1], flags=re.M)[1:]
 if not entries:
@@ -493,9 +459,6 @@ for entry in entries:
         sys.exit(f"FAIL: {path} has a prompt without a title, agent or prompt")
     if not re.search(r"^      - \{ provider: \S+, model: \S+", entry, re.M):
         sys.exit(f"FAIL: {path}: {title.group(1)} lists no models")
-    name = agent.group(1)
-    if name != "default" and not os.path.isfile(os.path.join(agents_dir, name + ".md")):
-        sys.exit(f"FAIL: {path}: {title.group(1)} uses missing agent {name}")
 PYEOF
 
 # The printed next steps lead to the setup wizard, not to a profile.
