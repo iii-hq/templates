@@ -10,7 +10,6 @@ You need:
 - The iii CLI: `curl -fsSL https://iii.dev/registry/install/iii/latest.sh | sh`
 - A project created from this template: `iii project init <name> -t harness`
 - A subscription or an API key for one AI provider, such as Anthropic, OpenAI or DeepSeek
-- To create apps and tools: Node.js 22 or later and pnpm 10 or later
 
 Run every command below from the project folder.
 
